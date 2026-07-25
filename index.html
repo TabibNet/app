@@ -24,57 +24,53 @@
         body { font-family: 'IBM Plex Sans Arabic', sans-serif; background: var(--bg); color: var(--fg); overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; -webkit-font-smoothing: antialiased; }
         h1, h2, h3, h4, h5 { font-family: 'Noto Kufi Arabic', sans-serif; }
         
-        /* الخلفية الأساسية للواجهة */
-.hero-bg { 
+        .hero-bg { 
     position: relative; 
     overflow: hidden; 
-    background-color: #041C14; /* أسود أخضر داكن فخم */
-    z-index: 1;
+    background: linear-gradient(-45deg, #041C14, #073D2E, #0E7C5F, #0D9488, #041C14);
+    background-size: 400% 400%;
+    animation: luxuryFlow 15s ease infinite;
 }
 
-/* طبقة الشفق القطبي المتحرك (Aurora) */
+/* إضافة كرة ضوئية ذهبية تتحرك بسلاسة في الخلفية */
 .hero-bg::before {
-    content: '';
-    position: absolute;
-    inset: -50%; /* تكبير الطبقة لتغطية الزوايا عند الدوران */
-    background: conic-gradient(from 0deg at 50% 50%, 
-        rgba(14, 124, 95, 0.5), 
-        rgba(7, 61, 46, 0.1), 
-        rgba(196, 150, 44, 0.25), /* لمسة ذهبية */
-        rgba(13, 148, 136, 0.4), 
-        rgba(14, 124, 95, 0.5));
-    filter: blur(100px); /* تمويه قوي لنعومة الألوان */
-    opacity: 0.7;
-    animation: aurora-rotate 25s linear infinite; /* دوران بطيء جداً */
-    z-index: -2;
-}
-
-/* كرة ضوئية ذهبية تطفو بحركة سينمائية */
-.hero-bg::after {
     content: '';
     position: absolute;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(196, 150, 44, 0.2) 0%, transparent 70%);
-    top: 10%;
-    right: -150px;
-    filter: blur(60px);
-    animation: float-gold 15s ease-in-out infinite alternate; /* حركة طفو للأعلى والأسفل */
-    z-index: -1;
-    pointer-events: none;
+    background: radial-gradient(circle, rgba(196, 150, 44, 0.25) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    border-radius: 50%;
+    filter: blur(50px);
+    animation: goldOrbit 20s linear infinite;
+    z-index: 0;
 }
 
-/* حركة دوران الشفق القطبي */
-@keyframes aurora-rotate {
-    0% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.3); }
-    100% { transform: rotate(360deg) scale(1); }
+/* إضافة كرة ضوئية خضراء تتحرك بشكل عكسي */
+.hero-bg::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(14, 124, 95, 0.4) 0%, transparent 70%);
+    bottom: -100px; left: -100px;
+    border-radius: 50%;
+    filter: blur(50px);
+    animation: goldOrbit 25s linear infinite reverse;
+    z-index: 0;
 }
 
-/* حركة طفو الكرة الذهبية */
-@keyframes float-gold {
-    0% { transform: translate(0, 0) scale(1); opacity: 0.4; }
-    100% { transform: translate(-100px, 100px) scale(1.4); opacity: 0.7; }
+/* حركة الألوان الانسيابية للخلفية */
+@keyframes luxuryFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* حركة دوران الكرات الضوئية */
+@keyframes goldOrbit {
+    0% { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+    100% { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
 }
         .search-container { backdrop-filter: blur(10px); background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); transition: all 0.4s ease; }
         .search-container:focus-within { background: rgba(255,255,255,0.2); border-color: rgba(196,150,44,0.5); box-shadow: 0 0 40px rgba(196,150,44,0.15); }
