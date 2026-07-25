@@ -224,22 +224,28 @@
 </head>
 <body>
         <!-- شريط الإعلانات العلوي -->
-        <div id="topAnnouncementBar" class="hidden fixed top-0 right-0 left-0 z-[60] bg-gradient-to-l from-[#052E22] via-[#0E7C5F] to-[#052E22] text-white text-center py-2 px-12 text-xs sm:text-sm font-semibold shadow-md flex items-center justify-center gap-3 border-b border-[var(--gold)]/40">
-            <i class="fas fa-bullhorn text-[var(--gold)] animate-pulse"></i>
-            <span id="announcementText"></span>
-            <a href="#" class="flex items-center gap-3 text-white no-underline">
-    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20"><i class="fas fa-heartbeat text-lg sm:text-xl" style="color: var(--gold)"></i></div>
-    <div class="flex flex-col">
-        <div class="text-base sm:text-lg font-bold leading-tight" style="font-family: 'Noto Kufi Arabic'">منصة متقدمة</div>
-        <div class="text-[10px] sm:text-xs opacity-60 mb-0.5">للخدمات الطبية</div>
-        <!-- شارة عدد الزوار الجديدة -->
-        <div class="flex items-center gap-1.5 text-[10px] bg-white/5 border border-white/10 rounded-full px-2 py-0.5 mt-1 w-fit">
-            <i class="fas fa-eye" style="color: var(--gold)"></i>
-            <span class="text-white/70">عدد الزوار:</span>
-            <span id="visitorCount" class="font-bold text-white">0</span>
-        </div>
+    <div id="topAnnouncementBar" class="hidden fixed top-0 right-0 left-0 z-[60] bg-gradient-to-l from-[#052E22] via-[#0E7C5F] to-[#052E22] text-white text-center py-2 px-12 text-xs sm:text-sm font-semibold shadow-md flex items-center justify-center gap-3 border-b border-[var(--gold)]/40">
+        <i class="fas fa-bullhorn text-[var(--gold)] animate-pulse"></i>
+        <span id="announcementText"></span>
+        <a id="announcementLink" href="#" target="_blank" class="text-[var(--gold)] hover:underline text-xs whitespace-nowrap" style="display: none;">اضغط هنا</a>
     </div>
-</a>
+
+    <nav class="navbar fixed top-0 right-0 left-0 z-50 bg-transparent" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 sm:h-20">
+                <a href="#" class="flex items-center gap-3 text-white no-underline">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20"><i class="fas fa-heartbeat text-lg sm:text-xl" style="color: var(--gold)"></i></div>
+                    <div class="flex flex-col">
+                        <div class="text-base sm:text-lg font-bold leading-tight" style="font-family: 'Noto Kufi Arabic'">منصة متقدمة</div>
+                        <div class="text-[10px] sm:text-xs opacity-60 mb-0.5">للخدمات الطبية</div>
+                        <!-- شارة عدد الزوار الجديدة -->
+                        <div class="flex items-center gap-1.5 text-[10px] bg-white/5 border border-white/10 rounded-full px-2 py-0.5 mt-1 w-fit">
+                            <i class="fas fa-eye" style="color: var(--gold)"></i>
+                            <span class="text-white/70">عدد الزوار:</span>
+                            <span id="visitorCount" class="font-bold text-white">0</span>
+                        </div>
+                    </div>
+                </a>
                 <div class="hidden lg:flex items-center gap-6">
                     <a href="#home" class="text-white/80 hover:text-white text-sm transition-colors no-underline">الرئيسية</a>
                     <a href="#hospitals" class="text-white/80 hover:text-white text-sm transition-colors no-underline">المشافي</a>
