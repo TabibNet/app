@@ -1733,8 +1733,7 @@ let currentFollowupBookingId = null;
 
         onSnapshot(query(collection(db, 'medicine_donations'), where('status', '==', 'active')), (snapshot) => {
             medicineDonations = []; snapshot.forEach(doc => { medicineDonations.push({ id: doc.id, ...doc.data() }); });
-            
-            // Render Home Medicines
+                        // Render Home Medicines
             const section = document.getElementById('homeMedicinesSection');
             const container = document.getElementById('homeMedicinesList');
             if (medicineDonations.length === 0) { section.classList.add('hidden'); container.innerHTML = ''; } 
@@ -1743,10 +1742,10 @@ let currentFollowupBookingId = null;
                 container.innerHTML = medicineDonations.map(m => `
                     <div class="med-donation-card" style="padding: 12px;">
                         <div class="flex items-center gap-3 mb-2">
-                            <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center"><i class="fas fa-pills text-green-600"></i></div>
-                            <div class="font-bold text-sm text-gray-800 truncate">${m.medicineName}</div>
+                            <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-pills text-green-600"></i></div>
+                            <div class="font-bold text-sm text-gray-800 dark:text-gray-100 break-words">${m.medicineName}</div>
                         </div>
-                        <div class="text-xs text-gray-500 flex flex-col gap-1 mb-2">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 flex flex-col gap-1 mb-2">
                             <span><i class="fas fa-box ml-1"></i> ${m.quantity}</span>
                             <span class="text-red-500 font-bold"><i class="fas fa-calendar-times ml-1"></i> ينتهي: ${m.expiryDate}</span>
                         </div>
