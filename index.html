@@ -378,7 +378,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 sm:h-20">
                 <a href="#" class="flex items-center gap-3 text-white no-underline">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20"><i class="fas fa-heartbeat text-lg sm:text-xl" style="color: var(--gold)"></i></div>
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex items-center justify-center backdrop-blur-sm border border-white/20" style="box-shadow: 0 0 15px rgba(196, 150, 44, 0.3);">
+    <img src="https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg?auth_key=1885239914-cbdf24db3e384494b76a36d7b2c9a35a-0-3aee9630f51ea0cb177c216a24d9f061" alt="شعار دليل الرحيبة الطبي" class="w-full h-full object-cover" loading="lazy">
+</div>
                     <div class="flex flex-col">
                         <div class="text-base sm:text-lg font-bold leading-tight" style="font-family: 'Noto Kufi Arabic'">منصة متقدمة</div>
                         <div class="text-[10px] sm:text-xs opacity-60 mb-0.5">للخدمات الطبية</div>
@@ -511,7 +513,12 @@
     <div class="mobile-menu fixed top-0 right-0 w-80 h-full z-50 bg-[#073D2E] shadow-2xl overflow-y-auto" id="mobileMenu">
     <div class="p-6 pt-12"> <!-- تم إضافة pt-12 لدفع المحتوى للأسفل -->
             <div class="flex items-center justify-between mb-8">
-                <div class="flex items-center gap-3 text-white"><i class="fas fa-heartbeat text-xl" style="color: var(--gold)"></i><span class="font-bold" style="font-family: 'Noto Kufi Arabic'">دليل الطبي</span></div>
+                <div class="flex items-center gap-3 text-white">
+    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center" style="box-shadow: 0 0 10px rgba(196, 150, 44, 0.3);">
+        <img src="https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg?auth_key=1885239914-cbdf24db3e384494b76a36d7b2c9a35a-0-3aee9630f51ea0cb177c216a24d9f061" alt="شعار دليل الرحيبة الطبي" class="w-full h-full object-cover" loading="lazy">
+    </div>
+    <span class="font-bold" style="font-family: 'Noto Kufi Arabic'">دليل الطبي</span>
+</div>
                 <button onclick="toggleMobileMenu()" class="text-white/60 hover:text-white text-xl" aria-label="إغلاق"><i class="fas fa-times"></i></button>
             </div>
             <div class="flex flex-col gap-1">
@@ -779,7 +786,9 @@
     <footer class="py-10 sm:py-14" style="background: #052E22">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-                <div class="sm:col-span-2 lg:col-span-1"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center"><i class="fas fa-heartbeat" style="color: var(--gold)"></i></div><span class="text-white font-bold" style="font-family: 'Noto Kufi Arabic'">دليل الطبي</span></div><p class="text-white/50 text-sm leading-relaxed">دليلك الشامل للخدمات الطبية . مشافي، عيادات، مراكز طبية، مخابر، أطباء وصيدليات في مكان واحد.</p></div>
+                <div class="sm:col-span-2 lg:col-span-1"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center" style="box-shadow: 0 0 15px rgba(196, 150, 44, 0.2);">
+    <img src="https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg?auth_key=1885239914-cbdf24db3e384494b76a36d7b2c9a35a-0-3aee9630f51ea0cb177c216a24d9f061" alt="شعار دليل الرحيبة الطبي" class="w-full h-full object-cover" loading="lazy">
+                </div><span class="text-white font-bold" style="font-family: 'Noto Kufi Arabic'">دليل الطبي</span></div><p class="text-white/50 text-sm leading-relaxed">دليلك الشامل للخدمات الطبية . مشافي، عيادات، مراكز طبية، مخابر، أطباء وصيدليات في مكان واحد.</p></div>
                 <div><h4 class="text-white font-bold mb-4 text-sm" style="font-family: 'Noto Kufi Arabic'">روابط سريعة</h4><div class="flex flex-col gap-2"><a href="#home" class="text-white/50 hover:text-white text-sm transition-colors">الرئيسية</a><a href="#hospitals" class="text-white/50 hover:text-white text-sm transition-colors">المشافي</a><a href="#clinics" class="text-white/50 hover:text-white text-sm transition-colors">العيادات</a><a href="#pharmacies" class="text-white/50 hover:text-white text-sm transition-colors">الصيدليات</a><a href="#disclaimer" class="text-white/50 hover:text-white text-sm transition-colors">إخلاء المسؤولية</a></div></div>
                 <div>
     <h4 class="text-white font-bold mb-4 text-sm" style="font-family: 'Noto Kufi Arabic'">عن المنصة</h4>
@@ -1861,8 +1870,21 @@ let currentFollowupBookingId = null;
 
                 document.getElementById('lightbox').addEventListener('click', () => { document.getElementById('lightbox').classList.remove('active'); unlockScroll(); });
         document.getElementById('darkModeToggle').addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('darkMode', document.documentElement.classList.contains('dark')); });
-        if (localStorage.getItem('darkMode') === 'true') document.documentElement.classList.add('dark');
+                if (localStorage.getItem('darkMode') === 'true') document.documentElement.classList.add('dark');
         
+        // === تأثير ظهور الشعار تدريجياً ===
+        const heroLogo = document.querySelector('.hero-medical-logo');
+        if (heroLogo) {
+            heroLogo.style.opacity = '0';
+            heroLogo.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                heroLogo.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                heroLogo.style.opacity = '1';
+                heroLogo.style.transform = 'translateY(0)';
+            }, 300);
+        }
+
         // تشغيل عداد الزوار عند فتح الموقع
         trackAndDisplayVisitors();
     });
@@ -2491,7 +2513,7 @@ let currentFollowupBookingId = null;
         e.preventDefault(); const phoneInput = document.getElementById('contactPhone'); const phone = phoneInput.value.trim(); 
         if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); return; } phoneInput.classList.remove('input-invalid'); 
         const name = document.getElementById('contactName').value; const type = document.getElementById('contactType').value; const message = document.getElementById('contactMessage').value; 
-        const text = `*رسالة جديدة من دليل الرحيبة الطبي*%0A*الاسم:* ${name}%0A*الهاتف:* ${phone}%0A*النوع:* ${type}%0A*الرسالة:* ${message}`; 
+        const text = `*رسالة جديدة من منصة دليل الطبي*%0A*الاسم:* ${name}%0A*الهاتف:* ${phone}%0A*النوع:* ${type}%0A*الرسالة:* ${message}`; 
         const adminWhatsAppNumber = "963980390813"; window.open(`https://wa.me/${adminWhatsAppNumber}?text=${text}`, '_blank'); showToast('جاري تحويلك إلى واتساب لإرسال الرسالة...'); e.target.reset(); 
     }
     window.addEventListener('scroll', () => { document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 80); document.getElementById('backToTop').classList.toggle('visible', window.scrollY > 500); });
@@ -3167,27 +3189,13 @@ let currentFollowupBookingId = null;
             el.innerText = current.toLocaleString('ar-EG');
         }, stepTime);
     }
-        // === تبديل حالة المنشأة (مفتوح/مغلق) ===
+            // === تبديل حالة المنشأة (مفتوح/مغلق) ===
     window.toggleOpenStatus = async (id, currentStatus) => {
         try {
             await updateDoc(doc(db, 'listings', id), { isOpen: currentStatus });
             showToast(currentStatus ? 'تم تغيير الحالة إلى: مفتوح الآن' : 'تم تغيير الحالة إلى: مغلق');
         } catch (e) { showToast('حدث خطأ أثناء تحديث الحالة'); }
     }
-    // === تأثير ظهور الشعار ===
-window.addEventListener('DOMContentLoaded', () => {
-    const heroLogo = document.querySelector('.hero-medical-logo');
-    if (heroLogo) {
-        heroLogo.style.opacity = '0';
-        heroLogo.style.transform = 'translateY(20px)';
-        
-        setTimeout(() => {
-            heroLogo.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-            heroLogo.style.opacity = '1';
-            heroLogo.style.transform = 'translateY(0)';
-        }, 300);
-    }
-}
 </script>
 </body>
 </html>
