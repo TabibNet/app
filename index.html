@@ -2760,6 +2760,17 @@ let currentFollowupBookingId = null;
             icon.style.transform = 'rotate(0deg)';
         }
     }
+        window.togglePrivacyPolicy = () => {
+        const content = document.getElementById('privacyPolicyContent');
+        const icon = document.getElementById('privacyPolicyIcon');
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            content.classList.add('hidden');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
     window.handleContactSubmit = (e) => { 
         e.preventDefault(); const phoneInput = document.getElementById('contactPhone'); const phone = phoneInput.value.trim(); 
         if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); return; } phoneInput.classList.remove('input-invalid'); 
