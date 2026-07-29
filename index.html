@@ -3372,14 +3372,16 @@ let currentFollowupBookingId = null;
                 adInterval = setInterval(nextAdSlide, 6000);
             }
             
-        } else if (ad.type === 'video') {
+                } else if (ad.type === 'video') {
             // إذا كان إعلان واحد فقط، اجعل الفيديو يتكرر (loop)
             // إذا كان هناك إعلانات أخرى، اجعله ينتقل عند الانتهاء (onended)
             const loopAttr = isSingleAd ? 'loop' : '';
             const endedAttr = isSingleAd ? '' : 'onended="nextAdSlide()"';
             
-            mediaHTML = `<div class="w-full h-full bg-black overflow-hidden">
-                <video autoplay muted ${loopAttr} ${endedAttr} class="w-full h-full object-cover">
+            // أضفنا controls ليعرض شريط التحكم (يمكن للمستخدم فتح الصوت)
+            // وأبقينا muted لكي يقوم المتصفح بتشغيله تلقائياً دون حظر
+            mediaHTML = `<div class="w-full h-full bg-black overflow-hidden flex items-center justify-center">
+                <video autoplay muted controls ${loopAttr} ${endedAttr} class="w-full h-full object-cover">
                     <source src="${ad.content}" type="video/mp4">
                     متصفحك لا يدعم تشغيل الفيديو المباشر.
                 </video>
