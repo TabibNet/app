@@ -541,6 +541,20 @@
                 </div>
                 
                 <div class="flex flex-col gap-3">
+
+                                    <!-- Homepage Media Ads Slider Section -->
+                <div id="homeMediaAdsSection" class="hidden mb-6 w-full max-w-2xl mx-auto">
+                    <div class="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
+                        <div id="homeAdContainer" class="w-full h-[120px] sm:h-[200px]">
+                            <!-- سيتم حقن الإعلانات هنا -->
+                        </div>
+                        <!-- أسهم التنقل -->
+                        <button onclick="prevAdSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center backdrop-blur-sm z-20 transition-all"><i class="fas fa-chevron-right text-sm"></i></button>
+                        <button onclick="nextAdSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center backdrop-blur-sm z-20 transition-all"><i class="fas fa-chevron-left text-sm"></i></button>
+                        <!-- النقاط (تُنشأ تلقائياً) -->
+                        <div id="adDots" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-20"></div>
+                    </div>
+                </div>
                     <!-- بطاقة البحث والحجز -->
                     <div class="flex items-start gap-3 p-3 rounded-xl bg-black/20 border border-white/5">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: var(--accent-light);">
@@ -868,21 +882,6 @@
                         <button type="submit" class="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-paper-plane"></i> إرسال الطلب</button>
                     </form>
                 </div>
-            </div>
-        </div>
-    </section>
-    <!-- Homepage Media Ads Slider Section -->
-    <section id="homeMediaAdsSection" class="hidden py-6" style="background: var(--bg);">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white" style="border-color: var(--card);">
-                <div id="homeAdContainer" class="w-full h-[180px] sm:h-[350px]">
-                    <!-- سيتم حقن الإعلانات هنا -->
-                </div>
-                <!-- أسهم التنقل -->
-                <button onclick="prevAdSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm z-20 transition-all"><i class="fas fa-chevron-right"></i></button>
-                <button onclick="nextAdSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm z-20 transition-all"><i class="fas fa-chevron-left"></i></button>
-                <!-- النقاط (تُنشأ تلقائياً) -->
-                <div id="adDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20"></div>
             </div>
         </div>
     </section>
@@ -3455,13 +3454,32 @@ let currentFollowupBookingId = null;
         `).join('');
     }
 
-    window.saveHomeAd = async (e) => {
+        window.saveHomeAd = async (e) => {
         e.preventDefault();
-        const type = document.getElementById('adType').value;
-        const content = document.getElementById('adContent').value.trim();
+        let type = document.getElementById('adType').value;
+        let content = document.getElementById('adContent').value.trim();
         const link = document.getElementById('adLink').value.trim();
         if (!content) { showToast('الرجاء إدخال رابط الصورة أو الفيديو'); return; }
         
+        // تحويل روابط يوتيوب العادية والـ Shorts إلى صيغة Embed تلقائياً
+        if (type === 'video' && content.includes('youtube.com')) {
+            let videoId = '';
+            if (content.includes('shorts/')) {
+                videoId = content.split('shorts/')[1].split(/[?&]/)[0];
+            } else if (content.includes('v=')) {
+                videoId = content.split('v=')[1].split(/[&]/)[0];
+            } else if (content.includes('youtu.be/')) {
+                videoId = content.split('youtu.be/')[1].split(/[?&]/)[0];
+            } else if (content.includes('embed/')) {
+                videoId = content.split('embed/')[1].split(/[?&]/)[0];
+            }
+            
+            if (videoId) {
+                content = `https://www.youtube.com/embed/${videoId}`;
+                showToast('تم تحويل رابط يوتيوب تلقائياً ليُعمل بشكل صحيح');
+            }
+        }
+
         try {
             await addDoc(collection(db, 'homepage_ads'), {
                 type, content, link, 
