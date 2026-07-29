@@ -2493,7 +2493,7 @@ let currentFollowupBookingId = null;
                 <form onsubmit="saveHomeAd(event)" class="grid grid-cols-1 gap-3 mb-4">
                     <select id="adType" class="ctrl-input text-sm">
                         <option value="image">صورة (رابط مباشر ينتهي بـ .jpg أو .png)</option>
-                        <option value="video">فيديو (رابط يوتيوب Embed أو رابط MP4)</option>
+                        <option value="video">فيديو (رابط مباشر ينتهي بـ .mp4 فقط)</option>
                     </select>
                     <input type="text" id="adContent" class="ctrl-input text-sm" placeholder="الصق الرابط هنا..." required>
                     <input type="text" id="adLink" class="ctrl-input text-sm" placeholder="رابط التحويل عند الضغط (اختياري للصور)">
@@ -3343,7 +3343,7 @@ let currentFollowupBookingId = null;
             showToast(currentStatus ? 'تم تغيير الحالة إلى: مفتوح الآن' : 'تم تغيير الحالة إلى: مغلق');
         } catch (e) { showToast('حدث خطأ أثناء تحديث الحالة'); }
     }
-                    // === إدارة إعلانات الصفحة الرئيسية (سلايدر متعدد) ===
+                        // === إدارة إعلانات الصفحة الرئيسية (سلايدر ذكي) ===
     let activeAds = [];
     let currentAdIndex = 0;
     let adInterval = null;
@@ -3356,22 +3356,25 @@ let currentFollowupBookingId = null;
         const ad = activeAds[index];
         let mediaHTML = '';
 
+        // إيقاف أي مؤقت سابق قبل عرض الإعلان الجديد
+        if (adInterval) { clearInterval(adInterval); adInterval = null; }
+
         if (ad.type === 'image') {
             mediaHTML = `<a href="${ad.link || '#'}" target="_blank" class="block w-full h-full">
                 <img src="${ad.content}" alt="إعلان" class="w-full h-full object-cover transition-opacity duration-500">
             </a>`;
+            // مؤقت 6 ثوانٍ للصور فقط
+            adInterval = setInterval(nextAdSlide, 6000);
+            
         } else if (ad.type === 'video') {
-            if (ad.content.includes('youtube.com/embed') || ad.content.includes('player.vimeo.com')) {
-                mediaHTML = `<div class="w-full h-full bg-black flex items-center justify-center">
-                    <iframe src="${ad.content}?autoplay=1&mute=1&loop=1&playlist=${ad.content.split('/').pop()}" class="w-full h-full" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-                </div>`;
-            } else {
-                mediaHTML = `<div class="w-full h-full bg-black flex items-center justify-center">
-                    <video controls autoplay muted loop class="w-full h-full object-cover">
-                        <source src="${ad.content}" type="video/mp4">
-                    </video>
-                </div>`;
-            }
+            // فيديو MP4 مباشر فقط: ينتقل تلقائياً عند انتهائه (onended)
+            mediaHTML = `<div class="w-full h-full bg-black flex items-center justify-center">
+                <video controls autoplay muted class="w-full h-full object-cover" onended="nextAdSlide()">
+                    <source src="${ad.content}" type="video/mp4">
+                    متصفحك لا يدعم تشغيل الفيديو المباشر.
+                </video>
+            </div>`;
+            // لا يوجد مؤقت ثابت هنا، الانتقال يعتمد على انتهاء الفيديو
         }
 
         container.innerHTML = `<div class="w-full h-full transition-opacity duration-500">${mediaHTML}</div>`;
@@ -3398,12 +3401,6 @@ let currentFollowupBookingId = null;
     function goToAdSlide(index) {
         currentAdIndex = index;
         renderAdSlide(currentAdIndex);
-        resetAdInterval();
-    }
-
-    function resetAdInterval() {
-        if (adInterval) clearInterval(adInterval);
-        adInterval = setInterval(nextAdSlide, 6000); // تغيير الإعلان كل 6 ثواني
     }
 
     onSnapshot(query(collection(db, 'homepage_ads'), where('isActive', '==', true)), (snapshot) => {
@@ -3418,7 +3415,6 @@ let currentFollowupBookingId = null;
             section.classList.remove('hidden');
             currentAdIndex = 0;
             renderAdSlide(currentAdIndex);
-            resetAdInterval();
         }
         
         const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
@@ -3454,30 +3450,56 @@ let currentFollowupBookingId = null;
         `).join('');
     }
 
-        window.saveHomeAd = async (e) => {
+    window.saveHomeAd = async (e) => {
         e.preventDefault();
-        let type = document.getElementById('adType').value;
-        let content = document.getElementById('adContent').value.trim();
+        const type = document.getElementById('adType').value;
+        const content = document.getElementById('adContent').value.trim();
         const link = document.getElementById('adLink').value.trim();
         if (!content) { showToast('الرجاء إدخال رابط الصورة أو الفيديو'); return; }
         
-        // تحويل روابط يوتيوب العادية والـ Shorts إلى صيغة Embed تلقائياً
-        if (type === 'video' && content.includes('youtube.com')) {
-            let videoId = '';
-            if (content.includes('shorts/')) {
-                videoId = content.split('shorts/')[1].split(/[?&]/)[0];
-            } else if (content.includes('v=')) {
-                videoId = content.split('v=')[1].split(/[&]/)[0];
-            } else if (content.includes('youtu.be/')) {
-                videoId = content.split('youtu.be/')[1].split(/[?&]/)[0];
-            } else if (content.includes('embed/')) {
-                videoId = content.split('embed/')[1].split(/[?&]/)[0];
-            }
-            
-            if (videoId) {
-                content = `https://www.youtube.com/embed/${videoId}`;
-                showToast('تم تحويل رابط يوتيوب تلقائياً ليُعمل بشكل صحيح');
-            }
+        // تنبيه المستخدم إذا أدخل رابط يوتيوب بالخطأ
+        if (type === 'video' && (content.includes('youtube.com') || content.includes('youtu.be'))) {
+            showToast('تنبيه: يتم دعم روابط الفيديو المباشرة (MP4) فقط، روابط يوتيوب لن تعمل.');
+        }
+
+        try {
+            await addDoc(collection(db, 'homepage_ads'), {
+                type, content, link, 
+                isActive: document.getElementById('adActiveCheck').checked, 
+                createdAt: new Date().toISOString()
+            });
+            showToast('تم حفظ الإعلان بنجاح!');
+            e.target.reset();
+            fetchHomeAdsForAdmin();
+        } catch (err) { showToast('خطأ في حفظ الإعلان'); }
+    };
+
+    window.toggleHomeAdStatus = async (id, status) => {
+        try {
+            await updateDoc(doc(db, 'homepage_ads', id), { isActive: status });
+            showToast('تم تحديث حالة الإعلان');
+            fetchHomeAdsForAdmin();
+        } catch (err) { showToast('خطأ في التحديث'); }
+    };
+
+    window.deleteHomeAd = async (id) => {
+        try {
+            await deleteDoc(doc(db, 'homepage_ads', id));
+            showToast('تم حذف الإعلان');
+            fetchHomeAdsForAdmin();
+        } catch (err) { showToast('خطأ في الحذف'); }
+    };
+
+            window.saveHomeAd = async (e) => {
+        e.preventDefault();
+        const type = document.getElementById('adType').value;
+        const content = document.getElementById('adContent').value.trim();
+        const link = document.getElementById('adLink').value.trim();
+        if (!content) { showToast('الرجاء إدخال رابط الصورة أو الفيديو'); return; }
+        
+        // تنبيه المستخدم إذا أدخل رابط يوتيوب بالخطأ
+        if (type === 'video' && (content.includes('youtube.com') || content.includes('youtu.be'))) {
+            showToast('تنبيه: يتم دعم روابط الفيديو المباشرة (MP4) فقط، روابط يوتيوب لن تعمل.');
         }
 
         try {
