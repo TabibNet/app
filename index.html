@@ -651,7 +651,7 @@
                       <!-- Homepage Media Ads Slider Section -->
                 <div id="homeMediaAdsSection" class="hidden mb-6 w-full max-w-2xl mx-auto">
                     <div class="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
-                        <div id="homeAdContainer" class="w-full h-[120px] sm:h-[200px]">
+                        <div id="homeAdContainer" class="w-full h-[200px] sm:h-[350px]">
                             <!-- سيتم حقن الإعلانات هنا -->
                         </div>
                         <!-- أسهم التنقل -->
@@ -3343,12 +3343,7 @@ let currentFollowupBookingId = null;
             showToast(currentStatus ? 'تم تغيير الحالة إلى: مفتوح الآن' : 'تم تغيير الحالة إلى: مغلق');
         } catch (e) { showToast('حدث خطأ أثناء تحديث الحالة'); }
     }
-                        // === إدارة إعلانات الصفحة الرئيسية (سلايدر ذكي) ===
-    let activeAds = [];
-    let currentAdIndex = 0;
-    let adInterval = null;
-
-    function renderAdSlide(index) {
+                           function renderAdSlide(index) {
         const container = document.getElementById('homeAdContainer');
         const dotsContainer = document.getElementById('adDots');
         if (!container || activeAds.length === 0) return;
@@ -3359,96 +3354,46 @@ let currentFollowupBookingId = null;
         // إيقاف أي مؤقت سابق قبل عرض الإعلان الجديد
         if (adInterval) { clearInterval(adInterval); adInterval = null; }
 
+        // التحقق هل يوجد إعلان واحد فقط أم أكثر
+        const isSingleAd = activeAds.length === 1;
+
         if (ad.type === 'image') {
             mediaHTML = `<a href="${ad.link || '#'}" target="_blank" class="block w-full h-full">
                 <img src="${ad.content}" alt="إعلان" class="w-full h-full object-cover transition-opacity duration-500">
             </a>`;
-            // مؤقت 6 ثوانٍ للصور فقط
-            adInterval = setInterval(nextAdSlide, 6000);
+            
+            // إذا كان هناك أكثر من إعلان، انتقل للصورة التالية بعد 6 ثوانٍ
+            if (!isSingleAd) {
+                adInterval = setInterval(nextAdSlide, 6000);
+            }
             
         } else if (ad.type === 'video') {
-            // فيديو MP4 مباشر فقط: ينتقل تلقائياً عند انتهائه (onended)
-            mediaHTML = `<div class="w-full h-full bg-black flex items-center justify-center">
-                <video controls autoplay muted class="w-full h-full object-cover" onended="nextAdSlide()">
+            // إذا كان إعلان واحد فقط، اجعل الفيديو يتكرر (loop)
+            // إذا كان هناك إعلانات أخرى، اجعله ينتقل عند الانتهاء (onended)
+            const loopAttr = isSingleAd ? 'loop' : '';
+            const endedAttr = isSingleAd ? '' : 'onended="nextAdSlide()"';
+            
+            mediaHTML = `<div class="w-full h-full bg-black overflow-hidden">
+                <video autoplay muted ${loopAttr} ${endedAttr} class="w-full h-full object-cover">
                     <source src="${ad.content}" type="video/mp4">
                     متصفحك لا يدعم تشغيل الفيديو المباشر.
                 </video>
             </div>`;
-            // لا يوجد مؤقت ثابت هنا، الانتقال يعتمد على انتهاء الفيديو
         }
 
         container.innerHTML = `<div class="w-full h-full transition-opacity duration-500">${mediaHTML}</div>`;
         
         if (dotsContainer) {
-            dotsContainer.innerHTML = activeAds.map((_, i) => `
-                <span class="w-2 h-2 rounded-full bg-white/50 cursor-pointer transition-all ${i === index ? 'w-6 bg-white' : ''}" onclick="goToAdSlide(${i})"></span>
-            `).join('');
+            // إخفاء النقاط إذا كان هناك إعلان واحد فقط لعدم الحاجة للتنقل
+            if (isSingleAd) {
+                dotsContainer.innerHTML = '';
+            } else {
+                dotsContainer.innerHTML = activeAds.map((_, i) => `
+                    <span class="w-2 h-2 rounded-full bg-white/50 cursor-pointer transition-all ${i === index ? 'w-6 bg-white' : ''}" onclick="goToAdSlide(${i})"></span>
+                `).join('');
+            }
         }
-    }
-
-    function nextAdSlide() {
-        if (activeAds.length === 0) return;
-        currentAdIndex = (currentAdIndex + 1) % activeAds.length;
-        renderAdSlide(currentAdIndex);
-    }
-
-    function prevAdSlide() {
-        if (activeAds.length === 0) return;
-        currentAdIndex = (currentAdIndex - 1 + activeAds.length) % activeAds.length;
-        renderAdSlide(currentAdIndex);
-    }
-
-    function goToAdSlide(index) {
-        currentAdIndex = index;
-        renderAdSlide(currentAdIndex);
-    }
-
-    onSnapshot(query(collection(db, 'homepage_ads'), where('isActive', '==', true)), (snapshot) => {
-        const section = document.getElementById('homeMediaAdsSection');
-        activeAds = [];
-        snapshot.forEach(doc => activeAds.push({ id: doc.id, ...doc.data() }));
-        
-        if (activeAds.length === 0) {
-            section.classList.add('hidden');
-            if (adInterval) clearInterval(adInterval);
-        } else {
-            section.classList.remove('hidden');
-            currentAdIndex = 0;
-            renderAdSlide(currentAdIndex);
-        }
-        
-        const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
-        if (ctrlTitle === 'لوحة الإدارة') fetchHomeAdsForAdmin();
-    });
-
-    let allHomeAds = [];
-    async function fetchHomeAdsForAdmin() {
-        const snap = await getDocs(collection(db, 'homepage_ads'));
-        allHomeAds = [];
-        snap.forEach(doc => allHomeAds.push({ id: doc.id, ...doc.data() }));
-        renderHomeAdsList();
-    }
-
-    function renderHomeAdsList() {
-        const list = document.getElementById('adminHomeAdsList');
-        if (!list) return;
-        if (allHomeAds.length === 0) {
-            list.innerHTML = '<p class="text-center text-gray-400 text-sm py-2">لا توجد إعلانات حالياً.</p>';
-            return;
-        }
-        list.innerHTML = allHomeAds.map(ad => `
-            <div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)">
-                <div class="text-xs truncate flex-1 flex items-center gap-2">
-                    <i class="fas ${ad.type === 'image' ? 'fa-image text-blue-500' : 'fa-video text-purple-500'}"></i>
-                    <span class="truncate">${ad.content.substring(0, 30)}...</span>
-                </div>
-                <div class="flex gap-1 mr-2">
-                    <button onclick="toggleHomeAdStatus('${ad.id}', ${!ad.isActive})" class="px-2 py-1 rounded text-xs ${ad.isActive ? 'bg-green-500 text-white' : 'bg-gray-200'}">${ad.isActive ? 'مفعّل' : 'معطّل'}</button>
-                    <button onclick="deleteHomeAd('${ad.id}')" class="px-2 py-1 rounded text-xs bg-red-500 text-white"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>
-        `).join('');
-    }
+    } 
 
     window.saveHomeAd = async (e) => {
         e.preventDefault();
