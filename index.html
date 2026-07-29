@@ -174,10 +174,12 @@
         .search-input { background: transparent; color: white; outline: none; font-family: 'IBM Plex Sans Arabic', sans-serif; }
         .search-input::placeholder { color: rgba(255,255,255,0.5); }
         
-        .filter-btn { transition: all 0.3s ease; position: relative; overflow: hidden; }
-        .filter-btn::after { content: ''; position: absolute; bottom: 0; right: 0; width: 0; height: 3px; border-radius: 3px; transition: width 0.3s ease; }
-        .filter-btn:hover::after, .filter-btn.active::after { width: 100%; }
-        .filter-btn.active { transform: translateY(-2px) scale(1.05); box-shadow: 0 8px 25px -5px rgba(0,0,0,0.15); }
+        .filter-btn { transition: all 0.3s ease; position: relative; border: 1px solid var(--border); background: #FFFFFF; }
+        .filter-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); border-color: transparent !important; }
+        .filter-btn.active { transform: translateY(-3px); box-shadow: 0 12px 25px -5px rgba(0,0,0,0.2); border-color: transparent !important; }
+        .filter-btn.active i, .filter-btn.active span { color: white !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; transition: box-shadow 0.3s ease, border-color 0.3s ease; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .card::before { content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 0; transition: height 0.3s ease; border-radius: 0 0 4px 0; z-index: 2; }
@@ -627,44 +629,89 @@
         <div class="absolute bottom-0 left-0 right-0"><svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H0Z" fill="var(--bg)"/></svg></div>
     </section>
 
-    <!-- Urgent Blood Alerts Section -->
-    <section id="homeBloodAlertsSection" class="hidden py-8" style="background: #FEF2F2; border-bottom: 1px solid #FECACA;">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-3 mb-6">
-                <span class="relative flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                </span>
-                <h3 class="text-xl font-black text-red-700" style="font-family: 'Noto Kufi Arabic'">استغاثات دم مستعجلة </h3>
-            </div>
-            <div id="homeBloodAlerts" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-        </div>
-    </section>
-
-    <!-- Available Medicines Section -->
-    <section id="homeMedicinesSection" class="hidden py-8" style="background: #F0FDF4; border-bottom: 1px solid #BBF7D0;">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-3 mb-6">
-                <i class="fas fa-hand-holding-medical text-2xl text-green-600"></i>
-                <h3 class="text-xl font-black text-green-800" style="font-family: 'Noto Kufi Arabic'">أدوية متوفرة للتبرع </h3>
-            </div>
-            <div id="homeMedicinesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        </div>
-    </section>
-
-    <section class="py-6 sticky top-16 sm:top-20 z-30" style="background: var(--bg); border-bottom: 1px solid var(--border)">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between gap-3">
-                <div class="filters-scroll flex items-center gap-2 sm:gap-3 flex-1">
-                    <button class="filter-btn active px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white border border-gray-200 shadow-sm whitespace-nowrap" data-filter="all" onclick="setFilter('all', this)"><i class="fas fa-th-large ml-1 sm:ml-2"></i>الكل</button>
-                    <button class="filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white border border-gray-200 shadow-sm whitespace-nowrap" data-filter="hospital" onclick="setFilter('hospital', this)"><i class="fas fa-hospital-symbol ml-1 sm:ml-2" style="color:var(--hospital)"></i>المشافي</button>
-                    <button class="filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white border border-gray-200 shadow-sm whitespace-nowrap" data-filter="clinic" onclick="setFilter('clinic', this)"><i class="fas fa-hospital ml-1 sm:ml-2" style="color:var(--clinic)"></i>العيادات</button>
-                    <button class="filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white border border-gray-200 shadow-sm whitespace-nowrap" data-filter="center" onclick="setFilter('center', this)"><i class="fas fa-clinic-medical ml-1 sm:ml-2" style="color:var(--center)"></i>المراكز</button>
-                    <button class="filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white border border-gray-200 shadow-sm whitespace-nowrap" data-filter="lab" onclick="setFilter('lab', this)"><i class="fas fa-flask ml-1 sm:ml-2" style="color:var(--lab)"></i>المخابر</button>
-                    <button class="filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white border border-gray-200 shadow-sm whitespace-nowrap" data-filter="doctor" onclick="setFilter('doctor', this)"><i class="fas fa-user-md ml-1 sm:ml-2" style="color:var(--doctor)"></i>الأطباء</button>
-                    <button class="filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white border border-gray-200 shadow-sm whitespace-nowrap" data-filter="pharmacy" onclick="setFilter('pharmacy', this)"><i class="fas fa-pills ml-1 sm:ml-2" style="color:var(--pharmacy)"></i>الصيدليات</button>
+        <!-- Combined Section: Alerts (Right 35%) & Filters (Left 65% Grid) -->
+    <section class="sticky top-16 sm:top-20 z-30 py-4 shadow-sm" style="background: rgba(250, 248, 244, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border)">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex flex-row gap-3 sm:gap-5 items-start">
+                
+                <!-- الجانب الأيمن: الإعلانات (35%) -->
+                <div id="homeAlertsWrapper" class="hidden w-[35%] sm:w-1/3 flex-col gap-3 max-h-[75vh] overflow-y-auto pl-1 no-scrollbar">
+                    <!-- صندوق الدم -->
+                    <div id="homeBloodAlertsSection" class="hidden rounded-2xl p-3 border border-red-100 bg-gradient-to-br from-red-50/90 to-white shadow-lg">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="relative w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center text-white text-base shadow-md">
+                                <i class="fas fa-tint"></i>
+                                <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                                </span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-red-800" style="font-family: 'Noto Kufi Arabic'">استغاثات دم</h3>
+                                <p class="text-[10px] text-red-500/80 font-semibold">ساهم في إنقاذ حياة</p>
+                            </div>
+                        </div>
+                        <div id="homeBloodAlerts" class="flex flex-col gap-2"></div>
+                    </div>
+                    
+                    <!-- صندوق الأدوية -->
+                    <div id="homeMedicinesSection" class="hidden rounded-2xl p-3 border border-green-100 bg-gradient-to-br from-green-50/90 to-white shadow-lg">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white text-base shadow-md">
+                                <i class="fas fa-hand-holding-medical"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-green-800" style="font-family: 'Noto Kufi Arabic'">أدوية متوفرة</h3>
+                                <p class="text-[10px] text-green-500/80 font-semibold">تكافل طبي مجاني</p>
+                            </div>
+                        </div>
+                        <div id="homeMedicinesList" class="flex flex-col gap-2"></div>
+                    </div>
                 </div>
-                <div class="hidden sm:flex items-center gap-2 bg-white rounded-xl px-4 py-2 border border-gray-200 flex-shrink-0"><i class="fas fa-search text-gray-400 text-sm"></i><input type="text" id="inlineSearch" placeholder="تصفية النتائج..." class="outline-none text-sm bg-transparent w-40" oninput="handleSearch(this.value)"></div>
+
+                <!-- الجانب الأيسر: المربعات السبعة (65%) مرتبة كشبكة -->
+                <div class="w-[65%] sm:w-2/3 flex flex-col gap-3">
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                        <button class="filter-btn active aspect-square rounded-2xl flex flex-col items-center justify-center shadow-sm p-1" data-filter="all" onclick="setFilter('all', this)">
+                            <i class="fas fa-th-large text-xl sm:text-2xl mb-1 text-gray-400"></i>
+                            <span class="text-[10px] sm:text-xs font-extrabold text-gray-700">الكل</span>
+                        </button>
+                        <button class="filter-btn aspect-square rounded-2xl flex flex-col items-center justify-center shadow-sm p-1" data-filter="hospital" onclick="setFilter('hospital', this)">
+                            <i class="fas fa-hospital-symbol text-xl sm:text-2xl mb-1" style="color:var(--hospital)"></i>
+                            <span class="text-[10px] sm:text-xs font-extrabold text-gray-700">المشافي</span>
+                        </button>
+                        <button class="filter-btn aspect-square rounded-2xl flex flex-col items-center justify-center shadow-sm p-1" data-filter="clinic" onclick="setFilter('clinic', this)">
+                            <i class="fas fa-hospital text-xl sm:text-2xl mb-1" style="color:var(--clinic)"></i>
+                            <span class="text-[10px] sm:text-xs font-extrabold text-gray-700">العيادات</span>
+                        </button>
+                        <button class="filter-btn aspect-square rounded-2xl flex flex-col items-center justify-center shadow-sm p-1" data-filter="center" onclick="setFilter('center', this)">
+                            <i class="fas fa-clinic-medical text-xl sm:text-2xl mb-1" style="color:var(--center)"></i>
+                            <span class="text-[10px] sm:text-xs font-extrabold text-gray-700">المراكز</span>
+                        </button>
+                        <button class="filter-btn aspect-square rounded-2xl flex flex-col items-center justify-center shadow-sm p-1" data-filter="lab" onclick="setFilter('lab', this)">
+                            <i class="fas fa-flask text-xl sm:text-2xl mb-1" style="color:var(--lab)"></i>
+                            <span class="text-[10px] sm:text-xs font-extrabold text-gray-700">المخابر</span>
+                        </button>
+                        <button class="filter-btn aspect-square rounded-2xl flex flex-col items-center justify-center shadow-sm p-1" data-filter="doctor" onclick="setFilter('doctor', this)">
+                            <i class="fas fa-user-md text-xl sm:text-2xl mb-1" style="color:var(--doctor)"></i>
+                            <span class="text-[10px] sm:text-xs font-extrabold text-gray-700">الأطباء</span>
+                        </button>
+                        <button class="filter-btn aspect-square rounded-2xl flex flex-col items-center justify-center shadow-sm p-1" data-filter="pharmacy" onclick="setFilter('pharmacy', this)">
+                            <i class="fas fa-pills text-xl sm:text-2xl mb-1" style="color:var(--pharmacy)"></i>
+                            <span class="text-[10px] sm:text-xs font-extrabold text-gray-700">الصيدليات</span>
+                        </button>
+                        <!-- زر البحث لملء الفراغ في الشبكة -->
+                        <div class="aspect-square rounded-2xl flex items-center justify-center border-2 border-dashed" style="border-color: var(--border);" onclick="document.getElementById('inlineSearch').focus()">
+                            <i class="fas fa-search text-xl text-gray-300"></i>
+                        </div>
+                    </div>
+                    <!-- شريط البحث -->
+                    <div class="flex items-center gap-2 bg-white rounded-2xl px-4 py-2.5 border-2 shadow-sm w-full" style="border-color: var(--border)">
+                        <i class="fas fa-search text-gray-400 text-sm"></i>
+                        <input type="text" id="inlineSearch" placeholder="تصفية النتائج..." class="outline-none text-sm bg-transparent w-full" oninput="handleSearch(this.value)">
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
@@ -1824,45 +1871,60 @@ let currentFollowupBookingId = null;
     } 
 });
         
-        onSnapshot(query(collection(db, 'blood_requests'), where('status', '==', 'active')), (snapshot) => {
+                onSnapshot(query(collection(db, 'blood_requests'), where('status', '==', 'active')), (snapshot) => {
             bloodRequests = []; snapshot.forEach(doc => { bloodRequests.push({ id: doc.id, ...doc.data() }); });
             const section = document.getElementById('homeBloodAlertsSection');
             const container = document.getElementById('homeBloodAlerts');
-            if (bloodRequests.length === 0) { section.classList.add('hidden'); container.innerHTML = ''; } 
-            else {
+            if (bloodRequests.length === 0) {
+                section.classList.add('hidden');
+                container.innerHTML = '';
+            } else {
                 section.classList.remove('hidden');
                 container.innerHTML = bloodRequests.map(req => {
-                    return `<div class="blood-alert-card"><div class="w-16 h-16 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0"><span class="text-2xl font-black text-red-600">${req.bloodType}</span></div><div class="flex-1 min-w-0"><div class="font-bold text-gray-800 text-sm truncate">${req.patientName}</div><div class="text-xs text-gray-500 mt-1 flex items-center gap-1"><i class="fas fa-hospital"></i> ${req.hospital}</div></div><div class="flex flex-col gap-2"><a href="tel:${req.phone}" class="w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors"><i class="fas fa-phone-alt text-xs"></i></a></div></div>`;
+                    return `<div class="bg-white p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border border-red-50">
+                        <div class="flex items-center gap-2">
+                            <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0 border border-red-100">
+                                <span class="text-sm font-black text-red-600">${req.bloodType}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-gray-800 text-[11px] truncate">${req.patientName}</div>
+                                <div class="text-[9px] text-gray-500 truncate"><i class="fas fa-hospital text-red-400"></i> ${req.hospital}</div>
+                            </div>
+                        </div>
+                        <a href="tel:${req.phone}" class="w-full h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center text-[10px]">اتصال</a>
+                    </div>`;
                 }).join('');
             }
+            checkAlertsWrapperVisibility();
             const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
             if (ctrlTitle === 'بنك التبرع بالدم الرقمي (الرحيبة)') renderBloodBankUI();
             if (ctrlTitle === 'لوحة الإدارة') renderAdminDashboard();
         });
 
-        onSnapshot(query(collection(db, 'medicine_donations'), where('status', '==', 'active')), (snapshot) => {
+                onSnapshot(query(collection(db, 'medicine_donations'), where('status', '==', 'active')), (snapshot) => {
             medicineDonations = []; snapshot.forEach(doc => { medicineDonations.push({ id: doc.id, ...doc.data() }); });
-                        // Render Home Medicines
             const section = document.getElementById('homeMedicinesSection');
             const container = document.getElementById('homeMedicinesList');
-            if (medicineDonations.length === 0) { section.classList.add('hidden'); container.innerHTML = ''; } 
-            else {
+            if (medicineDonations.length === 0) {
+                section.classList.add('hidden');
+                container.innerHTML = '';
+            } else {
                 section.classList.remove('hidden');
                 container.innerHTML = medicineDonations.map(m => `
-                    <div class="med-donation-card" style="padding: 12px;">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-pills text-green-600"></i></div>
-                            <div class="font-bold text-sm text-gray-800 dark:text-gray-100 break-words">${m.medicineName}</div>
+                    <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border border-green-50">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 border border-green-100"><i class="fas fa-pills text-green-600 text-xs"></i></div>
+                            <div class="font-bold text-[11px] text-gray-800 truncate">${m.medicineName}</div>
                         </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 flex flex-col gap-1 mb-2">
-                            <span><i class="fas fa-box ml-1"></i> ${m.quantity}</span>
-                            <span class="text-red-500 font-bold"><i class="fas fa-calendar-times ml-1"></i> ينتهي: ${m.expiryDate}</span>
+                        <div class="text-[9px] text-gray-500 flex flex-col gap-0.5">
+                            <span><i class="fas fa-box"></i> ${m.quantity}</span>
+                            <span class="text-red-500 font-bold"><i class="fas fa-calendar-times"></i> ${m.expiryDate}</span>
                         </div>
-                        <a href="tel:${m.phone}" class="block text-center bg-green-500 text-white py-2 rounded-lg text-xs font-bold w-full hover:bg-green-600 transition-colors"><i class="fas fa-phone ml-1"></i> تواصل للمطالبة</a>
+                        <a href="tel:${m.phone}" class="mt-0.5 block text-center bg-green-500 text-white py-1 rounded-lg text-[9px] font-bold w-full">تواصل</a>
                     </div>
                 `).join('');
             }
-
+            checkAlertsWrapperVisibility();
             const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
             if (ctrlTitle === 'صندوق الأدوية الفائضة (تكافل طبي)') renderMedicineDonationsUI();
             if (ctrlTitle === 'لوحة الإدارة') renderAdminDashboard();
@@ -3195,6 +3257,20 @@ let currentFollowupBookingId = null;
             await updateDoc(doc(db, 'listings', id), { isOpen: currentStatus });
             showToast(currentStatus ? 'تم تغيير الحالة إلى: مفتوح الآن' : 'تم تغيير الحالة إلى: مغلق');
         } catch (e) { showToast('حدث خطأ أثناء تحديث الحالة'); }
+    }
+                    // دالة للتحقق إذا كانت كل المربعات فارغة لإخفاء القسم بالكامل
+    function checkAlertsWrapperVisibility() {
+        const wrapper = document.getElementById('homeAlertsWrapper');
+        const bloodSection = document.getElementById('homeBloodAlertsSection');
+        const medSection = document.getElementById('homeMedicinesSection');
+        
+        if (bloodSection.classList.contains('hidden') && medSection.classList.contains('hidden')) {
+            wrapper.classList.add('hidden');
+            wrapper.classList.remove('flex');
+        } else {
+            wrapper.classList.remove('hidden');
+            wrapper.classList.add('flex');
+        }
     }
 </script>
 </body>
