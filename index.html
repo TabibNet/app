@@ -3346,7 +3346,8 @@ let currentFollowupBookingId = null;
     let currentAdIndex = 0;
     let adInterval = null;
 
-       function renderAdSlide(index) {
+       window.renderAdSlide = (index) => {
+           
         const container = document.getElementById('homeAdContainer');
         const dotsContainer = document.getElementById('adDots');
         if (!container || activeAds.length === 0) return;
@@ -3445,19 +3446,19 @@ let currentFollowupBookingId = null;
         }
     };
 
-    function nextAdSlide() {
+    window.nextAdSlide = () => {
         if (activeAds.length === 0) return;
         currentAdIndex = (currentAdIndex + 1) % activeAds.length;
         renderAdSlide(currentAdIndex);
     }
 
-    function prevAdSlide() {
+    window.prevAdSlide = () => {
         if (activeAds.length === 0) return;
         currentAdIndex = (currentAdIndex - 1 + activeAds.length) % activeAds.length;
         renderAdSlide(currentAdIndex);
     }
 
-    function goToAdSlide(index) {
+    window.goToAdSlide = (index) => {
         currentAdIndex = index;
         renderAdSlide(currentAdIndex);
     }
