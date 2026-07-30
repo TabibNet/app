@@ -923,11 +923,10 @@
                         <li><a href="#doctors" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> الأطباء</a></li>
                         <li><a href="#pharmacies" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> الصيدليات</a></li>
                         <li><a href="#disclaimer" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> إخلاء المسؤولية</a></li>
-                        <li><button onclick="togglePrivacyPolicy()" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> سياسة الخصوصية</button></li>
                     </ul>
                 </div>
 
-                <!-- القسم الثالث: عن المنصة وتواصل (يأخذ 4 أعمدة) -->
+                                <!-- القسم الثالث: عن المنصة وتواصل + الأزرار القابلة للطي -->
                 <div class="md:col-span-4">
                     <h4 class="text-sm font-bold mb-5 text-white/90 relative pr-4 before:content-[''] before:absolute before:right-0 before:top-1/2 before:-translate-y-1/2 before:w-1.5 before:h-5 before:bg-[var(--gold)] before:rounded-full" style="font-family: 'Noto Kufi Arabic';">عن المنصة</h4>
                     <div class="space-y-3 text-sm text-white/50">
@@ -946,57 +945,26 @@
                             <i class="fab fa-facebook-f text-sm"></i>
                         </a>
                     </div>
-                </div>
-                    
-            </div>                <!-- زر سياسة الخصوصية التفاعلي -->
-                <div class="md:col-span-12 mt-2">
-                    <button onclick="togglePrivacyPolicy()" class="w-full flex items-center justify-center gap-2 text-sm font-bold text-[var(--gold)] py-2.5 px-4 rounded-xl bg-white/5 border border-[var(--gold)]/20 transition-all hover:bg-white/10 mb-4" style="font-family: 'Noto Kufi Arabic'">
-                        <i class="fas fa-user-shield"></i>
-                        سياسة الخصوصية وأمان البيانات
-                        <i class="fas fa-chevron-down text-xs transition-transform mr-auto" id="privacyPolicyIcon"></i>
-                    </button>
-                    <div id="privacyPolicyContent" class="hidden bg-white/5 p-6 rounded-2xl border border-white/10 text-right">
-                        <div class="space-y-6 text-sm text-white/60 leading-relaxed">
-                            <div class="flex items-start gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-[var(--accent-light)] flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-database text-[var(--accent)]"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-lg mb-1 text-white">1. البيانات التي نجمعها</h3>
-                                    <p>عند استخدامك لخدمات المنصة (مثل حجز المواعيد، بنك الدم، أو الملف الصحي)، قد نطلب منك تقديم بيانات مثل: الاسم، رقم الهاتف، الفصيلة، أو معلومات طبية أساسية. نحن لا نجمع أي بيانات لا حاجة لها.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-[var(--accent-light)] flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-shield-alt text-[var(--accent)]"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-lg mb-1 text-white">2. كيفية استخدام بياناتك</h3>
-                                    <p>تُستخدم بياناتك حصراً لتحقيق الغرض الذي قدمت من أجله (مثل: التواصل معك لتأكيد موعدك، أو إعلام الصيدلية بحاجتك لدواء، أو عرض ملفك الطبي على الطبيب المعالج). نحن <strong>لا نبيع ولا نشارك</strong> بياناتك مع أي جهة تسويقية.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-[var(--accent-light)] flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-lock text-[var(--accent)]"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-lg mb-1 text-white">3. تخزين البيانات وأمانها</h3>
-                                    <p>يتم تخزين بياناتك بشكل آمن على خوادم (Firebase). الملف الصحي الذكي محمي بكلمة مرور خاصة بك، ولا يمكن لأي طبيب الوصول إليه إلا عبر رمز QR الذي تولده أنت بنفسك في حالات الطوارئ.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-[var(--accent-light)] flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-user-times text-[var(--accent)]"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-lg mb-1 text-white">4. حقك في حذف بياناتك</h3>
-                                    <p>لديك الحق الكامل في التحكم ببياناتك. يمكنك في أي وقت تعديل أو حذف الروشتات الطبية من ملفك. كما يمكنك طلب حذف استغاثة الدم أو الدواء بعد تلبية حاجتك. للطلب حذف بياناتك بالكامل، تواصل معنا عبر صفحة اتصل بنا.</p>
-                                </div>
-                            </div>
+
+                    <!-- أزرار إخلاء المسؤولية وسياسة الخصوصية -->
+                    <div class="mt-6 border-t border-white/10 pt-4 space-y-2">
+                        <!-- زر إخلاء المسؤولية -->
+                        <button onclick="toggleFooterBox('disclaimerContentFooter', 'disclaimerIconFooter')" class="w-full flex items-center justify-between text-sm font-semibold text-white/80 hover:text-white transition-colors py-2">
+                            <span class="flex items-center gap-2"><i class="fas fa-shield-alt text-[var(--gold)]"></i> إخلاء مسؤولية وشروط الاستخدام</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform" id="disclaimerIconFooter"></i>
+                        </button>
+                        <div id="disclaimerContentFooter" class="hidden text-xs text-white/50 leading-relaxed mt-1 pr-6">
+                            هذا الموقع دليل إرشادي تطوعي لتسهيل الوصول للخدمات الطبية. المعلومات الواردة جمعت من مصادر عامة أو من أصحاب الفعاليات. لا يتحمل الموقع مسؤولية صحة البيانات أو جودة الخدمات. الأدوات الطبية التفاعلية استرشادية ولا تغني عن استشارة الطبيب.
                         </div>
-                        <p class="text-xs text-white/40 text-center mt-6 pt-4 border-t border-white/10">
-                            آخر تحديث لسياسة الخصوصية: يوليو 2026 | منصة دليل الطبي
-                        </p>
+
+                        <!-- زر سياسة الخصوصية -->
+                        <button onclick="toggleFooterBox('privacyContentFooter', 'privacyIconFooter')" class="w-full flex items-center justify-between text-sm font-semibold text-white/80 hover:text-white transition-colors py-2">
+                            <span class="flex items-center gap-2"><i class="fas fa-user-shield text-[var(--gold)]"></i> سياسة الخصوصية</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform" id="privacyIconFooter"></i>
+                        </button>
+                        <div id="privacyContentFooter" class="hidden text-xs text-white/50 leading-relaxed mt-1 pr-6">
+                            خصوصيتك أولويتنا. نجمع بيانات أساسية (الاسم، الهاتف) فقط لتحقيق الغرض المطلوب كحجز موعد أو طلب دواء. لا نبيع بياناتك. الملف الصحي محمي بكلمة مرور ورمز QR. يمكنك طلب حذف بياناتك في أي وقت عبر التواصل معنا.
+                        </div>
                     </div>
                 </div>
             
@@ -2760,9 +2728,10 @@ let currentFollowupBookingId = null;
             icon.style.transform = 'rotate(0deg)';
         }
     }
-        window.togglePrivacyPolicy = () => {
-        const content = document.getElementById('privacyPolicyContent');
-        const icon = document.getElementById('privacyPolicyIcon');
+            // دالة عامة لطي وفتح المربعات في الـ Footer
+    window.toggleFooterBox = (contentId, iconId) => {
+        const content = document.getElementById(contentId);
+        const icon = document.getElementById(iconId);
         if (content.classList.contains('hidden')) {
             content.classList.remove('hidden');
             icon.style.transform = 'rotate(180deg)';
@@ -2770,7 +2739,7 @@ let currentFollowupBookingId = null;
             content.classList.add('hidden');
             icon.style.transform = 'rotate(0deg)';
         }
-    }
+    };
     window.handleContactSubmit = (e) => { 
         e.preventDefault(); const phoneInput = document.getElementById('contactPhone'); const phone = phoneInput.value.trim(); 
         if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); return; } phoneInput.classList.remove('input-invalid'); 
