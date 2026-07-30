@@ -1,27 +1,22 @@
 {
-  "name": "دليل الرحيبة الطبي | مشافي، عيادات، أطباء، صيدليات",
-  "short_name": "دليل الرحيبة",
-  "description": "اعثر على أقرب مشفى، عيادة، مركز طبي، مخبر، طبيب أو صيدلية في مدينة الرحيبة.",
+  "name": "دليل الطبي - سوريا",
+  "short_name": "دليل الطبي",
+  "description": "منصة طبية متكاملة للوصول السريع للخدمات الصحية وحجز المواعيد",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAF8F4",
+  "background_color": "#031410",
   "theme_color": "#0E7C5F",
-  "lang": "ar",
-  "dir": "rtl",
-  "orientation": "portrait-primary",
-  "gcm_sender_id": "482941778795",
-  "gcm_send_id": "482941778795",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg?auth_key=1885239914-cbdf24db3e384494b76a36d7b2c9a35a-0-3aee9630f51ea0cb177c216a24d9f061",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpg",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg?auth_key=1885239914-cbdf24db3e384494b76a36d7b2c9a35a-0-3aee9630f51ea0cb177c216a24d9f061",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpg",
       "purpose": "any maskable"
     }
   ]
