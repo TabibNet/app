@@ -379,17 +379,19 @@
         @keyframes glowShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
     </style>
         <!-- كود تفعيل OneSignal للإشعارات الخلفية -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "723bca89-f0e7-4108-b1fa-5e1bddb5f29e",
-          serviceWorkerParam: { scope: "/" },
           serviceWorkerPath: "OneSignalSDKWorker.js"
         });
       });
     </script>
+    <!-- تفعيل التطبيق PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0E7C5F">
 </head>
 <body>
         <!-- شريط الإعلانات العلوي -->
