@@ -2,7 +2,7 @@
   "name": "دليل طبي شامل",
   "short_name": "دليل الطبي",
   "description": "منصة طبية متكاملة للوصول السريع للخدمات الصحية",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#FAF8F4",
   "theme_color": "#0E7C5F",
