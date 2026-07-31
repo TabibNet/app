@@ -406,7 +406,268 @@
     </style>
 </head>
 <body>
+<!-- شاشة التحميل الأسطورية 3D -->
+<div id="appSplashScreen" class="splash-3d-scene">
+    <div class="splash-stars"></div>
+    <div class="splash-3d-stage">
+        <div class="orbit-ring orbit-1"></div>
+        <div class="orbit-ring orbit-2"></div>
+        <div class="orbit-ring orbit-3"></div>
+        
+        <div class="splash-logo-3d">
+            <div class="splash-logo-glow"></div>
+            <img src="https://i.ibb.co/d09VBmky/37414.png" alt="دليل الطبي">
+        </div>
+        
+        <!-- علامة طبية متوهجة في المدار -->
+        <i class="fas fa-heart-pulse orbit-icon orbit-icon-1"></i>
+        <i class="fas fa-staff-snake orbit-icon orbit-icon-2"></i>
+        <i class="fas fa-shield-heart orbit-icon orbit-icon-3"></i>
+    </div>
+    
+    <div class="splash-text-3d-container">
+        <h2 class="splash-text-3d">دليلك الطبي الشامل</h2>
+        <p class="splash-subtext">جاري تجهيز عالمك الصحي...</p>
+    </div>
+    
+    <div class="splash-loader-bar"></div>
+</div>
 
+<!-- سكريبت احتياطي مستقل لإخفاء شاشة التحميل لضمان عدم تعليق الموقع -->
+<script>
+    setTimeout(function() {
+        var splash = document.getElementById('appSplashScreen');
+        if (splash) {
+            splash.classList.add('hidden');
+            setTimeout(function() { splash.style.display = 'none'; }, 800);
+        }
+    }, 3000);
+</script>
+
+<style>
+/* === تنسيقات شاشة التحميل 3D === */
+.splash-3d-scene {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, #064D3A 0%, #021410 100%);
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    perspective: 1000px;
+    transition: transform 0.8s cubic-bezier(0.76, 0, 0.24, 1), opacity 0.8s ease, visibility 0.8s ease;
+    overflow: hidden;
+}
+
+/* خلفية النجوم المتطايرة */
+.splash-stars {
+    position: absolute;
+    inset: 0;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(196, 150, 44, 0.6), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.9), transparent),
+        radial-gradient(2px 2px at 160px 120px, rgba(14, 124, 95, 0.8), transparent),
+        radial-gradient(1px 1px at 250px 80px, rgba(255,255,255,0.7), transparent);
+    background-size: 300px 300px;
+    background-repeat: repeat;
+    animation: starsMove 8s linear infinite;
+    opacity: 0.6;
+    z-index: 1;
+}
+
+@keyframes starsMove {
+    from { background-position: 0 0; }
+    to { background-position: 300px 300px; }
+}
+
+/* المسرح ثلاثي الأبعاد */
+.splash-3d-stage {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    transform-style: preserve-3d;
+    animation: stageFloat 4s ease-in-out infinite;
+    z-index: 10;
+}
+
+@keyframes stageFloat {
+    0%, 100% { transform: translateY(0) rotateX(10deg) rotateY(0deg); }
+    50% { transform: translateY(-15px) rotateX(15deg) rotateY(10deg); }
+}
+
+/* الحلقات المدارية */
+.orbit-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transform-style: preserve-3d;
+    box-shadow: 0 0 20px rgba(196, 150, 44, 0.3);
+}
+
+.orbit-1 {
+    width: 180px; height: 180px;
+    margin-left: -90px; margin-top: -90px;
+    border-top-color: #C4962C; border-right-color: #0E7C5F;
+    animation: spin3d 1 4s linear infinite;
+}
+
+.orbit-2 {
+    width: 240px; height: 240px;
+    margin-left: -120px; margin-top: -120px;
+    border-bottom-color: #C4962C; border-left-color: rgba(14, 124, 95, 0.5);
+    transform: rotateX(70deg);
+    animation: spin3d 2 6s linear infinite reverse;
+}
+
+.orbit-3 {
+    width: 300px; height: 300px;
+    margin-left: -150px; margin-top: -150px;
+    border-top-color: rgba(14, 124, 95, 0.3); border-left-color: #C4962C;
+    transform: rotateY(70deg);
+    animation: spin3d 3 8s linear infinite;
+}
+
+@keyframes spin3d {
+    from { transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) rotateZ(0deg); }
+    to { transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) rotateZ(360deg); }
+}
+
+/* الشعار */
+.splash-logo-3d {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100px; height: 100px;
+    margin-left: -50px; margin-top: -50px;
+    transform-style: preserve-3d;
+    transform: translateZ(50px);
+}
+
+.splash-logo-3d img {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 40px rgba(196, 150, 44, 0.6), 0 15px 35px rgba(0,0,0,0.5);
+    border: 3px solid rgba(255,255,255,0.2);
+}
+
+.splash-logo-glow {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(196, 150, 44, 0.4) 0%, transparent 70%);
+    filter: blur(15px);
+    animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* الأيقونات الطبية في المدار */
+.orbit-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    color: #C4962C;
+    text-shadow: 0 0 10px rgba(196, 150, 44, 0.8);
+    font-size: 1.2rem;
+    transform-style: preserve-3d;
+}
+
+.orbit-icon-1 { animation: orbitMove1 4s linear infinite; }
+.orbit-icon-2 { animation: orbitMove2 6s linear infinite; }
+.orbit-icon-3 { animation: orbitMove3 8s linear infinite; }
+
+@keyframes orbitMove1 {
+    from { transform: rotate(0deg) translateX(90px) rotate(0deg) translateZ(20px); }
+    to { transform: rotate(360deg) translateX(90px) rotate(-360deg) translateZ(20px); }
+}
+@keyframes orbitMove2 {
+    from { transform: rotate(120deg) translateX(120px) rotate(-120deg) translateZ(-20px); }
+    to { transform: rotate(480deg) translateX(120px) rotate(-480deg) translateZ(-20px); }
+}
+@keyframes orbitMove3 {
+    from { transform: rotate(240deg) translateX(150px) rotate(-240deg) translateZ(0); }
+    to { transform: rotate(600deg) translateX(150px) rotate(-600deg) translateZ(0); }
+}
+
+/* النص ثلاثي الأبعاد */
+.splash-text-3d-container {
+    margin-top: 4rem;
+    text-align: center;
+    z-index: 10;
+    transform-style: preserve-3d;
+    animation: textFloat 3s ease-in-out infinite;
+}
+
+@keyframes textFloat {
+    0%, 100% { transform: translateY(0) translateZ(30px); }
+    50% { transform: translateY(-5px) translateZ(50px); }
+}
+
+.splash-text-3d {
+    font-family: 'Noto Kufi Arabic', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    letter-spacing: 1px;
+    text-shadow: 
+        1px 1px 0 #0E7C5F,
+        2px 2px 0 #0E7C5F,
+        3px 3px 0 #0E7C5F,
+        4px 4px 0 #0E7C5F,
+        5px 5px 10px rgba(0,0,0,0.5),
+        0 0 20px rgba(196, 150, 44, 0.5);
+}
+
+.splash-subtext {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* شريط التحميل الزجاجي */
+.splash-loader-bar {
+    margin-top: 2rem;
+    width: 200px;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+.splash-loader-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #C4962C, transparent);
+    box-shadow: 0 0 15px #C4962C;
+    animation: loaderSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes loaderSlide {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}
+
+/* تأثير الاختفاء */
+.splash-3d-scene.hidden {
+    opacity: 0;
+    transform: scale(1.1);
+    visibility: hidden;
+}
+</style>
         <!-- شريط الإعلانات العلوي -->
     <div id="topAnnouncementBar" class="hidden fixed top-0 right-0 left-0 z-[60] bg-gradient-to-l from-[#052E22] via-[#0E7C5F] to-[#052E22] text-white text-center py-2 px-12 text-xs sm:text-sm font-semibold shadow-md flex items-center justify-center gap-3 border-b border-[var(--gold)]/40">
         <i class="fas fa-bullhorn text-[var(--gold)] animate-pulse"></i>
@@ -1993,7 +2254,18 @@ let currentFollowupBookingId = null;
     window.openLightbox = (src) => { const lightbox = document.getElementById('lightbox'); lightbox.querySelector('img').src = src.includes('picsum.photos') ? src.replace('/400/250', '/1200/800') : src; lightbox.classList.add('active'); lockScroll(); }
     
             
-        window.addEventListener('DOMContentLoaded', () => {        // === كود الترجمة الإنجليزية ===
+        window.addEventListener('DOMContentLoaded', () => {
+        // === كود إخفاء شاشة التحميل الأسطورية بسلاسة ===
+        setTimeout(() => {
+            const splash = document.getElementById('appSplashScreen');
+            if (splash) {
+                splash.classList.add('hidden');
+                // إزالة العنصر من الـ DOM بالكامل بعد اختفائه لتحرير الذاكرة
+                setTimeout(() => { splash.style.display = 'none'; }, 1000);
+            }
+        }, 3000); // تتلاشى بعد ٣ ثوان من الفتح
+            
+            // === كود الترجمة الإنجليزية ===
         const langToggle = document.getElementById('langToggle');
         let isEnglish = document.cookie.includes('googtrans=/ar/en');
 
