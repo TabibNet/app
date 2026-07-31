@@ -3997,19 +3997,19 @@ let currentFollowupBookingId = null;
             wrapper.classList.add('flex');
         }
     }
-                // تسجيل Service Worker مع تفعيل التحديث التلقائي
+                    // تسجيل Service Worker مع تفعيل التحديث التلقائي الفوري
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
                 .then(reg => {
                     console.log('✅ SW registered successfully:', reg.scope);
                     
-                    // إجبار المتصفح على البحث عن تحديثات جديدة
+                    // إجبار المتصفح على البحث عن تحديثات جديدة في كل مرة يفتح فيها الموقع
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // يوجد تحديث جديد، قم بتفعيله فوراً
+                                // يوجد تحديث جديد! أرسل أمر لتفعيله فوراً
                                 newWorker.postMessage({ type: 'SKIP_WAITING' });
                             }
                         });
@@ -4018,7 +4018,7 @@ let currentFollowupBookingId = null;
                 .catch(err => console.error('❌ SW registration failed:', err));
         });
 
-        // الاستماع لرسالة التحديث وتحديث الصفحة تلقائياً
+        // الاستماع لرسالة التحديث وتحديث الصفحة تلقائياً ليظهر التعديل الجديد
         let refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
