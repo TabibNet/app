@@ -3723,12 +3723,13 @@ let currentFollowupBookingId = null;
             wrapper.classList.add('flex');
         }
     }
-            // === دالة إرسال الإشعارات الآمنة عبر Google Apps Script ===
+                // === دالة إرسال الإشعارات الآمنة عبر Google Apps Script ===
     window.sendPushNotification = async (title, message) => {
         try {
             await fetch('https://script.google.com/macros/s/AKfycbymsbl4e2VftB-vzZq8280txBwZq57t6oFn6g8913C3EZjAQOy1yGF-PeFZfukFojH1/exec', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                // تم تغيير النوع إلى text/plain لتجنب مشكلة CORS في Google
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ title: title, message: message })
             });
         } catch (e) { console.error('Push notification error:', e); }
