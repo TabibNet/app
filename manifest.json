@@ -1,0 +1,24 @@
+{
+  "name": "دليل طبي شامل",
+  "short_name": "دليل الطبي",
+  "description": "منصة طبية متكاملة للوصول السريع للخدمات الصحية، حجز المواعيد، والملف الصحي.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF8F4",
+  "theme_color": "#0E7C5F",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg",
+      "sizes": "192x192",
+      "type": "image/jpg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg",
+      "sizes": "512x512",
+      "type": "image/jpg",
+      "purpose": "any maskable"
+    }
+  ]
+}
