@@ -764,48 +764,40 @@
                 </div>
             </div>
 
-            <!-- 2. مربعات التصفية (بالمنتصف بشكل احترافي وأنيق) -->
-            <div class="max-w-5xl mx-auto bg-white/50 backdrop-blur-md p-6 rounded-3xl border shadow-sm" style="border-color: var(--border)">
-                <div class="grid grid-cols-4 sm:grid-cols-7 gap-3 sm:gap-4 mb-6">
+                        <!-- 2. مربعات التصفية (بالمنتصف بشكل احترافي وأنيق) -->
+            <div class="max-w-5xl mx-auto bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-6 rounded-3xl border shadow-sm" style="border-color: var(--border)">
+                <div class="grid grid-cols-4 sm:grid-cols-7 gap-3 sm:gap-4">
                     <button class="filter-btn active rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="all" onclick="setFilter('all', this)">
                         <i class="fas fa-th-large text-2xl mb-2 text-gray-400"></i>
-                        <span class="text-xs font-extrabold text-gray-700">الكل</span>
+                        <span class="text-xs font-extrabold text-gray-700 dark:text-white">الكل</span>
                     </button>
                     <button class="filter-btn rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="hospital" onclick="setFilter('hospital', this)">
                         <i class="fas fa-hospital-symbol text-2xl mb-2" style="color:var(--hospital)"></i>
-                        <span class="text-xs font-extrabold text-gray-700">المشافي</span>
+                        <span class="text-xs font-extrabold text-gray-700 dark:text-white">المشافي</span>
                     </button>
                     <button class="filter-btn rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="clinic" onclick="setFilter('clinic', this)">
                         <i class="fas fa-hospital text-2xl mb-2" style="color:var(--clinic)"></i>
-                        <span class="text-xs font-extrabold text-gray-700">العيادات</span>
+                        <span class="text-xs font-extrabold text-gray-700 dark:text-white">العيادات</span>
                     </button>
                     <button class="filter-btn rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="center" onclick="setFilter('center', this)">
                         <i class="fas fa-clinic-medical text-2xl mb-2" style="color:var(--center)"></i>
-                        <span class="text-xs font-extrabold text-gray-700">المراكز</span>
+                        <span class="text-xs font-extrabold text-gray-700 dark:text-white">المراكز</span>
                     </button>
                     <button class="filter-btn rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="lab" onclick="setFilter('lab', this)">
                         <i class="fas fa-flask text-2xl mb-2" style="color:var(--lab)"></i>
-                        <span class="text-xs font-extrabold text-gray-700">المخابر</span>
+                        <span class="text-xs font-extrabold text-gray-700 dark:text-white">المخابر</span>
                     </button>
                     <button class="filter-btn rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="doctor" onclick="setFilter('doctor', this)">
                         <i class="fas fa-user-md text-2xl mb-2" style="color:var(--doctor)"></i>
-                        <span class="text-xs font-extrabold text-gray-700">الأطباء</span>
+                        <span class="text-xs font-extrabold text-gray-700 dark:text-white">الأطباء</span>
                     </button>
                     <button class="filter-btn rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="pharmacy" onclick="setFilter('pharmacy', this)">
                         <i class="fas fa-pills text-2xl mb-2" style="color:var(--pharmacy)"></i>
-                        <span class="text-xs font-extrabold text-gray-700">الصيدليات</span>
+                        <span class="text-xs font-extrabold text-gray-700 dark:text-white">الصيدليات</span>
                     </button>
                 </div>
-                
-                <!-- شريط البحث -->
-                <div class="flex items-center gap-3 bg-white rounded-2xl px-5 py-4 border-2 shadow-sm w-full focus-within:border-[var(--accent)] transition-colors" style="border-color: var(--border)">
-                    <i class="fas fa-search text-gray-400 text-base"></i>
-                    <input type="text" id="inlineSearch" placeholder="تصفية النتائج... ابحث عن اسم، تخصص، أو منطقة" class="outline-none text-sm bg-transparent w-full text-gray-700 placeholder-gray-400">
-                </div>
             </div>
-
-        </div>
-    </section>
+            </section>
 
     <section id="hospitals" class="py-12 sm:py-16 dot-pattern" style="background: var(--bg)"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="text-center mb-10"><div class="ornament-line mb-3"><i class="fas fa-hospital-symbol text-sm" style="color: var(--hospital)"></i></div><h2 class="text-2xl sm:text-3xl font-black mb-3" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">المشافي والمرافق الكبرى</h2><p class="text-sm" style="color: var(--muted)">المشافي الوطنية والخاصة في منطقة الرحيبة وريف دمشق</p></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="hospitalsGrid"></div></div></section>
     <section id="clinics" class="py-12 sm:py-16" style="background: var(--bg-deep)"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="text-center mb-10"><div class="ornament-line mb-3"><i class="fas fa-hospital text-sm" style="color: var(--clinic)"></i></div><h2 class="text-2xl sm:text-3xl font-black mb-3" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">العيادات الطبية</h2><p class="text-sm" style="color: var(--muted)">أبرز العيادات التخصصية </p></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="clinicsGrid"></div></div></section>
@@ -2194,10 +2186,10 @@ let currentFollowupBookingId = null;
 
     function matchItem(item) { if (currentFilter !== 'all' && item.type !== currentFilter) return false; if (!searchQuery) return true; const q = searchQuery.toLowerCase(); return ['name', 'specialty', 'address', 'clinic', 'description', 'services', 'tests', 'departments', 'floors', 'homeSample', 'nightDetails', 'consultHours', 'bookingNotes'].some(key => (item[key] || '').toLowerCase().includes(q)); }
 
-    window.setFilter = (filter, btn) => { currentFilter = filter; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }); btn.classList.add('active'); const colors = { all: 'var(--accent)', hospital: 'var(--hospital)', clinic: 'var(--clinic)', center: 'var(--center)', lab: 'var(--lab)', doctor: 'var(--doctor)', pharmacy: 'var(--pharmacy)' }; btn.style.background = colors[filter]; btn.style.color = 'white'; btn.style.borderColor = colors[filter]; renderData(); }
-    window.handleSearch = (value) => { searchQuery = value.trim(); document.getElementById('heroSearch').value = value; document.getElementById('inlineSearch').value = value; renderData(); }
-    window.resetSearch = () => { searchQuery = ''; currentFilter = 'all'; document.getElementById('heroSearch').value = ''; document.getElementById('inlineSearch').value = ''; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }); const allBtn = document.querySelector('[data-filter="all"]'); allBtn.classList.add('active'); allBtn.style.background = 'var(--accent)'; allBtn.style.color = 'white'; allBtn.style.borderColor = 'var(--accent)'; renderData(); }
-
+        window.setFilter = (filter, btn) => { currentFilter = filter; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }); btn.classList.add('active'); const colors = { all: 'var(--accent)', hospital: 'var(--hospital)', clinic: 'var(--clinic)', center: 'var(--center)', lab: 'var(--lab)', doctor: 'var(--doctor)', pharmacy: 'var(--pharmacy)' }; btn.style.background = colors[filter]; btn.style.color = 'white'; btn.style.borderColor = colors[filter]; renderData(); }
+    window.handleSearch = (value) => { searchQuery = value.trim(); const heroSearch = document.getElementById('heroSearch'); if(heroSearch) heroSearch.value = value; renderData(); }
+    window.resetSearch = () => { searchQuery = ''; currentFilter = 'all'; const heroSearch = document.getElementById('heroSearch'); if(heroSearch) heroSearch.value = ''; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }); const allBtn = document.querySelector('[data-filter="all"]'); allBtn.classList.add('active'); allBtn.style.background = 'var(--accent)'; allBtn.style.color = 'white'; allBtn.style.borderColor = 'var(--accent)'; renderData(); }
+    
     window.openModal = (id) => { 
         const item = allData.find(d => d.id === id); 
         if (!item) return; 
