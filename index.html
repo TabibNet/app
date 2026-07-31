@@ -3997,8 +3997,7 @@ let currentFollowupBookingId = null;
             wrapper.classList.add('flex');
         }
     }
-
-        // تسجيل Service Worker مع تفعيل التحديث التلقائي
+                // تسجيل Service Worker مع تفعيل التحديث التلقائي
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
