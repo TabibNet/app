@@ -1,19 +1,19 @@
-const CACHE_NAME = 'raheba-med-dynamic-v2'; // تم تغيير الرقم إلى v2 لمسح الكاش القديم
+const CACHE_NAME = 'raheba-med-v4'; // تغيير الرقم يجبر المتصفح على مسح النسخة القديمة
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json'
 ];
 
-// تثبيت الـ Service Worker وحفظ الملفات الأساسية
+// تثبيت النسخة الجديدة وحفظ الملفات الأساسية للعمل بدون إنترنت
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).catch(err => console.log('Cache addAll error:', err))
   );
-  self.skipWaiting(); // تفعيل النسخة الجديدة فوراً
+  self.skipWaiting(); // تفعيل النسخة الجديدة فوراً دون انتظار إغلاق الصفحة
 });
 
-// تفعيل الـ Service Worker ومسح الكاش القديم
+// تفعيل النسخة الجديدة ومسح أي كاش قديم
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -29,29 +29,42 @@ self.addEventListener('activate', (event) => {
   self.clients.claim(); // السيطرة على الصفحة فوراً
 });
 
-// استراتيجية: الشبكة أولاً (لجلب التحديثات فوراً)
+// استراتيجية ذكية: جلب التحديث من الإنترنت، وإذا انقطع الإنترنت اعرض المحفوظ
 self.addEventListener('fetch', (event) => {
-  // تجاهل الطلبات غير الـ GET (مثل إرسال البيانات لفايربيس)
+  // تجاهل الطلبات غير GET (مثل إرسال البيانات لفايربيس)
   if (event.request.method !== 'GET') return;
 
+  // تجاهل روابط فايربيس وجوجل والـ CDN (لأنها تتغير ديناميكياً ولا يجب حفظها)
+  const url = new URL(event.request.url);
+  if (url.origin !== location.origin) {
+    return; // دع المتصفح يتعامل معها بشكل طبيعي
+  }
+
+  // للملفات المحلية (HTML, CSS, JS, صور): الشبكة أولاً
   event.respondWith(
-    fetch(event.request) // 1. حاول جلب النسخة الجديدة من الإنترنت
-      .then((response) => {
-        // إذا نجح الطلب، احفظ النسخة الجديدة في الكاش
-        if (response && response.status === 200) {
-          const responseToCache = response.clone();
+    fetch(event.request)
+      .then((networkResponse) => {
+        // إذا وجدنا النسخة الجديدة في الإنترنت، احفظها في الكاش واعرضها
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
         }
-        return response; // اعرض النسخة الجديدة للمستخدم
+        return networkResponse; // اعرض أحدث نسخة للمستخدم
       })
       .catch(() => {
-        // 2. إذا فشل الإنترنت، ابحث في الكاش
+        // إذا انقطع الإنترنت، ابحث عن الملف في الذاكرة المحفوظة واعرضه
         return caches.match(event.request).then((cachedResponse) => {
-          // إذا وجد الملف في الكاش اعرضه، وإذا لم تجده اعطِ رداً آمناً بدل أن ينهار المتصفح
-          return cachedResponse || new Response('Offline page not available', { status: 503, statusText: 'Offline' });
+          return cachedResponse || caches.match('./index.html');
         });
       })
   );
+});
+
+// الاستماع لرسالة تحديث الصفحة
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
