@@ -1,5 +1,24 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+        <!-- كود تفعيل التطبيق PWA والإشعارات -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0E7C5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="دليل الطبي">
+    <link rel="apple-touch-icon" href="https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg">
+
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "723bca89-f0e7-4108-b1fa-5e1bddb5f29e",
+          serviceWorkerPath: "OneSignalSDKWorker.js"
+        });
+      });
+    </script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
