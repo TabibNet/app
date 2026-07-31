@@ -1,24 +1,28 @@
 {
-  "name": "دليل طبي شامل",
+  "name": "دليل طبي | مشافي، عيادات، أطباء، صيدليات",
   "short_name": "دليل الطبي",
-  "description": "منصة طبية متكاملة للوصول السريع للخدمات الصحية",
-  "start_url": ".",
+  "description": "دليل طبي شامل في سوريا ريف دمشق. ابحث عن أقرب مشفى، عيادة، طبيب، صيدلية، أو مخبر.",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAF8F4",
+  "background_color": "#073D2E",
   "theme_color": "#0E7C5F",
   "orientation": "portrait-primary",
   "icons": [
     {
       "src": "https://i.ibb.co/d09VBmky/37414.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.ibb.co/d09VBmky/37414.png",
+      "sizes": "512x512",
+      "type": "image/png"
     },
     {
       "src": "https://i.ibb.co/d09VBmky/37414.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "maskable"
     }
   ]
 }
