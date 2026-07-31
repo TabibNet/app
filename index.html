@@ -416,7 +416,7 @@
         
         <div class="splash-logo-3d">
             <div class="splash-logo-glow"></div>
-            <img src="https://z-cdn-media.chatglm.cn/files/981068e8-ce01-48cb-baf4-b93e843f3df9.jpg" alt="دليل الطبي">
+            <img src="https://i.ibb.co/d09VBmky/37414.png" alt="دليل الطبي">
         </div>
         
         <!-- علامة طبية متوهجة في المدار -->
@@ -432,6 +432,17 @@
     
     <div class="splash-loader-bar"></div>
 </div>
+
+<!-- سكريبت احتياطي مستقل لإخفاء شاشة التحميل لضمان عدم تعليق الموقع -->
+<script>
+    setTimeout(function() {
+        var splash = document.getElementById('appSplashScreen');
+        if (splash) {
+            splash.classList.add('hidden');
+            setTimeout(function() { splash.style.display = 'none'; }, 800);
+        }
+    }, 3000);
+</script>
 
 <style>
 /* === تنسيقات شاشة التحميل 3D === */
@@ -657,6 +668,7 @@
     visibility: hidden;
 }
 </style>
+
         <!-- شريط الإعلانات العلوي -->
     <div id="topAnnouncementBar" class="hidden fixed top-0 right-0 left-0 z-[60] bg-gradient-to-l from-[#052E22] via-[#0E7C5F] to-[#052E22] text-white text-center py-2 px-12 text-xs sm:text-sm font-semibold shadow-md flex items-center justify-center gap-3 border-b border-[var(--gold)]/40">
         <i class="fas fa-bullhorn text-[var(--gold)] animate-pulse"></i>
