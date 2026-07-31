@@ -3723,11 +3723,10 @@ let currentFollowupBookingId = null;
             wrapper.classList.add('flex');
         }
     }
-        // === دالة إرسال الإشعارات للمستخدمين (حتى لو الموقع مغلق) عبر Cloudflare ===
+            // === دالة إرسال الإشعارات الآمنة عبر Google Apps Script ===
     window.sendPushNotification = async (title, message) => {
         try {
-            // استبدل YOUR_WORKER_URL برابط الـ Cloudflare Worker الخاص بك
-            await fetch('YOUR_WORKER_URL', {
+            await fetch('https://script.google.com/macros/s/AKfycbymsbl4e2VftB-vzZq8280txBwZq57t6oFn6g8913C3EZjAQOy1yGF-PeFZfukFojH1/exec', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title: title, message: message })
