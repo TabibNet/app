@@ -2054,7 +2054,8 @@ let currentFollowupBookingId = null;
         const docData = allData.find(d => d.name === docName); 
         if (docData && docData.type === 'doctor') renderDoctorDashboard(docData); 
     } 
-});        onSnapshot(query(collection(db, 'blood_requests'), where('status', '==', 'active')), (snapshot) => {
+});        
+                onSnapshot(query(collection(db, 'blood_requests'), where('status', '==', 'active')), (snapshot) => {
             bloodRequests = []; snapshot.forEach(doc => { bloodRequests.push({ id: doc.id, ...doc.data() }); });
             const section = document.getElementById('homeBloodAlertsSection');
             const container = document.getElementById('homeBloodAlerts');
@@ -2078,6 +2079,7 @@ let currentFollowupBookingId = null;
                     <a href="tel:${req.phone}" class="w-full h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center text-[10px]">اتصال</a>
                 </div>`;
             }).join('');
+            }
             checkAlertsWrapperVisibility();
             const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
             if (ctrlTitle === 'بنك التبرع بالدم الرقمي (سوريا)') renderBloodBankUI();
@@ -2106,6 +2108,7 @@ let currentFollowupBookingId = null;
                         <a href="tel:${m.phone}" class="mt-0.5 block text-center bg-green-500 text-white py-1 rounded-lg text-[9px] font-bold w-full">تواصل</a>
                     </div>
                 `).join('');
+            }
             checkAlertsWrapperVisibility();
             const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
             if (ctrlTitle === 'صندوق الأدوية الفائضة (تكافل طبي)') renderMedicineDonationsUI();
