@@ -2024,20 +2024,7 @@ let currentFollowupBookingId = null;
                 location.reload();
                 
             });
-        }
 
-        // === كود إخفاء شاشة التحميل الأسطورية ===
-        setTimeout(() => {
-            const splash = document.getElementById('appSplashScreen');
-            if (splash) {
-                splash.classList.add('hidden');
-                // إزالة العنصر من الـ DOM بالكامل بعد اختفائه لتحرير الذاكرة
-                setTimeout(() => { splash.style.display = 'none'; }, 1000);
-            }
-        }, 2500); // تتلاشى بعد ثانيتين ونصف من الفتح
-        // ==========================================
-
-    });
         // Tips Listener
         onSnapshot(collection(db, 'medical_tips'), (snapshot) => {
             healthTips = [];
