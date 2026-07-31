@@ -2060,9 +2060,7 @@ let currentFollowupBookingId = null;
         const docData = allData.find(d => d.name === docName); 
         if (docData && docData.type === 'doctor') renderDoctorDashboard(docData); 
     } 
-});
-        
-                onSnapshot(query(collection(db, 'blood_requests'), where('status', '==', 'active')), (snapshot) => {
+});        onSnapshot(query(collection(db, 'blood_requests'), where('status', '==', 'active')), (snapshot) => {
             bloodRequests = []; snapshot.forEach(doc => { bloodRequests.push({ id: doc.id, ...doc.data() }); });
             const section = document.getElementById('homeBloodAlertsSection');
             const container = document.getElementById('homeBloodAlerts');
@@ -2078,10 +2076,12 @@ let currentFollowupBookingId = null;
                                 <span class="text-sm font-black text-red-600">${req.bloodType}</span>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="font-bold text-gray-800 text-[11px] truncate">${req.patientName}</div>
-                                <div class="text-[9px] text-gray-500 truncate"><i class="fas fa-hospital text-red-400"></i> ${req.hospital}</div>
+                                <div class="font-bold text-gray-800 text-[11px] break-words">${req.patientName}</div>
+                                <div class="text-[9px] text-gray-500 break-words"><i class="fas fa-hospital text-red-400"></i> ${req.hospital}</div>
                             </div>
                         </div>
+                        <!-- إظهار الملاحظات (عدد الأكياس) -->
+                        ${req.notes ? `<div class="text-[9px] text-red-600 font-bold bg-red-50 p-1 rounded break-words text-center"><i class="fas fa-notes-medical"></i> ${req.notes}</div>` : ''}
                         <a href="tel:${req.phone}" class="w-full h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center text-[10px]">اتصال</a>
                     </div>`;
                 }).join('');
@@ -2091,8 +2091,8 @@ let currentFollowupBookingId = null;
             if (ctrlTitle === 'بنك التبرع بالدم الرقمي (سوريا)') renderBloodBankUI();
             if (ctrlTitle === 'لوحة الإدارة') renderAdminDashboard();
         });
-
-                onSnapshot(query(collection(db, 'medicine_donations'), where('status', '==', 'active')), (snapshot) => {
+   
+                        onSnapshot(query(collection(db, 'medicine_donations'), where('status', '==', 'active')), (snapshot) => {
             medicineDonations = []; snapshot.forEach(doc => { medicineDonations.push({ id: doc.id, ...doc.data() }); });
             const section = document.getElementById('homeMedicinesSection');
             const container = document.getElementById('homeMedicinesList');
@@ -2105,7 +2105,7 @@ let currentFollowupBookingId = null;
                     <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border border-green-50">
                         <div class="flex items-center gap-2">
                             <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 border border-green-100"><i class="fas fa-pills text-green-600 text-xs"></i></div>
-                            <div class="font-bold text-[11px] text-gray-800 truncate">${m.medicineName}</div>
+                            <div class="font-bold text-[11px] text-gray-800 break-words">${m.medicineName}</div>
                         </div>
                         <div class="text-[9px] text-gray-500 flex flex-col gap-0.5">
                             <span><i class="fas fa-box"></i> ${m.quantity}</span>
@@ -2120,6 +2120,7 @@ let currentFollowupBookingId = null;
             if (ctrlTitle === 'صندوق الأدوية الفائضة (تكافل طبي)') renderMedicineDonationsUI();
             if (ctrlTitle === 'لوحة الإدارة') renderAdminDashboard();
         });
+
 
                 document.getElementById('lightbox').addEventListener('click', () => { document.getElementById('lightbox').classList.remove('active'); unlockScroll(); });
         document.getElementById('darkModeToggle').addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('darkMode', document.documentElement.classList.contains('dark')); });
