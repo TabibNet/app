@@ -1,11 +1,10 @@
-const CACHE_NAME = 'medical-guide-v1';
+const CACHE_NAME = 'medical-guide-v2'; // تغيير الإصدار لتحديث الكاش
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
-// 1. التثبيت والتخزين المؤقت
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -14,7 +13,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 2. التفعيل وتنظيف المخازن القديمة
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -30,7 +28,6 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. حدث الفيتش (مهم جداً لكروم)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
