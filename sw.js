@@ -1,9 +1,8 @@
-const CACHE_NAME = 'raheba-med-dynamic-v1';
+const CACHE_NAME = 'raheba-med-dynamic-v2'; // تم تغيير الرقم إلى v2 لمسح الكاش القديم
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json'
-  // أضف هنا روابط الصور الأساسية إذا أردت مثل الشعار
 ];
 
 // تثبيت الـ Service Worker وحفظ الملفات الأساسية
@@ -48,8 +47,11 @@ self.addEventListener('fetch', (event) => {
         return response; // اعرض النسخة الجديدة للمستخدم
       })
       .catch(() => {
-        // 2. إذا فشل الإنترنت، اعرض النسخة المحفوظة سابقاً
-        return caches.match(event.request);
+        // 2. إذا فشل الإنترنت، ابحث في الكاش
+        return caches.match(event.request).then((cachedResponse) => {
+          // إذا وجد الملف في الكاش اعرضه، وإذا لم تجده اعطِ رداً آمناً بدل أن ينهار المتصفح
+          return cachedResponse || new Response('Offline page not available', { status: 503, statusText: 'Offline' });
+        });
       })
   );
 });
