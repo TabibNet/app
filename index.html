@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>دليل طبي | مشافي، عيادات، أطباء، صيدليات، مراكز طبية، مخابر</title>
+        <!-- كود تفعيل التطبيق PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0E7C5F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
         <!-- تحسين محركات البحث (SEO) -->
     <meta name="description" content=" دليل طبي شامل في سوريا ريف دمشق. ابحث عن أقرب مشفى، عيادة، طبيب، صيدلية، أو مخبر. احجز موعدك إلكترونياً واستفد من أدواتنا الطبية التفاعلية وبنك الدم.">
     <meta name="keywords" content="سوريا, ريف دمشق, أطباء الرحيبة, صيدليات الرحيبة, مشافي ريف دمشق, حجز موعد طبيب, دمشق, دليل الطبي">
@@ -3713,6 +3718,23 @@ let currentFollowupBookingId = null;
         }
     }
 
+    <script>
+    // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('✅ SW registered successfully:', reg.scope))
+                .catch(err => console.error('❌ SW registration failed:', err));
+        });
+    }
+
+    // التقاط حدث تثبيت التطبيق ( لإظهار زر مخصص إذا أردت لاحقاً )
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('⚡ التطبيق قابل للتثبيت الآن!');
+    });
 </script>
 </body>
 </html>
