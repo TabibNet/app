@@ -1,26 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-        <!-- كود تفعيل التطبيق PWA -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0E7C5F">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="دليل الطبي">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
-    <!-- كود تفعيل OneSignal للإشعارات -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "723bca89-f0e7-4108-b1fa-5e1bddb5f29e",
-          serviceWorkerPath: "OneSignalSDKWorker.js"
-        });
-      });
-    </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -399,43 +379,6 @@
         .glow-border:hover::before { opacity: 1; }
         @keyframes glowShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
     </style>
-    <script>
-    // تسجيل Service Worker الموحد لـ PWA و OneSignal
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/OneSignalSDKWorker.js')
-                .then(registration => {
-                    console.log('✅ SW registered successfully: ', registration.scope);
-                })
-                .catch(error => {
-                    console.log('❌ SW registration failed: ', error);
-                });
-        });
-    }
-
-    // كود إظهار زر تثبيت PWA
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log("⚡ يمكن تثبيت التطبيق الآن");
-        // إظهار زر التثبيت إذا كان مخفياً
-        const installBtn = document.getElementById('installAppBtn');
-        if(installBtn) installBtn.style.display = 'block';
-    });
-
-    window.installApp = () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('تم تثبيت التطبيق بنجاح');
-                }
-                deferredPrompt = null;
-            });
-        }
-    }
-</script>
 </head>
 <body>
         <!-- شريط الإعلانات العلوي -->
@@ -3769,57 +3712,7 @@ let currentFollowupBookingId = null;
             wrapper.classList.add('flex');
         }
     }
-                // === دالة إرسال الإشعارات الآمنة عبر Google Apps Script ===
-    window.sendPushNotification = async (title, message) => {
-        try {
-            await fetch('https://script.google.com/macros/s/AKfycbymsbl4e2VftB-vzZq8280txBwZq57t6oFn6g8913C3EZjAQOy1yGF-PeFZfukFojH1/exec', {
-                method: 'POST',
-                // تم تغيير النوع إلى text/plain لتجنب مشكلة CORS في Google
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ title: title, message: message })
-            });
-        } catch (e) { console.error('Push notification error:', e); }
-    };
 
-    // تفعيل الإشعارات اللحظية عند حدوث أحداث جديدة في قاعدة البيانات
-    let isFirstBloodLoad = true;
-    onSnapshot(query(collection(db, 'blood_requests'), where('status', '==', 'active')), (snapshot) => {
-        if (!isFirstBloodLoad) {
-            snapshot.docChanges().forEach(change => {
-                if (change.type === 'added') {
-                    const req = change.doc.data();
-                    window.sendPushNotification('🩸 استغاثة دم جديدة', `المريض: ${req.patientName} - الفصيلة: ${req.bloodType}`);
-                }
-            });
-        }
-        isFirstBloodLoad = false;
-    });
-
-    let isFirstMedLoad = true;
-    onSnapshot(query(collection(db, 'medicine_donations'), where('status', '==', 'active')), (snapshot) => {
-        if (!isFirstMedLoad) {
-            snapshot.docChanges().forEach(change => {
-                if (change.type === 'added') {
-                    const m = change.doc.data();
-                    window.sendPushNotification('💊 دواء متوفر للتبرع', `${m.medicineName} متوفر الآن`);
-                }
-            });
-        }
-        isFirstMedLoad = false;
-    });
-
-    let isFirstAnnLoad = true;
-    onSnapshot(collection(db, 'announcements'), (snapshot) => {
-        if (!isFirstAnnLoad) {
-            snapshot.docChanges().forEach(change => {
-                if (change.type === 'added') {
-                    const ann = change.doc.data();
-                    if (ann.isActive) window.sendPushNotification('📢 إعلان جديد', ann.text);
-                }
-            });
-        }
-        isFirstAnnLoad = false;
-    });
 </script>
 </body>
 </html>
