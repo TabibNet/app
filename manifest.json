@@ -2,7 +2,7 @@
   "name": "دليل طبي | مشافي، عيادات، أطباء، صيدليات",
   "short_name": "دليل الطبي",
   "description": "دليل طبي شامل في سوريا ريف دمشق. ابحث عن أقرب مشفى، عيادة، طبيب، صيدلية، أو مخبر.",
-  "start_url": "/",
+    "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#073D2E",
   "theme_color": "#0E7C5F",
