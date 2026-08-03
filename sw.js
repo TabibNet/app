@@ -1,11 +1,10 @@
-const CACHE_NAME = 'raheba-med-v5'; // تم تغيير الإصدار لمسح أي ذاكرة قديمة
+const CACHE_NAME = 'raheba-med-v7'; // تم تغيير الرقم إلى v7 لإجبار الهاتف على مسح كل الصفحات القديمة
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json'
 ];
 
-// تثبيت النسخة الجديدة وحفظ الملفات الأساسية
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).catch(err => console.log('Cache error:', err))
@@ -13,30 +12,23 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// تفعيل النسخة الجديدة ومسح الكاش القديم
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
+        cacheNames.map((cacheName) => caches.delete(cacheName)) // مسح أي ذاكرة قديمة مهما كان اسمها
       );
     })
   );
   self.clients.claim();
 });
 
-// استراتيجية التعامل مع الطلبات
 self.addEventListener('fetch', (event) => {
-  // تجاهل الطلبات غير GET (مثل إرسال البيانات لفايربيس)
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
 
-  // تجاهل الروابط الخارجية (فايربيس، جوجل، الصور الخارجية)
+  // تجاهل الروابط الخارجية (فايربيس، جوجل، الصور)
   if (url.origin !== location.origin) {
     return;
   }
@@ -46,7 +38,6 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
-          // إذا وجدنا الإنترنت، احفظ الصفحة الجديدة واعرضها
           if (networkResponse && networkResponse.status === 200) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -56,14 +47,16 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          // إذا انقطع الإنترنت، ابحث عن index.html في الذاكرة واعرضها (هنا يكمن الحل!)
-          return caches.match('./index.html').then((cached) => cached || caches.match('./'));
+          // عند انقطاع الإنترنت، ابحث عن الصفحة المحفوظة
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match('./index.html');
+          });
         })
     );
     return;
   }
 
-  // 2. لباقي الملفات (CSS, JS, Images): الشبكة أولاً ثم الكاش
+  // 2. لباقي الملفات (CSS, JS, Images)
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
@@ -76,13 +69,11 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(() => {
-        // إذا انقطع الإنترنت، اعرض الملفات المحفوظة (CSS/JS)
         return caches.match(event.request);
       })
   );
 });
 
-// الاستماع لرسالة تحديث الصفحة
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
