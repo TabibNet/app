@@ -2668,10 +2668,7 @@ window.undoRespond = () => {
         if (docData && docData.type === 'doctor') renderDoctorDashboard(docData); 
     } 
 });       
-            });       
-
-// === استغاثات الدم ===
-onSnapshot(collection(db, 'blood_requests'), (snapshot) => { 
+    
     bloodRequests = []; 
     const twentyHoursAgo = Date.now() - (20 * 60 * 60 * 1000); // 20 ساعة بالميلي ثانية
     snapshot.forEach(doc => { 
