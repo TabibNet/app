@@ -667,6 +667,8 @@
     transform: scale(1.1);
     visibility: hidden;
 }
+            .pulse-danger { animation: pulse-danger 1.5s infinite; }
+        @keyframes pulse-danger { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
 </style>
         <!-- شريط الإعلانات العلوي -->
     <div id="topAnnouncementBar" class="hidden fixed top-0 right-0 left-0 z-[60] bg-gradient-to-l from-[#052E22] via-[#0E7C5F] to-[#052E22] text-white text-center py-2 px-12 text-xs sm:text-sm font-semibold shadow-md flex items-center justify-center gap-3 border-b border-[var(--gold)]/40">
@@ -727,6 +729,10 @@
                             <div onclick="openSeasonalDiseases()" class="tools-dropdown-item">
                                 <i style="background: #8B5CF6;"><i class="fas fa-virus-covid"></i></i>
                                 <div><div class="text-sm font-bold text-gray-800">أمراض الرحيبة الموسمية</div><div class="text-xs text-gray-500">دليل الوقاية المحلي</div></div>
+                            </div>
+                                                        <div onclick="openInteractiveRadar()" class="tools-dropdown-item">
+                                <i style="background: #4F46E5;"><i class="fas fa-satellite-dish"></i></i>
+                                <div><div class="text-sm font-bold text-gray-800">رادار الأمراض الحي (تفاعلي)</div><div class="text-xs text-gray-500">تنبيهات وتقارير مجتمعية</div></div>
                             </div>
                             <div onclick="openPregnancyCalc()" class="tools-dropdown-item">
                                 <i style="background: #EC4899;"><i class="fas fa-baby"></i></i>
@@ -889,6 +895,7 @@
                 <button onclick="toggleMobileMenu(); openAskDoctor()" class="text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-comments w-5" style="color:#0EA5E9"></i> اسأل طبيب </button>
                 <button onclick="toggleMobileMenu(); openBurnCalculator()" class="text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-fire-extinguisher w-5" style="color:#F97316"></i> مُسعف الحروق الذكي</button>
                 <button onclick="toggleMobileMenu(); openSeasonalDiseases()" class="text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-virus-covid w-5" style="color:#8B5CF6"></i> أمراض الرحيبة الموسمية</button>
+                <button onclick="toggleMobileMenu(); openInteractiveRadar()" class="text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-satellite-dish w-5" style="color:#4F46E5"></i> رادار الأمراض الحي (تفاعلي)</button>
                 <button onclick="toggleMobileMenu(); openPregnancyCalc()" class="text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-baby w-5" style="color:#EC4899"></i> حاسبة الحمل والولادة</button>
                 <button onclick="toggleMobileMenu(); openDoseCalc()" class="text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-syringe w-5" style="color:#2563EB"></i> حاسبة جرعات الأطفال</button>
                 <button onclick="toggleMobileMenu(); openVaccineScheduler()" class="text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-syringe w-5" style="color:#F97316"></i> جدول لقاحات الطفل</button>
@@ -2249,7 +2256,133 @@ let currentFollowupBookingId = null;
             } else { showToast("لم يتم العثور على ملف بهذا الرمز."); }
         } catch (e) { showToast("خطأ في قراءة الملف."); }
     }
+    // === Interactive Disease Radar (Live Community Reports) ===
+    const trackableDiseases = [
+        { id: 'flu', name: 'الإنفلونزا ونزلات البرد', icon: 'fa-virus', color: '#3B82F6', prevention: 'غسل اليدين، تجنب الزحام، شرب السوائل الدافئة، أخذ لقاح الإنفلونزا.' },
+        { id: 'covid', name: 'الأعراض التنفسية الحادة (كوفيد)', icon: 'fa-virus-covid', color: '#8B5CF6', prevention: 'ارتداء الكمامة، التهوية الجيدة، إجراء الفحص عند ظهور الأعراض.' },
+        { id: 'gi', name: 'النزلات المعوية والتسمم', icon: 'fa-temperature-high', color: '#F59E0B', prevention: 'تجنب الطعام المكشوف، الاهتمام بنظافة المياه، غسل الخضار جيداً.' },
+        { id: 'allergy', name: 'حساسية الصدر والربو', icon: 'fa-wind', color: '#10B981', prevention: 'إغلاق النوافذ في الأيام المغبرة، استخدام البخاخات الوقائية.' },
+        { id: 'conjunctivitis', name: 'الرمد الصيفي (العين الحمراء)', icon: 'fa-eye', color: '#DC2626', prevention: 'عدم فرك العينين، استخدام المناشف الورقية، غسل اليدين.' },
+        { id: 'skin', name: 'الأمراض الجلدية', icon: 'fa-allergies', color: '#D97706', prevention: 'استخدام الناموسيات، رش المبيدات، عدم مشاركة الملابس.' },
+        { id: 'fever', name: 'الحرارة مجهولة المصدر', icon: 'fa-thermometer', color: '#EF4444', prevention: 'شرب السوائل، الراحة، عمل فحوصات دم إذا استمرت الحرارة.' }
+    ];
 
+    window.openInteractiveRadar = () => {
+        openCtrlPanel('رادار الأمراض الحي (تفاعلي)', `
+            <div class="flex flex-col gap-5">
+                <div id="radarCommunityStatus" class="rounded-xl p-4 text-sm flex items-center gap-3 transition-all duration-500">
+                    <i class="fas fa-heart-pulse text-xl animate-pulse"></i>
+                    <div><b>الوضع الصحي المجتمعي:</b> <span id="radarStatusText">جاري حساب الوضع...</span></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                    <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-circle-exclamation text-red-600"></i> أبلغ عن حالتك</h4>
+                    <select id="radarDiseaseSelect" class="ctrl-input text-sm mb-4">
+                        ${trackableDiseases.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
+                    </select>
+                    <button onclick="submitDiseaseReport()" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: #DC2626;">
+                        <i class="fas fa-bullhorn ml-2"></i> إرسال البلاغ
+                    </button>
+                    <p class="text-[10px] text-gray-400 mt-2 text-center">يتم تحديث الرادار بناءً على بلاغات آخر 7 أيام. مرة واحدة يومياً.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                    <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-chart-line text-indigo-600"></i> خريطة الأمراض النشطة</h4>
+                    <div id="radarLiveStats" class="flex flex-col gap-4"><p class="text-center text-gray-400 text-sm py-4">جاري التحميل...</p></div>
+                </div>
+            </div>
+        `, '#4F46E5');
+
+        if (window.unsubscribeRadar) window.unsubscribeRadar();
+        window.unsubscribeRadar = onSnapshot(collection(db, 'disease_reports'), (snapshot) => {
+            let allReports = [];
+            snapshot.forEach(doc => allReports.push({ id: doc.id, ...doc.data() }));
+            processRadarData(allReports);
+        });
+    };
+
+    window.submitDiseaseReport = async () => {
+        const lastReport = localStorage.getItem('lastDiseaseReportDate');
+        const today = new Date().toDateString();
+        if (lastReport === today) { showToast('لقد قمت بالإبلاغ اليوم بالفعل!'); return; }
+        
+        const diseaseId = document.getElementById('radarDiseaseSelect').value;
+        try {
+            await addDoc(collection(db, 'disease_reports'), { diseaseId, timestamp: new Date().toISOString() });
+            localStorage.setItem('lastDiseaseReportDate', today);
+            showToast('تم استلام بلاغك. شكراً لك!');
+        } catch (err) { showToast('خطأ في الإرسال'); }
+    };
+
+    function processRadarData(reports) {
+        const now = Date.now();
+        const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+        const threeDaysAgo = now - (3 * 24 * 60 * 60 * 1000);
+        let counts = {}, recentCounts = {}, totalReports = 0;
+        let validReports = reports.filter(r => {
+            const time = r.timestamp?.seconds ? r.timestamp.seconds * 1000 : new Date(r.timestamp).getTime();
+            return time > sevenDaysAgo;
+        });
+        totalReports = validReports.length;
+        validReports.forEach(r => {
+            counts[r.diseaseId] = (counts[r.diseaseId] || 0) + 1;
+            const time = r.timestamp?.seconds ? r.timestamp.seconds * 1000 : new Date(r.timestamp).getTime();
+            if (time > threeDaysAgo) recentCounts[r.diseaseId] = (recentCounts[r.diseaseId] || 0) + 1;
+        });
+        renderRadarStats(counts, recentCounts, totalReports);
+        updateCommunityStatus(totalReports, recentCounts);
+    }
+
+    function updateCommunityStatus(total, recentCounts) {
+        const statusBox = document.getElementById('radarCommunityStatus');
+        const statusText = document.getElementById('radarStatusText');
+        let maxRecent = 0;
+        for (let key in recentCounts) { if (recentCounts[key] > maxRecent) maxRecent = recentCounts[key]; }
+        if (maxRecent >= 5) {
+            statusBox.style.background = '#FEE2E2'; statusBox.style.color = '#991B1B';
+            statusText.innerText = 'إنذار مرتفع (انتشار نشط لمرض ما، يرجى الحذر)';
+        } else if (total > 0) {
+            statusBox.style.background = '#FEF3C7'; statusBox.style.color = '#92400E';
+            statusText.innerText = 'حالة ترقب (توجد حالات محدودة)';
+        } else {
+            statusBox.style.background = '#D1FAE5'; statusBox.style.color = '#065F46';
+            statusText.innerText = 'مستقر (لا توجد بلاغات في آخر 7 أيام)';
+        }
+    }
+
+    function renderRadarStats(counts, recentCounts, totalReports) {
+        const container = document.getElementById('radarLiveStats');
+        if (totalReports === 0) {
+            container.innerHTML = '<p class="text-center text-green-600 text-sm py-4 flex items-center justify-center gap-2"><i class="fas fa-shield-check"></i> الوضع الصحي مستقر.</p>';
+            return;
+        }
+        const sortedDiseases = [...trackableDiseases].sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0));
+        container.innerHTML = sortedDiseases.map(d => {
+            const count = counts[d.id] || 0;
+            if (count === 0) return ''; 
+            const percentage = totalReports > 0 ? Math.round((count / totalReports) * 100) : 0;
+            const recent = recentCounts[d.id] || 0;
+            let isSpreading = recent >= 5;
+            let riskLevel = "منخفض", riskColor = "#10B981", riskBg = "#D1FAE5";
+            if (isSpreading) { riskLevel = "منتشر"; riskColor = "#DC2626"; riskBg = "#FEE2E2"; }
+            else if (percentage > 30) { riskLevel = "مرتفع"; riskColor = "#F59E0B"; riskBg = "#FEF3C7"; }
+            const old = count - recent;
+            let trendIcon = "fa-arrows-up-down", trendText = "استقرار", trendColor = "#64748b";
+            if (recent > old) { trendIcon = "fa-arrow-trend-up"; trendText = "ارتفاع"; trendColor = "#DC2626"; }
+            else if (recent < old) { trendIcon = "fa-arrow-trend-down"; trendText = "انخفاض"; trendColor = "#10B981"; }
+            return `
+                <div class="border-2 rounded-xl p-4 transition-all duration-500 ${isSpreading ? 'pulse-danger' : ''}" style="border-color: ${riskColor}40; background: ${riskBg}10;">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2"><i class="fas ${d.icon} text-lg" style="color: ${d.color};"></i><span class="font-bold text-sm">${d.name}</span></div>
+                        <span class="text-xs font-black px-2 py-1 rounded" style="color: ${riskColor}; background: ${riskBg};">خطر ${riskLevel}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2"><div class="h-2.5 rounded-full transition-all duration-500" style="width: ${percentage}%; background: ${riskColor};"></div></div>
+                    <div class="flex justify-between items-center text-[10px] text-gray-500 mb-3">
+                        <span>${count} بلاغ (آخر 7 أيام)</span><span class="flex items-center gap-1 font-bold" style="color: ${trendColor};"><i class="fas ${trendIcon}"></i> ${trendText}</span>
+                    </div>
+                    <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg flex items-start gap-2"><i class="fas fa-shield-virus mt-0.5" style="color: ${riskColor};"></i><span>${d.prevention}</span></div>
+                </div>
+            `;
+        }).join('');
+    }
     // === Core App Functions ===
     window.openLightbox = (src) => { const lightbox = document.getElementById('lightbox'); lightbox.querySelector('img').src = src.includes('picsum.photos') ? src.replace('/400/250', '/1200/800') : src; lightbox.classList.add('active'); lockScroll(); }
     
