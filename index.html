@@ -2399,7 +2399,7 @@ let currentFollowupBookingId = null;
                     
                     <div class="flex justify-between text-[11px] text-gray-500 mb-3 font-semibold">
                         <span>⚡ حالة جديدة اليوم: ${newToday}</span>
-                        <span>⏳ حالات مستمرة: ${ongoing}</span>
+                        <span>⏳ حالات سابقة (منذ أيام): ${ongoing}</span>
                     </div>
 
                     <div class="w-full bg-gray-100 rounded-full h-2.5">
@@ -2502,17 +2502,18 @@ let currentFollowupBookingId = null;
             }, 300);
         } catch (err) { showToast('حدث خطأ'); }
     };
-    // دالة تحويل المستخدم لشريط بحث الأطباء
+        // دالة تحويل المستخدم لشريط بحث الأطباء
     window.redirectToDoctorsSearch = () => {
-        closeModal(); // 1. إغلاق النافذة المنبثقة
+        closeModal(); // 1. إغلاق نافذة الشكر المنبثقة
+        closeCtrlPanel(); // 2. إغلاق نافذة الرادار بالكامل
         
-        // 2. التمرير الناعم إلى قسم الأطباء
+        // 3. التمرير الناعم إلى قسم الأطباء
         const doctorsSection = document.getElementById('doctors');
         if (doctorsSection) {
             doctorsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         
-        // 3. تحديد شريط البحث وإبرازه بعد ثانية (ليكتمل التمرير)
+        // 4. تحديد شريط البحث وإبرازه بعد ثانية (ليكتمل التمرير)
         setTimeout(() => {
             const searchInput = document.getElementById('inlineSearch') || document.getElementById('heroSearch');
             if (searchInput) {
