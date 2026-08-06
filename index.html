@@ -2538,6 +2538,58 @@ let currentFollowupBookingId = null;
     window.resetRadarVotes = async () => {
         try { await setDoc(doc(db, 'radar_settings', 'config'), { lastReset: Date.now() }, { merge: true }); showToast("تم تصفير العدادات بنجاح"); } catch (e) {}
     };
+        // 1. دالة الاستجابة (لا ترسل للسيرفر إلا بعد 6 ثوانٍ)
+    window.respondToBloodRequest = (reqId, patientName, phone) => {
+        const toast = document.getElementById('toast');
+        
+        // إظهار رسالة التراجع فوراً لمدة 6 ثوانٍ
+        toast.innerHTML = `<div class="flex flex-col items-center gap-3">
+            <div class="text-sm">سيتم تسجيل استجابتك خلال 6 ثوانٍ...</div>
+            <button onclick="undoRespond()" style="background:#ef4444; color:white; padding:6px 16px; border-radius:8px; font-size:12px; border:none; cursor:pointer; font-family: inherit; font-weight:bold;">تراجع الآن</button>
+        </div>`;
+        toast.classList.add('show');
+
+        // بدء العد التنازلي 6 ثوانٍ
+        window.radarUndoTimeout = setTimeout(async () => {
+            // إخفاء رسالة التراجع
+            toast.classList.remove('show');
+            
+            try {
+                // إرسال البيانات للسيرفر (زيادة عدد المستجيبين بـ 1)
+                await updateDoc(doc(db, 'blood_requests', reqId), { 
+                    responsesCount: increment(1) // استخدام increment من Firebase
+                });
+                
+                // إظهار رسالة الشكر مع زر الاتصال أسفلها
+                toast.innerHTML = `<div class="flex flex-col items-center gap-3">
+                    <div class="text-sm font-bold">بارك الله فيك وجزاك كل خير! 🌹<br>تم تسجيل استجابتك بنجاح.</div>
+                    <a href="tel:${phone}" onclick="hideToast()" style="background:#2563EB; color:white; padding:8px 20px; border-radius:8px; font-size:14px; text-decoration:none; font-weight:bold; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-phone-volume"></i> اتصال بالمريض
+                    </a>
+                </div>`;
+                toast.classList.add('show');
+                
+                // إخفاء رسالة الشكر بعد 10 ثوانٍ
+                setTimeout(() => { toast.classList.remove('show'); }, 10000);
+
+            } catch (err) { 
+                showToast('حدث خطأ أثناء التسجيل'); 
+            }
+        }, 6000);
+    };
+
+    // 2. دالة التراجع (تلغي العد التنازلي ولا ترسل شيئاً للسيرفر)
+    window.undoRespond = () => {
+        if (window.radarUndoTimeout) clearTimeout(window.radarUndoTimeout);
+        const toast = document.getElementById('toast');
+        toast.classList.remove('show');
+        setTimeout(() => showToast('تم التراجع بنجاح. لم يتم إرسال أي بيانات للسيرفر.'), 300);
+    };
+
+    // 3. دالة مساعدة لإخفاء الرسالة عند الضغط على زر الاتصال
+    window.hideToast = () => {
+        document.getElementById('toast').classList.remove('show');
+    };
     // === Core App Functions ===
     window.openLightbox = (src) => { const lightbox = document.getElementById('lightbox'); lightbox.querySelector('img').src = src.includes('picsum.photos') ? src.replace('/400/250', '/1200/800') : src; lightbox.classList.add('active'); lockScroll(); }
     
@@ -2614,9 +2666,18 @@ let currentFollowupBookingId = null;
         const docData = allData.find(d => d.name === docName); 
         if (docData && docData.type === 'doctor') renderDoctorDashboard(docData); 
     } 
-});        
-                onSnapshot(query(collection(db, 'blood_requests'), where('status', '==', 'active')), (snapshot) => {
-            bloodRequests = []; snapshot.forEach(doc => { bloodRequests.push({ id: doc.id, ...doc.data() }); });
+});       
+                        bloodRequests = []; 
+            const twentyHoursAgo = Date.now() - (20 * 60 * 60 * 1000); // 20 ساعة بالميلي ثانية
+            snapshot.forEach(doc => { 
+                const data = doc.data();
+                const createdTime = data.createdAt?.seconds ? data.createdAt.seconds * 1000 : new Date(data.createdAt).getTime();
+                // إظهار الطلب فقط إذا كان نشطاً ولم يمضِ عليه 20 ساعة
+                if (createdTime > twentyHoursAgo) {
+                    bloodRequests.push({ id: doc.id, ...data });
+                }
+            });
+
             const section = document.getElementById('homeBloodAlertsSection');
             const container = document.getElementById('homeBloodAlerts');
             if (bloodRequests.length === 0) {
@@ -2625,20 +2686,33 @@ let currentFollowupBookingId = null;
             } else {
                 section.classList.remove('hidden');
                 container.innerHTML = bloodRequests.map(req => {
-                return `<div class="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border border-red-50 dark:border-red-900/50">
-                    <div class="flex items-center gap-2">
-                        <div class="w-9 h-9 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 border border-red-100 dark:border-red-800">
-                            <span class="text-sm font-black text-red-600 dark:text-red-400">${req.bloodType}</span>
+                    let statusBox = '';
+                    let cardBorder = 'border-red-50';
+                    
+                    // إذا كان هناك مستجيبين، نغير لون البطاقة ونظهر العداد
+                    if (req.responsesCount > 0) {
+                        cardBorder = 'border-green-200 bg-green-50/30';
+                        statusBox = `<div class="bg-green-100 text-green-800 text-[10px] font-bold p-1.5 rounded-lg flex items-center justify-center gap-1 mb-1.5"><i class="fas fa-heart"></i> مستجيب لها (${req.responsesCount}) - نحتاج المزيد</div>`;
+                    }
+
+                    return `<div class="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border ${cardBorder} dark:border-red-900/50">
+                        ${statusBox}
+                        <div class="flex items-center gap-2">
+                            <div class="w-9 h-9 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 border border-red-100 dark:border-red-800">
+                                <span class="text-sm font-black text-red-600 dark:text-red-400">${req.bloodType}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-gray-800 dark:text-white text-[11px] break-words">${req.patientName}</div>
+                                <div class="text-[9px] text-gray-500 dark:text-gray-400 break-words"><i class="fas fa-hospital text-red-400"></i> ${req.hospital}</div>
+                            </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-bold text-gray-800 dark:text-white text-[11px] break-words">${req.patientName}</div>
-                            <div class="text-[9px] text-gray-500 dark:text-gray-400 break-words"><i class="fas fa-hospital text-red-400"></i> ${req.hospital}</div>
+                        ${req.notes ? `<div class="text-[9px] text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 p-1 rounded break-words text-center"><i class="fas fa-notes-medical"></i> ${req.notes}</div>` : ''}
+                        <div class="flex gap-1.5 mt-1">
+                            <a href="tel:${req.phone}" class="flex-1 h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-blue-600 transition-colors">اتصال</a>
+                            <button onclick="respondToBloodRequest('${req.id}', '${req.patientName}', '${req.phone}')" class="flex-1 h-7 rounded-lg bg-green-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-green-600 transition-colors">استجبت 🤍</button>
                         </div>
-                    </div>
-                    ${req.notes ? `<div class="text-[9px] text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 p-1 rounded break-words text-center"><i class="fas fa-notes-medical"></i> ${req.notes}</div>` : ''}
-                    <a href="tel:${req.phone}" class="w-full h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center text-[10px]">اتصال</a>
-                </div>`;
-            }).join('');
+                    </div>`;
+                }).join('');
             }
             checkAlertsWrapperVisibility();
             const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
@@ -3221,7 +3295,14 @@ let currentFollowupBookingId = null;
     <button onclick="setStatus('${item.id}', null)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isOpen == null ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button>
 </div>
 ` : ''}<button onclick="editFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue/50"><i class="fas fa-edit"></i></button><button onclick="deleteFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-50"><i class="fas fa-trash"></i></button></div></div>`).join(''); 
-        let bloodHtml = bloodRequests.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد استغاثات حالياً.</p>' : bloodRequests.map(b => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><span class="blood-type-badge text-sm py-1 px-3">${b.bloodType}</span><div><div class="text-sm font-semibold">${b.patientName}</div><div class="text-xs text-gray-500">${b.hospital}</div></div></div><button onclick="resolveBloodRequest('${b.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">إنهاء الطلب</button></div>`).join('');
+                // فلترة الطلبات التي مضى عليها أكثر من 20 ساعة
+        const twentyHoursAgo = Date.now() - (20 * 60 * 60 * 1000); 
+        const activeBloodRequests = bloodRequests.filter(b => {
+            const createdTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt).getTime();
+            return createdTime > twentyHoursAgo; // أظهرها فقط إذا مضى عليها أقل من 20 ساعة
+        });
+
+        let bloodHtml = activeBloodRequests.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد استغاثات حالياً.</p>' : activeBloodRequests.map(b => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><span class="blood-type-badge text-sm py-1 px-3">${b.bloodType}</span><div><div class="text-sm font-semibold">${b.patientName} ${b.responsesCount > 0 ? '<span class="text-xs text-green-500">(مستجيب: '+b.responsesCount+')</span>' : ''}</div><div class="text-xs text-gray-500">${b.hospital}</div></div></div><button onclick="resolveBloodRequest('${b.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">إنهاء الطلب</button></div>`).join('');
         let medDonHtml = medicineDonations.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد أدوية مُتبرع بها حالياً.</p>' : medicineDonations.map(m => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><i class="fas fa-pills text-green-600"></i><div><div class="text-sm font-semibold">${m.medicineName} (${m.quantity})</div><div class="text-xs text-gray-500">ينتهي: ${m.expiryDate} | المتبرع: ${m.donorName}</div></div></div><button onclick="resolveMedicineDonation('${m.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">حذف/إنهاء</button></div>`).join('');
                 openCtrlPanel('لوحة الإدارة', `<div class="flex flex-col gap-6"> ${announcementsHtml} ${homeAdsHtml} ${radarAdminHtml} <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-tint text-red-600"></i> إدارة استغاثات الدم (${bloodRequests.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${bloodHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-hand-holding-medical text-green-600"></i> إدارة الأدوية الفائضة (${medicineDonations.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${medDonHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle ml-2" style="color: var(--accent)"></i> <span id="formTitle">إضافة منشأة</span></h4><form onsubmit="saveFacility(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="hidden" id="edit_id"><select id="new_type" class="ctrl-input text-sm" required onchange="updateAdminFormFields(this.value)"><option value="clinic">عيادة</option><option value="hospital">مشفى</option><option value="center">مركز</option><option value="lab">مخبر</option><option value="doctor">طبيب</option><option value="pharmacy">صيدلية</option></select><input type="text" id="new_name" class="ctrl-input text-sm" placeholder="الاسم" required><input type="text" id="new_specialty" class="ctrl-input text-sm" placeholder="التخصص الأساسي" required><input type="text" id="new_address" class="ctrl-input text-sm" placeholder="العنوان / الموقع" required><input type="text" id="new_phone" class="ctrl-input text-sm" placeholder="رقم الهاتف (اختياري)"><input type="text" id="new_hours" class="ctrl-input text-sm" placeholder="أوقات العمل"><input type="text" id="new_image_url" class="ctrl-input text-sm" placeholder="رابط الصورة (URL)"><textarea id="new_desc" class="ctrl-input text-sm col-span-2" placeholder="وصف عام" rows="2" required></textarea><div id="adminExtraFields" class="contents"></div><button type="submit" class="col-span-1 sm:col-span-2 py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--accent)"><i class="fas fa-save ml-1"></i> حفظ</button></form></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list ml-2"></i> المنشآت (${allData.length})</h4><div class="flex flex-col gap-2 max-h-96 overflow-y-auto">${listHtml}</div></div> <button onclick="seedDatabase()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: var(--gold); color: var(--gold)"><i class="fas fa-database ml-2"></i> ترحيل البيانات الافتراضية</button> <button onclick="seedMedicalTips()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: #EC4899; color: #EC4899"><i class="fas fa-lightbulb ml-2"></i> ترحيل 30 نصيحة طبية للفايربايس</button> </div>`, '#073D2E'); 
 
