@@ -749,18 +749,46 @@
     <nav class="navbar fixed top-0 right-0 left-0 z-50 bg-transparent" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 sm:h-20">
+<style>
+    .stat-pill-pro {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1); padding: 6px 14px;
+        border-radius: 12px; font-size: 11px; transition: all 0.4s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .stat-pill-pro:hover {
+        background: rgba(255, 255, 255, 0.15); border-color: rgba(196, 150, 44, 0.5);
+        transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    .radar-dot-pro {
+        width: 7px; height: 7px; background-color: #10B981; border-radius: 50%;
+        position: relative; box-shadow: 0 0 8px #10B981; flex-shrink: 0;
+    }
+    .radar-dot-pro::before {
+        content: ''; position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%); width: 100%; height: 100%;
+        border-radius: 50%; border: 2px solid #10B981;
+        animation: radar-pulse-pro 2s ease-out infinite;
+    }
+    @keyframes radar-pulse-pro {
+        0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+        100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+    }
+</style>
+
 <a href="#home" class="flex flex-col gap-1.5 text-white no-underline">
-    <div class="stat-pill">
-        <i class="fas fa-users stat-icon"></i>
-        <span class="stat-label">الزوار:</span>
-        <span id="visitorCount" class="stat-number">0</span>
-        <span class="live-indicator"></span>
+    <div class="stat-pill-pro">
+        <i class="fas fa-users" style="color: var(--gold); font-size: 12px;"></i>
+        <span style="color: rgba(255, 255, 255, 0.7); font-weight: 500;">الزوار:</span>
+        <span id="visitorCount" style="color: #fff; font-weight: 800;">0</span>
+        <span class="radar-dot-pro"></span>
     </div>
-    <div class="stat-pill">
-        <i class="fas fa-eye stat-icon"></i>
-        <span class="stat-label">المشاهدات:</span>
-        <span id="viewsCount" class="stat-number">0</span>
-        <span class="live-indicator"></span>
+    <div class="stat-pill-pro">
+        <i class="fas fa-eye" style="color: var(--gold); font-size: 12px;"></i>
+        <span style="color: rgba(255, 255, 255, 0.7); font-weight: 500;">المشاهدات:</span>
+        <span id="viewsCount" style="color: #fff; font-weight: 800;">0</span>
+        <span class="radar-dot-pro"></span>
     </div>
 </a>
                 <div class="hidden lg:flex items-center gap-6">
