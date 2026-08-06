@@ -2335,7 +2335,7 @@ let currentFollowupBookingId = null;
         renderRadarCards();
     };
 
-        function renderRadarCards() {
+            function renderRadarCards() {
         const container = document.getElementById('radarCardsContainer');
         if (!container) return;
         const diseases = radarDiseasesData[currentRadarTab];
@@ -2379,36 +2379,36 @@ let currentFollowupBookingId = null;
             let barWidth = Math.min(100, (count / 50) * 100); 
 
             return `
-                <div class="bg-white p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg cursor-pointer" style="border-color: var(--border);" onclick="toggleRadarTip('${d.id}')">
+                <div class="p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg cursor-pointer" style="background: var(--card); border-color: var(--border);" onclick="toggleRadarTip('${d.id}')">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: ${d.color}20; color: ${d.color};">
                                 <i class="fas ${d.icon}"></i>
                             </div>
                             <div>
-                                <h4 class="font-bold text-base text-gray-800">${d.name}</h4>
-                                <p class="text-[11px] text-gray-500">${d.symptoms}</p>
+                                <h4 class="font-bold text-base" style="color: var(--fg);">${d.name}</h4>
+                                <p class="text-[11px]" style="color: var(--muted);">${d.symptoms}</p>
                             </div>
                         </div>
                         <span class="text-[10px] font-black px-2 py-1 rounded-lg" style="color: ${badgeColor}; background: ${badgeBg};">${badgeText}</span>
                     </div>
                     
                     <div class="flex justify-between items-center text-xs mb-2">
-                        <span class="font-bold text-gray-700">${count} حالة مسجلة</span>
+                        <span class="font-bold" style="color: var(--fg-light);">${count} حالة مسجلة</span>
                     </div>
                     
-                    <div class="flex justify-between text-[11px] text-gray-500 mb-3 font-semibold">
+                    <div class="flex justify-between text-[11px] mb-3 font-semibold" style="color: var(--muted);">
                         <span>⚡ حالة جديدة اليوم: ${newToday}</span>
                         <span>⏳ حالات سابقة (منذ أيام): ${ongoing}</span>
                     </div>
 
-                    <div class="w-full bg-gray-100 rounded-full h-2.5">
+                    <div class="w-full rounded-full h-2.5" style="background: var(--bg-deep);">
                         <div class="h-2.5 rounded-full transition-all duration-700" style="width: ${barWidth}%; background: ${barColor};"></div>
                     </div>
 
-                    <div id="radarTip_${d.id}" class="hidden mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-gray-700 flex items-start gap-2">
-                        <i class="fas fa-lightbulb text-blue-500 mt-0.5"></i>
-                        <div><b class="text-blue-700">نصيحة الرادار:</b> ${d.advice}</div>
+                    <div id="radarTip_${d.id}" class="hidden mt-4 p-3 rounded-xl text-xs flex items-start gap-2" style="background: rgba(37, 99, 235, 0.1); color: var(--fg-light); border: 1px solid rgba(37, 99, 235, 0.2);">
+                        <i class="fas fa-lightbulb mt-0.5" style="color: #2563EB;"></i>
+                        <div><b style="color: #2563EB;">نصيحة الرادار:</b> ${d.advice}</div>
                     </div>
                 </div>
             `;
