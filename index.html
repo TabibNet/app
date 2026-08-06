@@ -672,18 +672,71 @@
         .pulse-register { animation: pulse-btn 2s infinite; }
         @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); } 70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
 
-    /* === حركات إحصائيات الزوار والمشاهدات === */
-/* حركة طفو وتوهج للأيقونات */
-.live-stat-icon {
-    animation: float-icon 2s ease-in-out infinite, glow-gold 2s ease-in-out infinite alternate;
+    /* === شارة الإحصائيات الزجاجية الاحترافية === */
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 11px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
-@keyframes float-icon {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); } /* تم زيادة الارتفاع لتكون الحركة واضحة */
+.stat-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(196, 150, 44, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
-@keyframes glow-gold {
-    0% { filter: drop-shadow(0 0 2px rgba(196, 150, 44, 0.5)); }
-    100% { filter: drop-shadow(0 0 10px rgba(196, 150, 44, 1)); } /* توهج ذهبي قوي جداً */
+.stat-icon {
+    color: var(--gold);
+    font-size: 12px;
+    transition: transform 0.4s ease;
+}
+.stat-pill:hover .stat-icon {
+    transform: scale(1.2) rotate(-5deg);
+}
+.stat-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+.stat-number {
+    color: #fff;
+    font-weight: 800;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    min-width: 12px;
+    text-align: center;
+}
+
+/* نقطة مباشرة (Live Dot) بتأثير الرادار */
+.live-indicator {
+    width: 7px;
+    height: 7px;
+    background-color: #10B981;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 8px #10B981;
+}
+.live-indicator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid #10B981;
+    animation: radar-pulse 2s ease-out infinite;
+}
+@keyframes radar-pulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
 }
 </style>
         <!-- شريط الإعلانات العلوي -->
@@ -696,20 +749,20 @@
     <nav class="navbar fixed top-0 right-0 left-0 z-50 bg-transparent" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 sm:h-20">
-                       <a href="#home" class="flex flex-col gap-1 text-white no-underline">
-    <div class="flex items-center gap-1.5 text-[10px] bg-white/5 border border-white/10 rounded-full px-2.5 py-1 w-fit">
-        <i class="fas fa-users live-stat-icon" style="color: var(--gold)"></i>
-        <span class="text-white/70">الزوار:</span>
-        <span id="visitorCount" class="font-bold text-white">0</span>
-        <span class="live-pulse-dot"></span>
+<a href="#home" class="flex flex-col gap-1.5 text-white no-underline">
+    <div class="stat-pill">
+        <i class="fas fa-users stat-icon"></i>
+        <span class="stat-label">الزوار:</span>
+        <span id="visitorCount" class="stat-number">0</span>
+        <span class="live-indicator"></span>
     </div>
-    <div class="flex items-center gap-1.5 text-[10px] bg-white/5 border border-white/10 rounded-full px-2.5 py-1 w-fit">
-        <i class="fas fa-eye live-stat-icon" style="color: var(--gold)"></i>
-        <span class="text-white/70">المشاهدات:</span>
-        <span id="viewsCount" class="font-bold text-white">0</span>
-        <span class="live-pulse-dot"></span>
+    <div class="stat-pill">
+        <i class="fas fa-eye stat-icon"></i>
+        <span class="stat-label">المشاهدات:</span>
+        <span id="viewsCount" class="stat-number">0</span>
+        <span class="live-indicator"></span>
     </div>
-</a>     
+</a>
                 <div class="hidden lg:flex items-center gap-6">
                     <a href="#home" class="text-white/80 hover:text-white text-sm transition-colors no-underline">الرئيسية</a>
                     <a href="#hospitals" class="text-white/80 hover:text-white text-sm transition-colors no-underline">المشافي</a>
