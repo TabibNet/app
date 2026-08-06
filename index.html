@@ -2260,18 +2260,18 @@ let currentFollowupBookingId = null;
         } catch (e) { showToast("خطأ في قراءة الملف."); }
     }
             // === Raheba Health Radar (Firebase Connected - Pro Version) ===
-    const radarDiseasesData = {
+        const radarDiseasesData = {
         summer: [
-            { id: 'poisoning', name: 'تسمم ونزلة معوية', icon: 'fa-temperature-high', color: '#F59E0B', symptoms: 'ألم بطن، إسهال، استفراغ، أو مغص حاد' },
-            { id: 'summer_cold', name: 'رشح صيفي ووجع الحلق', icon: 'fa-virus', color: '#DC2626', symptoms: 'وجع حلق، احتقان، بحة صوت، وتكسير عظام' },
-            { id: 'sunstroke', name: 'ضربة شمس وصداع', icon: 'fa-sun', color: '#3B82F6', symptoms: 'وجع رأس، دوخة، لعيان نفس من الحر' },
-            { id: 'skin_allergy', name: 'حساسية وطفح جلدي', icon: 'fa-allergies', color: '#10B981', symptoms: 'حكة بالجلد، احمرار من الحر، وقرص حشرات' }
+            { id: 'poisoning', name: 'تسمم ونزلة معوية', icon: 'fa-temperature-high', color: '#F59E0B', symptoms: 'ألم بطن، إسهال، استفراغ، أو مغص حاد', advice: 'لوحظ تسجيل حالات تسمم مؤخراً، يرجى التأكد من غسل الخضار جيداً وعدم ترك الأطعمة خارج الثلاجة.' },
+            { id: 'summer_cold', name: 'رشح صيفي ووجع الحلق', icon: 'fa-virus', color: '#DC2626', symptoms: 'وجع حلق، احتقان، بحة صوت، وتكسير عظام', advice: 'الرشح الصيفي شائع بسبب المكيفات، اضبط حرارتها معتدلة وتجنب التعرض المباشر للهواء البارد.' },
+            { id: 'sunstroke', name: 'ضربة شمس وصداع', icon: 'fa-sun', color: '#3B82F6', symptoms: 'وجع رأس، دوخة، لعيان نفس من الحر', advice: 'اشرب كميات وفيرة من الماء، تجنب الخروج في أوقات الذروة، واستخدم واقي الشمس.' },
+            { id: 'skin_allergy', name: 'حساسية وطفح جلدي', icon: 'fa-allergies', color: '#10B981', symptoms: 'حكة بالجلد، احمرار من الحر، وقرص حشرات', advice: 'لتجنب حساسية الصيف، استخدم كريمات مرطبة وتجنب التعرض المباشر لأشعة الشمس الحارقة.' }
         ],
         winter: [
-            { id: 'flu', name: 'إنفلونزا ونزلة صدرية', icon: 'fa-virus-covid', color: '#DC2626', symptoms: 'سعال قحّة، حرارة، وسيلان أنف' },
-            { id: 'throat_ear', name: 'التهاب حلق وأذن', icon: 'fa-ear-listen', color: '#F59E0B', symptoms: 'ألم بالبلع، وجع أذن، والتهاب لوز' },
-            { id: 'joints', name: 'آلام مفاصل وروماتيزم', icon: 'fa-bone', color: '#3B82F6', symptoms: 'وجع ظهر، وتيبّس ركب ومفاصل مع البرد' },
-            { id: 'asthma', name: 'ضيق تنفس وحساسية', icon: 'fa-lungs', color: '#10B981', symptoms: 'ألم بالصدر وضيق في التنفس' }
+            { id: 'flu', name: 'إنفلونزا ونزلة صدرية', icon: 'fa-virus-covid', color: '#DC2626', symptoms: 'سعال قحّة، حرارة، وسيلان أنف', advice: 'للوقاية من الإنفلونزا، غسل اليدين ضروري، وتجنب الزحام، وخذ قسطاً من الراحة إذا شعرت بالتعب.' },
+            { id: 'throat_ear', name: 'التهاب حلق وأذن', icon: 'fa-ear-listen', color: '#F59E0B', symptoms: 'ألم بالبلع، وجع أذن، والتهاب لوز', advice: 'التهاب الحلق والأذن يزداد في البرد، اشرب سوائل دافئة واغلق النوافذ ليلاً.' },
+            { id: 'joints', name: 'آلام مفاصل وروماتيزم', icon: 'fa-bone', color: '#3B82F6', symptoms: 'وجع ظهر، وتيبّس ركب ومفاصل مع البرد', advice: 'لتحسين آلام المفاصل في الشتاء، حافظ على دفء جسمك وتجنب التيارات الهوائية الباردة.' },
+            { id: 'asthma', name: 'ضيق تنفس وحساسية', icon: 'fa-lungs', color: '#10B981', symptoms: 'ألم بالصدر وضيق في التنفس', advice: 'مرضى الربو يجب عليهم حمل البخاخ الوقائي وتجنب الغبار والدخان.' }
         ]
     };
     let currentRadarTab = 'summer';
@@ -2335,7 +2335,7 @@ let currentFollowupBookingId = null;
         renderRadarCards();
     };
 
-    function renderRadarCards() {
+        function renderRadarCards() {
         const container = document.getElementById('radarCardsContainer');
         if (!container) return;
         const diseases = radarDiseasesData[currentRadarTab];
@@ -2344,36 +2344,83 @@ let currentFollowupBookingId = null;
             return time > (radarSettings.lastReset || 0);
         });
         const seasonReports = validReports.filter(r => r.season === currentRadarTab);
-        const totalVotes = seasonReports.length;
-        let counts = {};
-        seasonReports.forEach(r => { counts[r.diseaseId] = (counts[r.diseaseId] || 0) + 1; });
+        
+        let counts = {}, newTodayCounts = {}, ongoingCounts = {};
+        
+        // تحديد بداية اليوم الحالي
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const todayTime = startOfToday.getTime();
+
+        seasonReports.forEach(r => {
+            const time = r.timestamp?.seconds ? r.timestamp.seconds * 1000 : new Date(r.timestamp).getTime();
+            counts[r.diseaseId] = (counts[r.diseaseId] || 0) + 1;
+            if (time >= todayTime) {
+                newTodayCounts[r.diseaseId] = (newTodayCounts[r.diseaseId] || 0) + 1;
+            } else {
+                ongoingCounts[r.diseaseId] = (ongoingCounts[r.diseaseId] || 0) + 1;
+            }
+        });
 
         container.innerHTML = diseases.map(d => {
             const count = counts[d.id] || 0;
-            const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+            const newToday = newTodayCounts[d.id] || 0;
+            const ongoing = ongoingCounts[d.id] || 0;
+            
+            // 1. نظام الشارات (الأرقام المطلقة)
+            let badgeText = "وضع طبيعي 🟢", badgeColor = "#10B981", badgeBg = "#D1FAE5", barColor = "#10B981";
+            if (count >= 21 && count <= 50) {
+                badgeText = "انتشار متوسط 🟡"; badgeColor = "#F59E0B"; badgeBg = "#FEF3C7"; barColor = "#F59E0B";
+            } else if (count > 50) {
+                badgeText = "تنبيه انتشار 🔴"; badgeColor = "#DC2626"; badgeBg = "#FEE2E2"; barColor = "#DC2626";
+            }
+
+            // عرض الشريط بناءً على الحد الأقصى التقديري (50 حالة كـ 100%)
+            let barWidth = Math.min(100, (count / 50) * 100); 
+
             return `
-                <div class="bg-white p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg" style="border-color: ${d.color}30;">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: ${d.color}20; color: ${d.color};">
-                            <i class="fas ${d.icon}"></i>
+                <div class="bg-white p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg cursor-pointer" style="border-color: var(--border);" onclick="toggleRadarTip('${d.id}')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: ${d.color}20; color: ${d.color};">
+                                <i class="fas ${d.icon}"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-base text-gray-800">${d.name}</h4>
+                                <p class="text-[11px] text-gray-500">${d.symptoms}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="font-bold text-base text-gray-800">${d.name}</h4>
-                            <p class="text-[11px] text-gray-500">${d.symptoms}</p>
-                        </div>
+                        <span class="text-[10px] font-black px-2 py-1 rounded-lg" style="color: ${badgeColor}; background: ${badgeBg};">${badgeText}</span>
                     </div>
+                    
                     <div class="flex justify-between items-center text-xs mb-2">
                         <span class="font-bold text-gray-700">${count} حالة مسجلة</span>
-                        <span class="font-bold text-gray-400">${percentage}%</span>
                     </div>
+                    
+                    <div class="flex justify-between text-[11px] text-gray-500 mb-3 font-semibold">
+                        <span>⚡ حالة جديدة اليوم: ${newToday}</span>
+                        <span>⏳ حالات مستمرة: ${ongoing}</span>
+                    </div>
+
                     <div class="w-full bg-gray-100 rounded-full h-2.5">
-                        <div class="h-2.5 rounded-full transition-all duration-700" style="width: ${percentage}%; background: ${d.color};"></div>
+                        <div class="h-2.5 rounded-full transition-all duration-700" style="width: ${barWidth}%; background: ${barColor};"></div>
+                    </div>
+
+                    <div id="radarTip_${d.id}" class="hidden mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-gray-700 flex items-start gap-2">
+                        <i class="fas fa-lightbulb text-blue-500 mt-0.5"></i>
+                        <div><b class="text-blue-700">نصيحة الرادار:</b> ${d.advice}</div>
                     </div>
                 </div>
             `;
         }).join('');
     }
-
+    
+    window.toggleRadarTip = (id) => {
+        const tipDiv = document.getElementById(`radarTip_${id}`);
+        if (tipDiv) {
+            tipDiv.classList.toggle('hidden');
+        }
+    };
     window.openRadarRegisterModal = () => {
         let lastVoteTime = 0;
         try { lastVoteTime = parseInt(localStorage.getItem('lastRadarVoteTime') || '0'); } catch(e) {}
@@ -2448,14 +2495,40 @@ let currentFollowupBookingId = null;
                         <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-heart text-4xl text-red-500"></i></div>
                         <h3 class="font-bold text-xl mb-2 text-gray-800">نتمنى لك الشفاء العاجل!</h3>
                         <p class="text-sm text-gray-500 mb-6">تم إضافتك لرادار الرحيبة الصحي. ساهم تسجيلك في حماية المجتمع.</p>
-                        <a href="#doctors" onclick="closeModal()" class="block bg-blue-500 text-white py-4 rounded-xl font-bold mb-2 hover:bg-blue-600 transition-all">👨‍⚕️ تواصل مع الأطباء المتاحين الآن</a>
+                        <button onclick="redirectToDoctorsSearch()" class="w-full bg-blue-500 text-white py-4 rounded-xl font-bold mb-2 hover:bg-blue-600 transition-all">👨‍⚕️ تواصل مع الأطباء المتاحين الآن</button>
                         <button onclick="closeModal()" class="text-gray-400 py-2 text-sm hover:text-gray-600">إغلاق</button>
                     </div>`;
                 document.getElementById('modalOverlay').classList.add('active');
             }, 300);
         } catch (err) { showToast('حدث خطأ'); }
     };
-
+    // دالة تحويل المستخدم لشريط بحث الأطباء
+    window.redirectToDoctorsSearch = () => {
+        closeModal(); // 1. إغلاق النافذة المنبثقة
+        
+        // 2. التمرير الناعم إلى قسم الأطباء
+        const doctorsSection = document.getElementById('doctors');
+        if (doctorsSection) {
+            doctorsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // 3. تحديد شريط البحث وإبرازه بعد ثانية (ليكتمل التمرير)
+        setTimeout(() => {
+            const searchInput = document.getElementById('inlineSearch') || document.getElementById('heroSearch');
+            if (searchInput) {
+                searchInput.focus(); // تركيز المؤشر داخل شريط البحث
+                
+                // إضافة توهج أزرق حول شريط البحث لفتت انتباه المستخدم
+                searchInput.style.transition = 'box-shadow 0.4s ease';
+                searchInput.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.5)';
+                
+                // إزالة التوهج بعد 3 ثواني
+                setTimeout(() => {
+                    searchInput.style.boxShadow = '';
+                }, 3000);
+            }
+        }, 1000); 
+    };
     // دوال لوحة تحكم الأدمن (سيتم استدعاؤها من لوحة الإدارة)
     window.setRadarDefaultSeason = async () => {
         try { await setDoc(doc(db, 'radar_settings', 'config'), { defaultSeason: document.getElementById('adminRadarSeason').value }, { merge: true }); showToast("تم تحديث الفصل الافتراضي"); } catch (e) {}
