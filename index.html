@@ -666,12 +666,12 @@
     opacity: 0;
     transform: scale(1.1);
     visibility: hidden;
-    }
-                  /* === Radar Styles === */
-        .tab-btn { transition: all 0.3s; }
+} 
+            .tab-btn { transition: all 0.3s; }
         .tab-btn.active { background: #073D2E; color: white; box-shadow: 0 4px 15px rgba(7,61,46,0.3); }
         .pulse-register { animation: pulse-btn 2s infinite; }
         @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); } 70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+    
 </style>
         <!-- شريط الإعلانات العلوي -->
     <div id="topAnnouncementBar" class="hidden fixed top-0 right-0 left-0 z-[60] bg-gradient-to-l from-[#052E22] via-[#0E7C5F] to-[#052E22] text-white text-center py-2 px-12 text-xs sm:text-sm font-semibold shadow-md flex items-center justify-center gap-3 border-b border-[var(--gold)]/40">
@@ -2259,7 +2259,7 @@ let currentFollowupBookingId = null;
             } else { showToast("لم يتم العثور على ملف بهذا الرمز."); }
         } catch (e) { showToast("خطأ في قراءة الملف."); }
     }
-        // === Raheba Health Radar (Firebase Connected) ===
+            // === Raheba Health Radar (Firebase Connected - Pro Version) ===
     const radarDiseasesData = {
         summer: [
             { id: 'poisoning', name: 'تسمم ونزلة معوية', icon: 'fa-temperature-high', color: '#F59E0B', symptoms: 'ألم بطن، إسهال، استفراغ، أو مغص حاد' },
@@ -2281,8 +2281,8 @@ let currentFollowupBookingId = null;
     let latestRadarReports = [];
 
     window.openRahebaRadar = () => {
-        openCtrlPanel('رادار الصحي 📡', `
-            <div class="flex flex-col gap-5">
+        openCtrlPanel('رادار الرحيبة الصحي (التفاعلي) 📡', `
+            <div class="flex flex-col gap-6">
                 <div class="flex justify-center gap-3 bg-white p-2 rounded-2xl shadow-sm max-w-md mx-auto w-full">
                     <button id="tabSummer" onclick="switchRadarTab('summer')" class="tab-btn active flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                         ☀️ <span>حالات الصيف</span>
@@ -2291,28 +2291,14 @@ let currentFollowupBookingId = null;
                         ❄️ <span>حالات الشتاء</span>
                     </button>
                 </div>
+                
                 <div id="radarCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-                <div class="text-center mt-4">
+                
+                <div class="text-center mt-4 p-6 bg-white rounded-2xl shadow-sm border" style="border-color: var(--border)">
+                    <p class="text-sm text-gray-600 mb-4">إذا كنت تعاني من أحد هذه الأعراض، ساعد مجتمعك بتسجيل حالتك لمتابعة انتشار الأمراض.</p>
                     <button onclick="openRadarRegisterModal()" class="pulse-register bg-red-500 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-red-600 transition-all w-full sm:w-auto">
                         ➕ سَجّل حالتك الصحية الآن
                     </button>
-                    <p class="text-xs text-gray-400 mt-3">يتم تسجيل حالتك بشكل مجهول، ويُسمح بتسجيل حالة واحدة فقط يومياً.</p>
-                </div>
-                <div class="mt-8 p-5 rounded-xl border-2 border-indigo-200 bg-indigo-50/50">
-                    <h3 class="font-bold mb-4 text-lg flex items-center gap-2 text-indigo-600"><i class="fas fa-user-shield"></i> إدارة الرادار</h3>
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <div class="flex-1 bg-white p-3 rounded-xl border">
-                            <span class="text-xs text-gray-500 block mb-1">تحديد الفصل الافتراضي:</span>
-                            <select id="adminRadarSeason" onchange="setRadarDefaultSeason()" class="w-full p-2 rounded-lg border outline-none text-sm">
-                                <option value="summer">☀️ صيف</option>
-                                <option value="winter">❄️ شتاء</option>
-                            </select>
-                        </div>
-                        <div class="flex-1 bg-white p-3 rounded-xl border flex flex-col justify-end">
-                            <span class="text-xs text-gray-500 block mb-1">تصفير العدادات:</span>
-                            <button onclick="resetRadarVotes()" class="bg-gray-800 text-white py-2 rounded-lg text-sm font-bold hover:bg-gray-900 transition-all">تصفير العدادات</button>
-                        </div>
-                    </div>
                 </div>
             </div>
         `, '#4F46E5');
@@ -2324,11 +2310,9 @@ let currentFollowupBookingId = null;
             if (docSnap.exists()) {
                 radarSettings = docSnap.data();
                 currentRadarTab = radarSettings.defaultSeason || 'summer';
-                const adminSelect = document.getElementById('adminRadarSeason');
-                if (adminSelect) adminSelect.value = currentRadarTab;
                 switchRadarTab(currentRadarTab);
             } else {
-                setDoc(doc(db, 'radar_settings', 'config'), { defaultSeason: 'summer', lastReset: Date.now() });
+                setDoc(doc(db, 'radar_settings', 'config'), { defaultSeason: 'summer', lastReset: 0 });
             }
         });
 
@@ -2367,26 +2351,23 @@ let currentFollowupBookingId = null;
         container.innerHTML = diseases.map(d => {
             const count = counts[d.id] || 0;
             const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-            let riskLevel = "منخفض", riskColor = "#10B981", riskBg = "#D1FAE5";
-            if (count >= 5) { riskLevel = "مرتفع"; riskColor = "#DC2626"; riskBg = "#FEE2E2"; }
-            else if (count > 0) { riskLevel = "متوسط"; riskColor = "#F59E0B"; riskBg = "#FEF3C7"; }
             return `
-                <div class="card border-2" style="border-color: ${riskColor}30; background: ${riskBg}05;">
-                    <div class="flex items-center gap-3 mb-3">
+                <div class="bg-white p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg" style="border-color: ${d.color}30;">
+                    <div class="flex items-center gap-3 mb-4">
                         <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: ${d.color}20; color: ${d.color};">
                             <i class="fas ${d.icon}"></i>
                         </div>
                         <div>
                             <h4 class="font-bold text-base text-gray-800">${d.name}</h4>
-                            <p class="text-[10px] text-gray-500">${d.symptoms}</p>
+                            <p class="text-[11px] text-gray-500">${d.symptoms}</p>
                         </div>
                     </div>
-                    <div class="flex justify-between items-center text-xs mb-1">
-                        <span class="font-bold text-gray-600">${count} حالة مسجلة</span>
-                        <span class="px-2 py-0.5 rounded-full font-bold" style="color: ${riskColor}; background: ${riskBg};">خطر ${riskLevel}</span>
+                    <div class="flex justify-between items-center text-xs mb-2">
+                        <span class="font-bold text-gray-700">${count} حالة مسجلة</span>
+                        <span class="font-bold text-gray-400">${percentage}%</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="h-2 rounded-full transition-all duration-500" style="width: ${percentage}%; background: ${riskColor};"></div>
+                    <div class="w-full bg-gray-100 rounded-full h-2.5">
+                        <div class="h-2.5 rounded-full transition-all duration-700" style="width: ${percentage}%; background: ${d.color};"></div>
                     </div>
                 </div>
             `;
@@ -2394,9 +2375,18 @@ let currentFollowupBookingId = null;
     }
 
     window.openRadarRegisterModal = () => {
-        let lastVote = null;
-        try { lastVote = localStorage.getItem('lastRadarVoteDate'); } catch(e) {}
-        if (lastVote === new Date().toDateString()) { showToast("شُكراً لك، لقد قمت بالتسجيل اليوم بالفعل!"); return; }
+        let lastVoteTime = 0;
+        try { lastVoteTime = parseInt(localStorage.getItem('lastRadarVoteTime') || '0'); } catch(e) {}
+        
+        if (lastVoteTime > 0) {
+            let diff = Date.now() - lastVoteTime;
+            let cooldown = 3 * 24 * 60 * 60 * 1000; // 3 أيام
+            if (diff < cooldown) {
+                let daysLeft = Math.ceil((cooldown - diff) / (24 * 60 * 60 * 1000));
+                showToast(`شُكراً لك! يمكنك تسجيل حالة جديدة بعد ${daysLeft} أيام لمراقبة تطور الحالة.`);
+                return;
+            }
+        }
 
         const diseases = radarDiseasesData[currentRadarTab];
         const optionsHtml = diseases.map((d, index) => `
@@ -2409,11 +2399,23 @@ let currentFollowupBookingId = null;
 
         document.getElementById('modalContent').innerHTML = `
             <div class="p-6">
-                <h3 class="font-bold text-xl mb-4 text-center">تسجيل حالة صحية</h3>
-                <p class="text-sm text-gray-500 text-center mb-6">اختر الفئة التي تعاني منها:</p>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-xl">تسجيل حالة صحية</h3>
+                    <button onclick="closeModal()" class="text-2xl hover:text-gray-400">&times;</button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">اختر الفئة التي تعاني منها:</p>
                 <div id="radarModalOptions" class="flex flex-col gap-3 mb-6">${optionsHtml}</div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">منذ متى تعاني من هذه الأعراض؟</label>
+                    <select id="radarDuration" class="ctrl-input text-sm">
+                        <option value="يوم واحد">يوم واحد</option>
+                        <option value="2-3 أيام">2-3 أيام</option>
+                        <option value="أكثر من أسبوع">أكثر من أسبوع</option>
+                    </select>
+                </div>
+                
                 <button onclick="submitRadarVote()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-all">تأكيد التسجيل</button>
-                <button onclick="closeModal()" class="w-full text-gray-400 py-2 mt-2 text-sm hover:text-gray-600">إلغاء</button>
             </div>
         `;
         document.getElementById('modalOverlay').classList.add('active');
@@ -2429,9 +2431,15 @@ let currentFollowupBookingId = null;
 
     window.submitRadarVote = async () => {
         if (!window.selectedRadarDisease) return;
+        const duration = document.getElementById('radarDuration').value;
         try {
-            await addDoc(collection(db, 'disease_reports'), { diseaseId: window.selectedRadarDisease, season: currentRadarTab, timestamp: new Date().toISOString() });
-            localStorage.setItem('lastRadarVoteDate', new Date().toDateString());
+            await addDoc(collection(db, 'disease_reports'), { 
+                diseaseId: window.selectedRadarDisease, 
+                season: currentRadarTab, 
+                duration: duration,
+                timestamp: new Date().toISOString() 
+            });
+            localStorage.setItem('lastRadarVoteTime', Date.now().toString());
             closeModal();
             showToast('تم تسجيل حالتك بنجاح!');
             setTimeout(() => {
@@ -2448,12 +2456,13 @@ let currentFollowupBookingId = null;
         } catch (err) { showToast('حدث خطأ'); }
     };
 
+    // دوال لوحة تحكم الأدمن (سيتم استدعاؤها من لوحة الإدارة)
     window.setRadarDefaultSeason = async () => {
-        try { await setDoc(doc(db, 'radar_settings', 'config'), { defaultSeason: document.getElementById('adminRadarSeason').value }, { merge: true }); showToast("تم التحديث"); } catch (e) {}
+        try { await setDoc(doc(db, 'radar_settings', 'config'), { defaultSeason: document.getElementById('adminRadarSeason').value }, { merge: true }); showToast("تم تحديث الفصل الافتراضي"); } catch (e) {}
     };
 
     window.resetRadarVotes = async () => {
-        try { await setDoc(doc(db, 'radar_settings', 'config'), { lastReset: Date.now() }, { merge: true }); showToast("تم التصفير"); } catch (e) {}
+        try { await setDoc(doc(db, 'radar_settings', 'config'), { lastReset: Date.now() }, { merge: true }); showToast("تم تصفير العدادات بنجاح"); } catch (e) {}
     };
     // === Core App Functions ===
     window.openLightbox = (src) => { const lightbox = document.getElementById('lightbox'); lightbox.querySelector('img').src = src.includes('picsum.photos') ? src.replace('/400/250', '/1200/800') : src; lightbox.classList.add('active'); lockScroll(); }
@@ -3081,6 +3090,24 @@ let currentFollowupBookingId = null;
     }
 
         window.renderAdminDashboard = async () => { 
+                    const radarAdminHtml = `
+            <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-satellite-dish text-indigo-600"></i> إدارة رادار الرحيبة الصحي</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-gray-50 p-3 rounded-xl">
+                        <span class="text-xs text-gray-500 block mb-1">الفصل الافتراضي للزوار:</span>
+                        <select id="adminRadarSeason" onchange="setRadarDefaultSeason()" class="ctrl-input text-sm">
+                            <option value="summer">☀️ صيف</option>
+                            <option value="winter">❄️ شتاء</option>
+                        </select>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-xs text-gray-500 block mb-1">تصفير العدادات الأسبوعي:</span>
+                        <button onclick="resetRadarVotes()" class="bg-red-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-red-600 transition-all">تصفير العدادات</button>
+                    </div>
+                </div>
+            </div>
+        `;
                 const homeAdsHtml = `
             <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
                 <h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-photo-video text-purple-600"></i> إعلانات الصفحة الرئيسية (صور/فيديو)</h4>
@@ -3122,7 +3149,7 @@ let currentFollowupBookingId = null;
 ` : ''}<button onclick="editFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue/50"><i class="fas fa-edit"></i></button><button onclick="deleteFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-50"><i class="fas fa-trash"></i></button></div></div>`).join(''); 
         let bloodHtml = bloodRequests.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد استغاثات حالياً.</p>' : bloodRequests.map(b => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><span class="blood-type-badge text-sm py-1 px-3">${b.bloodType}</span><div><div class="text-sm font-semibold">${b.patientName}</div><div class="text-xs text-gray-500">${b.hospital}</div></div></div><button onclick="resolveBloodRequest('${b.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">إنهاء الطلب</button></div>`).join('');
         let medDonHtml = medicineDonations.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد أدوية مُتبرع بها حالياً.</p>' : medicineDonations.map(m => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><i class="fas fa-pills text-green-600"></i><div><div class="text-sm font-semibold">${m.medicineName} (${m.quantity})</div><div class="text-xs text-gray-500">ينتهي: ${m.expiryDate} | المتبرع: ${m.donorName}</div></div></div><button onclick="resolveMedicineDonation('${m.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">حذف/إنهاء</button></div>`).join('');
-                openCtrlPanel('لوحة الإدارة', `<div class="flex flex-col gap-6"> ${announcementsHtml} ${homeAdsHtml} <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-tint text-red-600"></i> إدارة استغاثات الدم (${bloodRequests.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${bloodHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-hand-holding-medical text-green-600"></i> إدارة الأدوية الفائضة (${medicineDonations.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${medDonHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle ml-2" style="color: var(--accent)"></i> <span id="formTitle">إضافة منشأة</span></h4><form onsubmit="saveFacility(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="hidden" id="edit_id"><select id="new_type" class="ctrl-input text-sm" required onchange="updateAdminFormFields(this.value)"><option value="clinic">عيادة</option><option value="hospital">مشفى</option><option value="center">مركز</option><option value="lab">مخبر</option><option value="doctor">طبيب</option><option value="pharmacy">صيدلية</option></select><input type="text" id="new_name" class="ctrl-input text-sm" placeholder="الاسم" required><input type="text" id="new_specialty" class="ctrl-input text-sm" placeholder="التخصص الأساسي" required><input type="text" id="new_address" class="ctrl-input text-sm" placeholder="العنوان / الموقع" required><input type="text" id="new_phone" class="ctrl-input text-sm" placeholder="رقم الهاتف (اختياري)"><input type="text" id="new_hours" class="ctrl-input text-sm" placeholder="أوقات العمل"><input type="text" id="new_image_url" class="ctrl-input text-sm" placeholder="رابط الصورة (URL)"><textarea id="new_desc" class="ctrl-input text-sm col-span-2" placeholder="وصف عام" rows="2" required></textarea><div id="adminExtraFields" class="contents"></div><button type="submit" class="col-span-1 sm:col-span-2 py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--accent)"><i class="fas fa-save ml-1"></i> حفظ</button></form></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list ml-2"></i> المنشآت (${allData.length})</h4><div class="flex flex-col gap-2 max-h-96 overflow-y-auto">${listHtml}</div></div> <button onclick="seedDatabase()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: var(--gold); color: var(--gold)"><i class="fas fa-database ml-2"></i> ترحيل البيانات الافتراضية</button> <button onclick="seedMedicalTips()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: #EC4899; color: #EC4899"><i class="fas fa-lightbulb ml-2"></i> ترحيل 30 نصيحة طبية للفايربايس</button> </div>`, '#073D2E'); 
+                openCtrlPanel('لوحة الإدارة', `<div class="flex flex-col gap-6"> ${announcementsHtml} ${homeAdsHtml} ${radarAdminHtml} <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-tint text-red-600"></i> إدارة استغاثات الدم (${bloodRequests.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${bloodHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-hand-holding-medical text-green-600"></i> إدارة الأدوية الفائضة (${medicineDonations.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${medDonHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle ml-2" style="color: var(--accent)"></i> <span id="formTitle">إضافة منشأة</span></h4><form onsubmit="saveFacility(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="hidden" id="edit_id"><select id="new_type" class="ctrl-input text-sm" required onchange="updateAdminFormFields(this.value)"><option value="clinic">عيادة</option><option value="hospital">مشفى</option><option value="center">مركز</option><option value="lab">مخبر</option><option value="doctor">طبيب</option><option value="pharmacy">صيدلية</option></select><input type="text" id="new_name" class="ctrl-input text-sm" placeholder="الاسم" required><input type="text" id="new_specialty" class="ctrl-input text-sm" placeholder="التخصص الأساسي" required><input type="text" id="new_address" class="ctrl-input text-sm" placeholder="العنوان / الموقع" required><input type="text" id="new_phone" class="ctrl-input text-sm" placeholder="رقم الهاتف (اختياري)"><input type="text" id="new_hours" class="ctrl-input text-sm" placeholder="أوقات العمل"><input type="text" id="new_image_url" class="ctrl-input text-sm" placeholder="رابط الصورة (URL)"><textarea id="new_desc" class="ctrl-input text-sm col-span-2" placeholder="وصف عام" rows="2" required></textarea><div id="adminExtraFields" class="contents"></div><button type="submit" class="col-span-1 sm:col-span-2 py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--accent)"><i class="fas fa-save ml-1"></i> حفظ</button></form></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list ml-2"></i> المنشآت (${allData.length})</h4><div class="flex flex-col gap-2 max-h-96 overflow-y-auto">${listHtml}</div></div> <button onclick="seedDatabase()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: var(--gold); color: var(--gold)"><i class="fas fa-database ml-2"></i> ترحيل البيانات الافتراضية</button> <button onclick="seedMedicalTips()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: #EC4899; color: #EC4899"><i class="fas fa-lightbulb ml-2"></i> ترحيل 30 نصيحة طبية للفايربايس</button> </div>`, '#073D2E'); 
 
         renderAdminAnnouncements();
         fetchHomeAdsForAdmin();
