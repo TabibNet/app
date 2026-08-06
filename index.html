@@ -441,7 +441,7 @@
             splash.classList.add('hidden');
             setTimeout(function() { splash.style.display = 'none'; }, 800);
         }
-    }, 3000);
+    }, 1500);
 </script>
 
 <style>
@@ -2695,7 +2695,7 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
             
             if (req.responsesCount > 0) {
                 cardBorder = 'border-green-200 bg-green-50/30';
-                statusBox = `<div class="bg-green-100 text-green-800 text-[10px] font-bold p-1.5 rounded-lg flex items-center justify-center gap-1 mb-1.5"><i class="fas fa-heart"></i> مستجيب لها (${req.responsesCount}) - نحتاج المزيد</div>`;
+                statusBox = `<div class="bg-green-100 text-green-800 text-[10px] font-bold p-1.5 rounded-lg flex items-center justify-center gap-1 mb-1.5"><i class="fas fa-heart"></i> المبادرون (${req.responsesCount})</div>`;
             }
 
             return `<div class="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border ${cardBorder} dark:border-red-900/50">
@@ -2712,7 +2712,7 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
                 ${req.notes ? `<div class="text-[9px] text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 p-1 rounded break-words text-center"><i class="fas fa-notes-medical"></i> ${req.notes}</div>` : ''}
                 <div class="flex gap-1.5 mt-1">
                     <a href="tel:${req.phone}" class="flex-1 h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-blue-600 transition-colors">اتصال</a>
-                    <button onclick="respondToBloodRequest(this, '${req.id}', '${req.patientName}', '${req.phone}')" class="flex-1 h-7 rounded-lg bg-green-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-green-600 transition-colors">استجبت 🤍</button>
+                    <button onclick="respondToBloodRequest(this, '${req.id}', '${req.patientName}', '${req.phone}')" class="flex-1 h-7 rounded-lg bg-green-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-green-600 transition-colors">قادم للتبرع</button>
                 </div>
             </div>`;
         }).join('');
