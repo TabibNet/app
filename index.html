@@ -2819,10 +2819,31 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
             }, 300);
         }
 
-        // تشغيل عداد الزوار عند فتح الموقع
+                // تشغيل عداد الزوار عند فتح الموقع
         trackAndDisplayVisitors();
-            });
-                    // 2. الاستماع للمستخدمين النشطين (آخر دقيقة واحدة)
+        // تشغيل تتبع المتصلين الآن
+        trackActiveUsers();
+    });
+
+    // === دالة تتبع المستخدمين المتصلين الآن (Active Users) ===
+    async function trackActiveUsers() {
+        const sessionId = sessionStorage.getItem('sessionId') || Math.random().toString(36).substring(2, 15);
+        sessionStorage.setItem('sessionId', sessionId);
+        
+        const userStatusRef = doc(db, 'active_users', sessionId);
+
+        // 1. تحديث وقت آخر نشاط للمستخدم كل 15 ثانية
+        const updateHeartbeat = async () => {
+            try {
+                await setDoc(userStatusRef, { lastSeen: new Date().toISOString() }, { merge: true });
+            } catch (e) { console.error("Error updating heartbeat:", e); }
+        };
+
+        // تشغيل التحديث فوراً ثم كل 15 ثانية
+        await updateHeartbeat();
+        setInterval(updateHeartbeat, 15000);
+
+        // 2. الاستماع للمستخدمين النشطين (آخر دقيقة واحدة)
         const oneMinuteAgo = new Date();
         oneMinuteAgo.setSeconds(oneMinuteAgo.getSeconds() - 60);
         const oneMinuteAgoISO = oneMinuteAgo.toISOString();
@@ -2830,13 +2851,25 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         const q = query(collection(db, 'active_users'), where('lastSeen', '>=', oneMinuteAgoISO));
         
         onSnapshot(q, (snapshot) => {
-            const activeCount = snapshot.size;
+            const realActiveCount = snapshot.size;
+            
+            // إضافة عدد زوار وهمي (بين 2 و 4) لإظهار نشاط الموقع
+            const fakeUsers = Math.floor(Math.random() * 3) + 2; 
+            const displayCount = realActiveCount + fakeUsers;
+            
             const activeEl = document.getElementById('activeUsersCount');
             if (activeEl) {
-                // تحديث الرقم بسلاسة
-                activeEl.textContent = activeCount;
+                activeEl.textContent = displayCount;
             }
         });
+
+        // 3. تنظيف قاعدة البيانات عند مغادرة المستخدم للموقع
+        window.addEventListener('beforeunload', async () => {
+            try {
+                await deleteDoc(userStatusRef);
+            } catch (e) { /* تجاهل الخطأ */ }
+        });
+    }
 
     function updateStats() {
         document.getElementById('stat-hospital').textContent = allData.filter(d => d.type === 'hospital').length;
