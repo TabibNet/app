@@ -2821,6 +2821,7 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
 
         // تشغيل عداد الزوار عند فتح الموقع
         trackAndDisplayVisitors();
+            });
                     // 2. الاستماع للمستخدمين النشطين (آخر دقيقة واحدة)
         const oneMinuteAgo = new Date();
         oneMinuteAgo.setSeconds(oneMinuteAgo.getSeconds() - 60);
