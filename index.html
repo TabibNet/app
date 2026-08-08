@@ -3108,6 +3108,7 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         // استدعاء الدالة لجلب الطلبات لمرة واحدة عند فتح اللوحة
         fetchMedRequests();
         // يمكن للصيدلي تحديث الطلبات يدوياً عن طريق استدعاء fetchMedRequests() من زر تحديث لو أردت إضافه لاحقاً
+            };
     window.toggleNightShift = async (id, currentStatus) => { try { await updateDoc(doc(db, 'listings', id), { night: currentStatus }); showToast(currentStatus ? 'تم تفعيل المناوبة!' : 'تم إيقاف المناوبة.'); } catch (e) { showToast('خطأ في التحديث'); } }
     window.resolveRequest = async (id) => { try { await updateDoc(doc(db, 'medicine_requests', id), { status: 'resolved' }); showToast('تم إنهاء الطلب.'); } catch (e) { showToast('خطأ في إنهاء الطلب'); } }
     window.setMedAvailable = async (id, pharmName) => {
