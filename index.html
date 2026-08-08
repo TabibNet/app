@@ -2678,25 +2678,26 @@ window.undoRespond = () => {
             });
 }
         // Tips Listener
-        onSnapshot(collection(db, 'medical_tips'), (snapshot) => {
+        getDocs(collection(db, 'medical_tips')).then((snapshot) => {
             healthTips = [];
             snapshot.forEach(doc => healthTips.push(doc.data().text));
             if (tipInterval) clearInterval(tipInterval);
             updateTipDisplay();
-            tipInterval = setInterval(updateTipDisplay, 12000); // 12 seconds
+            tipInterval = setInterval(updateTipDisplay, 12000);
         });
         
-        onSnapshot(collection(db, 'listings'), (snapshot) => { 
-    allData = []; 
-    snapshot.forEach(doc => { allData.push({ id: doc.id, ...doc.data() }); }); 
-    renderData(); updateStats(); 
-    const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || ''; 
-    if (ctrlTitle.includes('لوحة:')) { 
-        const docName = ctrlTitle.replace('لوحة: ', '').trim(); 
-        const docData = allData.find(d => d.name === docName); 
-        if (docData && docData.type === 'doctor') renderDoctorDashboard(docData); 
-    } 
-});
+        // Listings (تحويل إلى getDocs)
+        getDocs(collection(db, 'listings')).then((snapshot) => { 
+            allData = []; 
+            snapshot.forEach(doc => { allData.push({ id: doc.id, ...doc.data() }); }); 
+            renderData(); updateStats(); 
+            const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || ''; 
+            if (ctrlTitle.includes('لوحة:')) { 
+                const docName = ctrlTitle.replace('لوحة: ', '').trim(); 
+                const docData = allData.find(d => d.name === docName); 
+                if (docData && docData.type === 'doctor') renderDoctorDashboard(docData); 
+            } 
+        });
                     onSnapshot(collection(db, 'bookings'), (snapshot) => { 
     bookings = []; 
     snapshot.forEach(doc => { bookings.push({ id: doc.id, ...doc.data() }); }); 
@@ -2761,8 +2762,9 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
     if (ctrlTitle === 'بنك التبرع بالدم الرقمي (سوريا)') renderBloodBankUI();
     if (ctrlTitle === 'لوحة الإدارة') renderAdminDashboard();
 });
-   
-                        onSnapshot(query(collection(db, 'medicine_donations'), where('status', '==', 'active')), (snapshot) => {
+
+            // === الأدوية الفائضة (تحويل إلى getDocs) ===
+        getDocs(query(collection(db, 'medicine_donations'), where('status', '==', 'active'))).then((snapshot) => {
             medicineDonations = []; snapshot.forEach(doc => { medicineDonations.push({ id: doc.id, ...doc.data() }); });
             const section = document.getElementById('homeMedicinesSection');
             const container = document.getElementById('homeMedicinesList');
@@ -2789,7 +2791,7 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
             const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
             if (ctrlTitle === 'صندوق الأدوية الفائضة (تكافل طبي)') renderMedicineDonationsUI();
             if (ctrlTitle === 'لوحة الإدارة') renderAdminDashboard();
-        });
+        }).catch(err => console.error("Error fetching medicine donations:", err));
 
 
                 document.getElementById('lightbox').addEventListener('click', () => { document.getElementById('lightbox').classList.remove('active'); unlockScroll(); });
@@ -3013,93 +3015,100 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         
         const q = query(collection(db, 'medicine_requests'), where('status', 'in', ['active', 'searching', 'available', 'unavailable'])); 
         if (unsubscribeMedRequests) { unsubscribeMedRequests(); unsubscribeMedRequests = null; } 
-        unsubscribeMedRequests = onSnapshot(q, (snapshot) => { 
+                async function fetchMedRequests() {
             const container = document.getElementById('requestsContainer'); 
-            if (!container) { if (unsubscribeMedRequests) { unsubscribeMedRequests(); unsubscribeMedRequests = null; } return; } 
-            if (snapshot.empty) { container.innerHTML = '<p class="text-center py-10" style="color: var(--muted)">لا توجد طلبات أدوية حالياً.</p>'; return; } 
-            let html = ''; 
-            snapshot.forEach(doc => { 
-                const req = doc.data(); 
-                const date = new Date(req.createdAt).toLocaleString('ar-EG', { date: 'short', time: 'short' }); 
-                const phone = req.patientPhone; 
-                
-                let requestStatus = ''; 
-                if (req.status === 'available') requestStatus = `<span class="text-xs px-2 py-1 rounded bg-green-100 text-green-700 inline-block mb-2">تم التوفير</span>`; 
-                else if (req.status === 'unavailable') requestStatus = `<span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 inline-block mb-2">غير متوفر</span>`; 
-                else requestStatus = `<span class="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700 inline-block mb-2">قيد البحث</span>`;
+            if (!container) return; 
+            container.innerHTML = '<p class="text-center py-10" style="color: var(--muted)">جاري تحميل الطلبات...</p>';
+            
+            try {
+                const snapshot = await getDocs(q); 
+                if (snapshot.empty) { 
+                    container.innerHTML = '<p class="text-center py-10" style="color: var(--muted)">لا توجد طلبات أدوية حالياً.</p>'; 
+                    return; 
+                } 
+                let html = ''; 
+                snapshot.forEach(doc => { 
+                    const req = doc.data(); 
+                    const date = new Date(req.createdAt).toLocaleString('ar-EG', { date: 'short', time: 'short' }); 
+                    const phone = req.patientPhone; 
+                    
+                    let requestStatus = ''; 
+                    if (req.status === 'available') requestStatus = `<span class="text-xs px-2 py-1 rounded bg-green-100 text-green-700 inline-block mb-2">تم التوفير</span>`; 
+                    else if (req.status === 'unavailable') requestStatus = `<span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 inline-block mb-2">غير متوفر</span>`; 
+                    else requestStatus = `<span class="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700 inline-block mb-2">قيد البحث</span>`;
 
-                // منطق الإجراءات بناءً على حالة الطلب والصيدلية التي وفرته
-                let interactionArea = '';
-
-                if (req.status === 'available') {
-                    if (req.availablePharmacy === pharm.name) {
-                        // هذه الصيدلية هي من وفرت الدواء
+                    let interactionArea = '';
+                    if (req.status === 'available') {
+                        if (req.availablePharmacy === pharm.name) {
+                            interactionArea = `
+                                <div class="bg-green-50 text-green-700 text-sm font-bold p-3 rounded-lg text-center mb-2 flex items-center justify-center gap-2">
+                                    <i class="fas fa-check-circle"></i> أنت من وفر هذا الدواء للمريض
+                                </div>
+                                <a href="tel:${phone}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال بالمريض للاستلام</a>
+                                <button onclick="updateMedStatus('${doc.id}', 'searching')" class="w-full mt-2 bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300">
+                                    <i class="fas fa-undo"></i> تراجع عن التوفير (إعادة فتح الطلب)
+                                </button>
+                            `;
+                        } else {
+                            interactionArea = `
+                                <div class="bg-gray-100 text-gray-500 text-sm font-bold p-3 rounded-lg text-center flex items-center justify-center gap-2 cursor-not-allowed">
+                                    <i class="fas fa-lock"></i> تم إغلاق هذا الطلب (تم توفير الدواء من صيدلية أخرى)
+                                </div>
+                            `;
+                        }
+                    } else if (req.status === 'unavailable') {
                         interactionArea = `
-                            <div class="bg-green-50 text-green-700 text-sm font-bold p-3 rounded-lg text-center mb-2 flex items-center justify-center gap-2">
-                                <i class="fas fa-check-circle"></i> أنت من وفر هذا الدواء للمريض
+                            <div class="bg-gray-100 text-gray-400 text-sm font-bold p-3 rounded-lg text-center flex items-center justify-center gap-2">
+                                <i class="fas fa-times-circle"></i> قمت بإغلاق هذا الطلب كونه غير متوفر لديك
                             </div>
-                            <a href="tel:${phone}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال بالمريض للاستلام</a>
                             <button onclick="updateMedStatus('${doc.id}', 'searching')" class="w-full mt-2 bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300">
-                                <i class="fas fa-undo"></i> تراجع عن التوفير (إعادة فتح الطلب)
+                                <i class="fas fa-undo"></i> إعادة فتح الطلب (توفر لديك الآن)
                             </button>
                         `;
                     } else {
-                        // صيدلية أخرى هي من وفرت الدواء
+                        let actionButtons = `
+                            <div class="flex gap-2 mt-2">
+                                <button onclick="setMedAvailable('${doc.id}', '${pharm.name}')" class="flex-1 bg-green-500 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-green-600">
+                                    <i class="fas fa-check"></i> توفّر الدواء
+                                </button>
+                                <button onclick="updateMedStatus('${doc.id}', 'unavailable')" class="flex-1 bg-gray-500 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-gray-600">
+                                    <i class="fas fa-times"></i> غير متوفر
+                                </button>
+                            </div>`;
                         interactionArea = `
-                            <div class="bg-gray-100 text-gray-500 text-sm font-bold p-3 rounded-lg text-center flex items-center justify-center gap-2 cursor-not-allowed">
-                                <i class="fas fa-lock"></i> تم إغلاق هذا الطلب (تم توفير الدواء من صيدلية أخرى)
+                            <input type="text" id="medNotes_${doc.id}" placeholder="ملاحظة للمواطن (مثال: استلمه خلال ساعة)" value="${req.notes || ''}" onblur="updateMedNotes('${doc.id}', this.value)" class="ctrl-input text-sm py-1">
+                            ${actionButtons}
+                            <div class="flex gap-2 mt-2">
+                                <a href="tel:${phone}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال بالمريض</a>
                             </div>
                         `;
                     }
-                } else if (req.status === 'unavailable') {
-                    interactionArea = `
-                        <div class="bg-gray-100 text-gray-400 text-sm font-bold p-3 rounded-lg text-center flex items-center justify-center gap-2">
-                            <i class="fas fa-times-circle"></i> قمت بإغلاق هذا الطلب كونه غير متوفر لديك
-                        </div>
-                        <button onclick="updateMedStatus('${doc.id}', 'searching')" class="w-full mt-2 bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300">
-                            <i class="fas fa-undo"></i> إعادة فتح الطلب (توفر لديك الآن)
-                        </button>
-                    `;
-                } else {
-                    // الطلب قيد البحث (متاح للجميع)
-                    let actionButtons = `
-                        <div class="flex gap-2 mt-2">
-                            <button onclick="setMedAvailable('${doc.id}', '${pharm.name}')" class="flex-1 bg-green-500 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-green-600">
-                                <i class="fas fa-check"></i> توفّر الدواء
-                            </button>
-                            <button onclick="updateMedStatus('${doc.id}', 'unavailable')" class="flex-1 bg-gray-500 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-gray-600">
-                                <i class="fas fa-times"></i> غير متوفر
-                            </button>
-                        </div>`;
-                    
-                    interactionArea = `
-                        <input type="text" id="medNotes_${doc.id}" placeholder="ملاحظة للمواطن (مثال: استلمه خلال ساعة)" value="${req.notes || ''}" onblur="updateMedNotes('${doc.id}', this.value)" class="ctrl-input text-sm py-1">
-                        ${actionButtons}
-                        <div class="flex gap-2 mt-2">
-                            <a href="tel:${phone}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال بالمريض</a>
-                        </div>
-                    `;
-                }
 
-                html += `<div class="bg-white border rounded-xl p-4 flex flex-col gap-3" style="border-color: var(--border)">
-                    <div class="flex flex-col sm:flex-row gap-3 items-center">
-                        ${req.imageUrl ? `<img src="${req.imageUrl}" class="w-full sm:w-24 h-24 object-cover rounded-lg cursor-zoom-in" onclick="openLightbox('${req.imageUrl}')">` : ''}
-                        <div class="flex-1 text-center sm:text-right">
-                            <h4 class="font-bold">${req.patientName} <span class="text-xs text-yellow-600 font-mono">#${req.medRef || ''}</span></h4>
-                            <p class="text-sm text-gray-700 font-semibold">${req.medList || ''}</p>
-                            <p class="text-xs mt-1 text-red-500">الإلحاح: ${req.urgency || 'عادي'}</p>
-                            <p class="text-xs" style="color: var(--muted)"><i class="fas fa-clock"></i> ${date}</p>
-                            ${requestStatus}
+                    html += `<div class="bg-white border rounded-xl p-4 flex flex-col gap-3" style="border-color: var(--border)">
+                        <div class="flex flex-col sm:flex-row gap-3 items-center">
+                            ${req.imageUrl ? `<img src="${req.imageUrl}" class="w-full sm:w-24 h-24 object-cover rounded-lg cursor-zoom-in" onclick="openLightbox('${req.imageUrl}')">` : ''}
+                            <div class="flex-1 text-center sm:text-right">
+                                <h4 class="font-bold">${req.patientName} <span class="text-xs text-yellow-600 font-mono">#${req.medRef || ''}</span></h4>
+                                <p class="text-sm text-gray-700 font-semibold">${req.medList || ''}</p>
+                                <p class="text-xs mt-1 text-red-500">الإلحاح: ${req.urgency || 'عادي'}</p>
+                                <p class="text-xs" style="color: var(--muted)"><i class="fas fa-clock"></i> ${date}</p>
+                                ${requestStatus}
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex flex-col gap-2 mt-2 border-t pt-3" style="border-color: var(--border)">
-                        ${interactionArea}
-                    </div>
-                </div>`; 
-            }); 
-            container.innerHTML = html; 
-        });
-    }
+                        <div class="flex flex-col gap-2 mt-2 border-t pt-3" style="border-color: var(--border)">
+                            ${interactionArea}
+                        </div>
+                    </div>`; 
+                }); 
+                container.innerHTML = html; 
+            } catch (e) { 
+                container.innerHTML = '<p class="text-center py-10 text-red-500">حدث خطأ أثناء تحميل الطلبات.</p>'; 
+            }
+        }
+
+        // استدعاء الدالة لجلب الطلبات لمرة واحدة عند فتح اللوحة
+        fetchMedRequests();
+        // يمكن للصيدلي تحديث الطلبات يدوياً عن طريق استدعاء fetchMedRequests() من زر تحديث لو أردت إضافه لاحقاً
     window.toggleNightShift = async (id, currentStatus) => { try { await updateDoc(doc(db, 'listings', id), { night: currentStatus }); showToast(currentStatus ? 'تم تفعيل المناوبة!' : 'تم إيقاف المناوبة.'); } catch (e) { showToast('خطأ في التحديث'); } }
     window.resolveRequest = async (id) => { try { await updateDoc(doc(db, 'medicine_requests', id), { status: 'resolved' }); showToast('تم إنهاء الطلب.'); } catch (e) { showToast('خطأ في إنهاء الطلب'); } }
     window.setMedAvailable = async (id, pharmName) => {
@@ -3754,22 +3763,22 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         }
     }
 
-    onSnapshot(collection(db, 'announcements'), (snapshot) => {
-        const navbar = document.getElementById('navbar'); const annBar = document.getElementById('topAnnouncementBar'); const homeSection = document.getElementById('home');
-        allAnnouncements = []; snapshot.forEach(doc => allAnnouncements.push({ id: doc.id, ...doc.data() }));
-        if (annBar && navbar && homeSection) {
-            const activeAnns = allAnnouncements.filter(a => a.isActive);
-            if (activeAnns.length > 0) {
-                const ann = activeAnns.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0]; currentAnnouncement = ann;
-                const textEl = document.getElementById('announcementText'); textEl.innerText = ann.text;
-                const linkEl = document.getElementById('announcementLink');
-                if (ann.link) { let url = ann.link; if (!url.match(/^https?:\/\//i)) { url = 'https://' + url; } linkEl.href = url; linkEl.innerText = ann.linkText || 'اضغط هنا'; linkEl.style.display = 'inline'; textEl.classList.add('no-marquee'); } 
-                else { linkEl.style.display = 'none'; textEl.classList.remove('no-marquee'); }
-                annBar.classList.remove('hidden'); navbar.style.top = '36px'; homeSection.style.paddingTop = '11rem';
-            } else { currentAnnouncement = null; annBar.classList.add('hidden'); navbar.style.top = '0px'; homeSection.style.paddingTop = '6rem'; }
-        }
-        renderAdminAnnouncements();
-    });
+    getDocs(collection(db, 'announcements')).then((snapshot) => {
+    const navbar = document.getElementById('navbar'); const annBar = document.getElementById('topAnnouncementBar'); const homeSection = document.getElementById('home');
+    allAnnouncements = []; snapshot.forEach(doc => allAnnouncements.push({ id: doc.id, ...doc.data() }));
+    if (annBar && navbar && homeSection) {
+        const activeAnns = allAnnouncements.filter(a => a.isActive);
+        if (activeAnns.length > 0) {
+            const ann = activeAnns.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0]; currentAnnouncement = ann;
+            const textEl = document.getElementById('announcementText'); textEl.innerText = ann.text;
+            const linkEl = document.getElementById('announcementLink');
+            if (ann.link) { let url = ann.link; if (!url.match(/^https?:\/\//i)) { url = 'https://' + url; } linkEl.href = url; linkEl.innerText = ann.linkText || 'اضغط هنا'; linkEl.style.display = 'inline'; textEl.classList.add('no-marquee'); } 
+            else { linkEl.style.display = 'none'; textEl.classList.remove('no-marquee'); }
+            annBar.classList.remove('hidden'); navbar.style.top = '36px'; homeSection.style.paddingTop = '11rem';
+        } else { currentAnnouncement = null; annBar.classList.add('hidden'); navbar.style.top = '0px'; homeSection.style.paddingTop = '6rem'; }
+    }
+    renderAdminAnnouncements();
+});
 
     window.toggleAnnouncement = async (id, status) => { try { await updateDoc(doc(db, 'announcements', id), { isActive: status }); showToast('تم تحديث حالة الإعلان'); } catch (err) { showToast('خطأ'); } };
     window.deleteAnnouncement = async (id) => { try { await deleteDoc(doc(db, 'announcements', id)); showToast('تم حذف الإعلان'); } catch (err) { showToast('خطأ'); } };
@@ -3946,11 +3955,20 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         `, '#0EA5E9');
 
         if (unsubscribeQuestions) { unsubscribeQuestions(); unsubscribeQuestions = null; }
-        unsubscribeQuestions = onSnapshot(query(collection(db, 'medical_questions'), where('status', 'in', ['open', 'answered'])), (snapshot) => {
+        
+        // 1. حساب تاريخ قبل 7 أيام
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weekAgoISO = weekAgo.toISOString();
+
+        // 2. جلب الأسئلة التي حالتها مفتوحة أو مجاب عنها، وتاريخها أكبر من قبل أسبوع فقط
+        const q = query(collection(db, 'medical_questions'), where('status', 'in', ['open', 'answered']), where('createdAt', '>=', weekAgoISO));
+        
+        getDocs(q).then((snapshot) => {
             allQuestions = [];
             snapshot.forEach(doc => allQuestions.push({ id: doc.id, ...doc.data() }));
             renderQAList();
-        });
+        }).catch(err => console.error("Error fetching questions:", err));
     }
 
     function renderQAList() {
@@ -4326,7 +4344,8 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         renderAdSlide(currentAdIndex);
     }
 
-    onSnapshot(query(collection(db, 'homepage_ads'), where('isActive', '==', true)), (snapshot) => {
+    // === سلايدر الإعلانات (تحويل إلى getDocs) ===
+    getDocs(query(collection(db, 'homepage_ads'), where('isActive', '==', true))).then((snapshot) => {
         const section = document.getElementById('homeMediaAdsSection');
         activeAds = [];
         snapshot.forEach(doc => activeAds.push({ id: doc.id, ...doc.data() }));
