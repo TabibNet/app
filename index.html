@@ -2342,24 +2342,23 @@ let currentFollowupBookingId = null;
             </div>
         `, '#4F46E5');
 
-        if (unsubscribeRadar) unsubscribeRadar();
-        if (unsubscribeRadarSettings) unsubscribeRadarSettings();
-
-        unsubscribeRadarSettings = onSnapshot(doc(db, 'radar_settings', 'config'), (docSnap) => {
+         // 1. جلب إعدادات الرادار مرة واحدة (getDocs/getDoc)
+        getDoc(doc(db, 'radar_settings', 'config')).then((docSnap) => {
             if (docSnap.exists()) {
                 radarSettings = docSnap.data();
                 currentRadarTab = radarSettings.defaultSeason || 'summer';
-                switchRadarTab(currentRadarTab);
+                switchRadarTab(currentRadarTab); // هذه الدالة ستستدعي renderRadarCards
             } else {
                 setDoc(doc(db, 'radar_settings', 'config'), { defaultSeason: 'summer', lastReset: 0 });
             }
         });
 
-        unsubscribeRadar = onSnapshot(collection(db, 'disease_reports'), (snapshot) => {
+        // 2. جلب تقارير الحالات مرة واحدة (getDocs)
+        getDocs(collection(db, 'disease_reports')).then((snapshot) => {
             latestRadarReports = [];
             snapshot.forEach(d => latestRadarReports.push({ id: d.id, ...d.data() }));
             renderRadarCards();
-        });
+        }).catch(err => console.error("Error fetching radar reports:", err));
     };
 
     window.switchRadarTab = (season) => {
