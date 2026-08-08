@@ -1,4 +1,4 @@
-const CACHE_NAME = 'raheba-med-v9'; // تم تغيير الرقم إلى v7 لإجبار الهاتف على مسح كل الصفحات القديمة
+const CACHE_NAME = 'raheba-med-v10'; // تم تغيير الرقم إلى v7 لإجبار الهاتف على مسح كل الصفحات القديمة
 const CORE_ASSETS = [
   './',
   './index.html',
