@@ -733,16 +733,6 @@
             <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
         </span>
     </div>
-        <!-- شارة المتصلين الآن -->
-    <div class="stat-pill-pro" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4);">
-        <i class="fas fa-signal" style="color: #10B981; font-size: 12px;"></i>
-        <span style="color: rgba(255, 255, 255, 0.8); font-weight: 500;">متصل الآن:</span>
-        <span id="activeUsersCount" style="color: #fff; font-weight: 800;">0</span>
-        <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-        </span>
-    </div>
 </a>
                 <div class="hidden lg:flex items-center gap-6">
                     <a href="#home" class="text-white/80 hover:text-white text-sm transition-colors no-underline">الرئيسية</a>
@@ -2821,55 +2811,7 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
 
                 // تشغيل عداد الزوار عند فتح الموقع
         trackAndDisplayVisitors();
-        // تشغيل تتبع المتصلين الآن
-        trackActiveUsers();
     });
-
-    // === دالة تتبع المستخدمين المتصلين الآن (Active Users) ===
-    async function trackActiveUsers() {
-        const sessionId = sessionStorage.getItem('sessionId') || Math.random().toString(36).substring(2, 15);
-        sessionStorage.setItem('sessionId', sessionId);
-        
-        const userStatusRef = doc(db, 'active_users', sessionId);
-
-        // 1. تحديث وقت آخر نشاط للمستخدم كل 15 ثانية
-        const updateHeartbeat = async () => {
-            try {
-                await setDoc(userStatusRef, { lastSeen: new Date().toISOString() }, { merge: true });
-            } catch (e) { console.error("Error updating heartbeat:", e); }
-        };
-
-        // تشغيل التحديث فوراً ثم كل 15 ثانية
-        await updateHeartbeat();
-        setInterval(updateHeartbeat, 15000);
-
-        // 2. الاستماع للمستخدمين النشطين (آخر دقيقة واحدة)
-        const oneMinuteAgo = new Date();
-        oneMinuteAgo.setSeconds(oneMinuteAgo.getSeconds() - 60);
-        const oneMinuteAgoISO = oneMinuteAgo.toISOString();
-
-        const q = query(collection(db, 'active_users'), where('lastSeen', '>=', oneMinuteAgoISO));
-        
-        onSnapshot(q, (snapshot) => {
-            const realActiveCount = snapshot.size;
-            
-            // إضافة عدد زوار وهمي (بين 2 و 4) لإظهار نشاط الموقع
-            const fakeUsers = Math.floor(Math.random() * 3) + 2; 
-            const displayCount = realActiveCount + fakeUsers;
-            
-            const activeEl = document.getElementById('activeUsersCount');
-            if (activeEl) {
-                activeEl.textContent = displayCount;
-            }
-        });
-
-        // 3. تنظيف قاعدة البيانات عند مغادرة المستخدم للموقع
-        window.addEventListener('beforeunload', async () => {
-            try {
-                await deleteDoc(userStatusRef);
-            } catch (e) { /* تجاهل الخطأ */ }
-        });
-    }
 
     function updateStats() {
         document.getElementById('stat-hospital').textContent = allData.filter(d => d.type === 'hospital').length;
