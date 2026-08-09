@@ -33,6 +33,17 @@
     <meta property="og:url" content="https://tabibnet.github.io/" />
     <meta property="og:site_name" content="دليل الطبي" />
     <meta name="google-site-verification" content="xgV2Ga-CojV2Rw9acgS3hBPa_gAkuPtdbatttCT_LVY" />
+    <!-- OneSignal SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" async></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(function(OneSignal) {
+    OneSignal.init({
+      appId: "2e008b4d-0516-4b06-96b1-8a522e0c1587",
+      allowLocalhostAsSecureOrigin: true,
+    });
+  });
+</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
@@ -970,6 +981,7 @@
                     <button onclick="toggleMobileMenu(); openDoctorLogin()" class="w-full text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-user-md w-5" style="color:var(--gold)"></i> لوحة الطبيب</button>
                     <button onclick="toggleMobileMenu(); openAdminLogin()" class="w-full text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-cogs w-5 text-gray-300"></i> لوحة الإدارة</button>
                     <button onclick="toggleMobileMenu(); openPharmacyLogin()" class="w-full text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-prescription-bottle-medical w-5 text-green-300"></i> لوحة الصيدلية</button>
+                    <button onclick="toggleMobileMenu(); setupOneSignal()" class="w-full text-right text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-bell w-5" style="color:#F59E0B"></i>تفعيل إشعارات </button>
                 </div>
             </div>
         </div>
@@ -1372,7 +1384,46 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const IMGBB_API_KEY = "8a92929a2c1c90634ffc7ba88f2d481d"; 
+        // === نظام إشعارات OneSignal ===
+    window.setupOneSignal = async () => {
+        if (!window.OneSignalDeferred) { showToast("نظام الإشعارات لم يكتمل تحميله بعد"); return; }
+        
+        OneSignalDeferred.push(async function(OneSignal) {
+            try {
+                if (!OneSignal.Notifications.permission) {
+                    const granted = await OneSignal.Notifications.requestPermission();
+                    if (!granted) { showToast("تم رفض الإشعارات"); return; }
+                }
 
+                OneSignal.User.PushSubscription.addEventListener('change', async (event) => {
+                    const playerId = event.current.id;
+                    if (playerId) {
+                        try {
+                            await setDoc(doc(db, 'onesignal_users', playerId), { 
+                                playerId: playerId, 
+                                createdAt: new Date().toISOString() 
+                            });
+                            showToast('تم تفعيل إشعارات الخلفية بنجاح! 🔔');
+                        } catch (e) { 
+                            showToast('تم التفعيل ولكن حدث خطأ في حفظ الجهاز'); 
+                        }
+                    }
+                });
+
+                if (OneSignal.User.PushSubscription.optedIn) {
+                    const id = OneSignal.User.PushSubscription.id;
+                    if (id) {
+                       await setDoc(doc(db, 'onesignal_users', id), { playerId: id, createdAt: new Date().toISOString() });
+                       showToast('الإشعارات مفعلة مسبقاً');
+                    }
+                }
+            } catch (err) {
+                console.error("OneSignal Error:", err);
+                showToast("حدث خطأ في تفعيل الإشعارات");
+            }
+        });
+    };
+    
         const seedData = [];
 
 
@@ -3465,10 +3516,32 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${doc.isOpen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${doc.isOpen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${doc.isOpen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض (QR)</button><button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
     }
         
-    window.acceptBooking = async (bookingId) => { 
+        window.acceptBooking = async (bookingId) => { 
         const timeInput = document.getElementById(`time_${bookingId}`); const time = timeInput.value.trim(); 
         if (!time) { showToast('أدخل وقت الموعد'); return; } const booking = bookings.find(b => b.id === bookingId); if (!booking) return; 
-        try { const docRef = doc(db, 'bookings', bookingId); const currentChat = booking.chat || []; currentChat.push({ sender: 'doctor', text: `تم تثبيت موعدك اليوم الساعة ${time}. نرحب بك في العيادة.`, timestamp: new Date().toISOString() }); await updateDoc(docRef, { status: 'accepted', time: time, chat: currentChat }); showToast('تم قبول الموعد وإرسال رسالة للمريض في الشات'); } catch (e) { showToast('خطأ'); } 
+        try { 
+            const docRef = doc(db, 'bookings', bookingId); const currentChat = booking.chat || []; 
+            currentChat.push({ sender: 'doctor', text: `تم تثبيت موعدك اليوم الساعة ${time}. نرحب بك في العيادة.`, timestamp: new Date().toISOString() }); 
+            await updateDoc(docRef, { status: 'accepted', time: time, chat: currentChat }); 
+            
+            // === إرسال إشعار OneSignal للمريض ===
+            const usersSnap = await getDocs(collection(db, 'onesignal_users'));
+            const playerIds = [];
+            usersSnap.forEach(d => playerIds.push(d.data().playerId));
+            
+            if (playerIds.length > 0) {
+                fetch('https://script.google.com/macros/s/AKfycbwuYCdljTk-nX_bSXEBC5ku_nHKH_RUC3fETlIsunWjGmzVv98KRsbSiJyVyiLynhDhAQ/exec', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        playerId: playerIds[0], 
+                        title: "تم تأكيد موعدك! 🗓️",
+                        message: `تم قبول حجزك في ${booking.itemName}. الموعد: ${time}`
+                    })
+                }).catch(err => console.log("Notification error:", err));
+            }
+            
+            showToast('تم قبول الموعد وإرسال إشعار للمريض'); 
+        } catch (e) { showToast('خطأ'); } 
     }
     window.updateBookingStatus = async (bookingId, newStatus) => { 
         const booking = bookings.find(b => b.id === bookingId); if (!booking) return; 
