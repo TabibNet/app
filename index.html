@@ -1384,17 +1384,35 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const IMGBB_API_KEY = "8a92929a2c1c90634ffc7ba88f2d481d"; 
-            // === نظام إشعارات OneSignal ===
-    window.setupOneSignal = async () => {
-        if (!window.OneSignalDeferred) { showToast("نظام الإشعارات لم يكتمل تحميله بعد"); return; }
+                window.setupOneSignal = async () => {
+        if (!window.OneSignalDeferred) { 
+            showToast("نظام الإشعارات لم يكتمل تحميله بعد، يرجى المحاولة بعد ثوانٍ"); 
+            return; 
+        }
         
         OneSignalDeferred.push(async function(OneSignal) {
             try {
-                if (!OneSignal.Notifications.permission) {
-                    const granted = await OneSignal.Notifications.requestPermission();
-                    if (!granted) { showToast("تم رفض الإشعارات"); return; }
+                // 1. التحقق مما إذا كان المتصفح قد حظر الإشعارات مسبقاً
+                if (OneSignal.Notifications.permission === 'denied') {
+                    showToast("الإشعارات محظورة من إعدادات المتصفح! يرجى السماح لها يدوياً من أيقونة القفل 🔒 بجانب الرابط ثم تحديث الصفحة.");
+                    return;
                 }
 
+                // 2. طلب الإذن إذا لم يكن قد طُلب بعد
+                if (OneSignal.Notifications.permission !== 'granted') {
+                    const granted = await OneSignal.Notifications.requestPermission();
+                    if (!granted) { 
+                        showToast("تم رفض الإشعارات. لن نتمكن من إرسال التذكيرات لك."); 
+                        return; 
+                    }
+                }
+
+                // 3. تفعيل الاشتراك فعلياً في OneSignal (هذا السطر كان ناقصاً)
+                if (!OneSignal.User.PushSubscription.optedIn) {
+                    await OneSignal.User.PushSubscription.optIn();
+                }
+
+                // 4. الاستماع لتغيير حالة الاشتراك لحفظ الـ ID في قاعدة البيانات
                 OneSignal.User.PushSubscription.addEventListener('change', async (event) => {
                     const playerId = event.current.id;
                     if (playerId) {
@@ -1403,25 +1421,29 @@
                                 playerId: playerId, 
                                 createdAt: new Date().toISOString() 
                             });
-                            localStorage.setItem('onesignal_player_id', playerId); // <--- تم إضافة هذا السطر
+                            localStorage.setItem('onesignal_player_id', playerId);
                             showToast('تم تفعيل إشعارات الخلفية بنجاح! 🔔');
                         } catch (e) { 
-                            showToast('تم التفعيل ولكن حدث خطأ في حفظ الجهاز'); 
+                            console.error("DB Save Error:", e);
+                            showToast('تم التفعيل ولكن حدث خطأ في حفظ الجهاز بقاعدة البيانات'); 
                         }
                     }
                 });
 
+                // 5. إذا كان مفعلاً مسبقاً
                 if (OneSignal.User.PushSubscription.optedIn) {
                     const id = OneSignal.User.PushSubscription.id;
                     if (id) {
                        await setDoc(doc(db, 'onesignal_users', id), { playerId: id, createdAt: new Date().toISOString() });
-                       localStorage.setItem('onesignal_player_id', id); // <--- تم إضافة هذا السطر
-                       showToast('الإشعارات مفعلة مسبقاً');
+                       localStorage.setItem('onesignal_player_id', id);
+                       showToast('الإشعارات مفعلة مسبقاً ✅');
+                    } else {
+                       showToast('جاري تجهيز الإشعارات، يرجى إبقاء الصفحة مفتوحة...');
                     }
                 }
             } catch (err) {
                 console.error("OneSignal Error:", err);
-                showToast("حدث خطأ في تفعيل الإشعارات");
+                showToast("حدث خطأ غير متوقع في تفعيل الإشعارات");
             }
         });
     };
