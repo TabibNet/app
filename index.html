@@ -4321,31 +4321,45 @@ getDocs(collection(db, 'blood_requests')).then((snapshot) => {
         }
     };
             // === عدد زوار ومشاهدات الموقع ===
-    async function trackAndDisplayVisitors() {
+        async function trackAndDisplayVisitors() {
         const statsRef = doc(db, 'site_stats', 'visitor_metrics');
         const viewsRef = doc(db, 'site_stats', 'views_metrics');
-        try {
-            // 1. زيادة المشاهدات (Views) دائماً عند فتح أو تحديث الصفحة
-            await setDoc(viewsRef, { count: increment(1) }, { merge: true });
+        
+        // 1. عرض الأرقام المحفوظة محلياً فوراً (0 قراءة)
+        const cachedVisitors = localStorage.getItem('cached_visitors') || '0';
+        const cachedViews = localStorage.getItem('cached_views') || '0';
+        const lastFetch = parseInt(localStorage.getItem('stats_last_fetch') || '0');
+        const oneHour = 60 * 60 * 1000;
+        
+        animateCounter(parseInt(cachedVisitors), 'visitorCount');
+        animateCounter(parseInt(cachedViews), 'viewsCount');
 
-            // 2. زيادة عدد الزوار (Visitors) فقط في الجلسة الجديدة
+        try {
+            // 2. زيادة المشاهدات والزوار في قاعدة البيانات (Writes فقط)
+            await setDoc(viewsRef, { count: increment(1) }, { merge: true });
             const isNewSession = !sessionStorage.getItem('hasVisitedRaheba');
             if (isNewSession) {
                 await setDoc(statsRef, { count: increment(1) }, { merge: true });
                 sessionStorage.setItem('hasVisitedRaheba', 'true');
             }
 
-            // 3. جلب العددين وعرضهما
-            const [visSnap, viewsSnap] = await Promise.all([
-                getDoc(statsRef),
-                getDoc(viewsRef)
-            ]);
+            // 3. جلب الأرقام الحقيقية من Firebase مرة واحدة كل ساعة (1 قراءة)
+            if (Date.now() - lastFetch > oneHour) {
+                const [visSnap, viewsSnap] = await Promise.all([
+                    getDoc(statsRef),
+                    getDoc(viewsRef)
+                ]);
 
-            if (visSnap.exists()) {
-                animateCounter(visSnap.data().count || 0, 'visitorCount');
-            }
-            if (viewsSnap.exists()) {
-                animateCounter(viewsSnap.data().count || 0, 'viewsCount');
+                const realVisitors = visSnap.exists() ? visSnap.data().count || 0 : 0;
+                const realViews = viewsSnap.exists() ? viewsSnap.data().count || 0 : 0;
+
+                localStorage.setItem('cached_visitors', realVisitors.toString());
+                localStorage.setItem('cached_views', realViews.toString());
+                localStorage.setItem('stats_last_fetch', Date.now().toString());
+
+                // تحديث الشاشة بالأرقام الحقيقية
+                animateCounter(realVisitors, 'visitorCount');
+                animateCounter(realViews, 'viewsCount');
             }
         } catch (error) {
             console.error("Error tracking visitors:", error);
