@@ -1478,20 +1478,73 @@ let currentFollowupBookingId = null;
     function lockScroll() { scrollLockCount++; document.body.style.overflow = 'hidden'; }
     function unlockScroll() { scrollLockCount = Math.max(0, scrollLockCount - 1); if (scrollLockCount === 0) { document.body.style.overflow = ''; } }
 
-    const localFallbackTips = [
-        "احرص على شرب 8 أكواب من الماء يومياً للحفاظ على ترطيب الجسم.",
-        "تجنب شرب الشاي أو القهوة بعد الوجبات مباشرة.",
-        "المشي لمدة 30 دقيقة يومياً يقلل من خطر الإصابة بأمراض القلب.",
-        "لا تأخذ المضادات الحيوية دون وصفة طبية.",
-        "النوم لمدة 7-8 ساعات يومياً يعزز مناعة الجسم."
+        const localFallbackTips = [
+        "احرص على شرب 8 أكواب من الماء يومياً للحفاظ على ترطيب الجسم ووظائف الكلى.",
+        "تجنب شرب الشاي أو القهوة بعد الوجبات مباشرة لمنع تقليل امتصاص الحديد من الطعام.",
+        "المشي لمدة 30 دقيقة يومياً يقلل من خطر الإصابة بأمراض القلب والسكري.",
+        "لا تأخذ المضادات الحيوية دون وصفة طبية، فالاستهلاك الخاطئ يؤدي لمناعة البكتيريا.",
+        "النوم لمدة 7-8 ساعات يومياً يعزز مناعة الجسم ويحسن المزاج العام.",
+        "احرص على تناول وجبة الفطور، فهي أهم وجبة تمنحك الطاقة لبدء يومك.",
+        "غسل اليدين بالماء والصابون لمدة 20 ثانية هو أفضل طريقة لمنع انتشار العدوى.",
+        "الإكثار من تناول الخضروات والفواكه الطازجة يمد الجسم بالفيتامينات ومضادات الأكسدة.",
+        "تجنب استخدام الهاتف المحمول قبل النوم لتحسين جودة النوم.",
+        "الرضاعة الطبيعية لأول 6 أشهر توفر مناعة قوية للطفل.",
+        "الفحص الدوري لضغط الدم بعد سن الأربعين يقي من الجلطات والسكتات الدماغية.",
+        "الإقلاع عن التدخين يقلل خطر الإصابة بسرطان الرئة وأمراض القلب بشكل كبير.",
+        "الحفاظ على وزن صحي يحمي المفاصل والعمود الفقري من التآكل المبكر.",
+        "شرب الماء الدافئ بالليمون صباحاً يساعد في تنظيف الجهاز الهضمي وتنشيط الهضم.",
+        "الحصول على لقاح الإنفلونزا الموسمي يحمي من مضاعفات البرد الشديدة.",
+        "الابتعاد عن الأطعمة السريعة والمقليات يحافظ على صحة القلب والكبد.",
+        "المداومة على فحص الأسنان كل 6 أشهر يقي من تسوس الأسنان وأمراض اللثة.",
+        "تناول الأسماك الغنية بأوميغا 3 مرتين أسبوعياً يعزز صحة الدماغ والذاكرة.",
+        "التعامل مع الضغط النفسي عبر الرياضة أو التأمل يقي من الاكتئاب والقلق.",
+        "الابتعاد عن المشروبات الغازية لاحتوائها على نسب عالية من السكر والحمض.",
+        "ارتداء النظارات الشمسية يحمي العينين من الأشعة فوق البنفسجية الضارة.",
+        "تناول وجبات صغيرة ومتعددة أفضل من وجبات كبيرة وقليلة لتحسين الأيض.",
+        "المشي بعد تناول العشاء لمدة 15 دقيقة يساعد في خفض مستوى السكر في الدم.",
+        "غسل الخضار والفواكه جيداً قبل تناولها يقي من التسمم والعدوى المعوية.",
+        "النوم في غرفة مظلمة وهادئة يحفز إفراز الميلاتونين الضروري للنوم العميق.",
+        "الإقلال من الملح في الطعام يقي من ارتفاع ضغط الدم وأمراض الكلى.",
+        "التمدد واليوجا يقيان من آلام الظهر وتصلب العضلات.",
+        "استخدام واقي الشمس يومياً يحمي الجلد من التجاعيد المبكرة وسرطان الجلد.",
+        "الاطمئنان على سلامة الأطفال وإبعاد المواد الخطيرة والكيميائية عن متناولهم.",
+        "الاهتمام بالنظافة الشخصية كالاستحمام المنتظم وتقليم الأظافر يقي من الالتهابات.",
+        "الإكثار من تناول الألياف الموجودة في الشوفان والبقوليات يساعد على تحسين الهضم ومنع الإمساك.",
+        "الحفاظ على وضعية صحيحة أثناء الجلوس أمام الكمبيوتر يقي من آلام الرقبة والظهر المزمنة.",
+        "لحماية العينين من إجهاد الشاشات، اتبع قاعدة 20-20-20: كل 20 دقيقة، انظر لشيء على بعد 20 قدماً لمدة 20 ثانية.",
+        "احفظ الأدوية في مكان بارد وجاف بعيداً عن أشعة الشمس، ولا تتركها في خزنة السيارة أو الحمام.",
+        "تأكد دائماً من تاريخ انتهاء الأدوية قبل تناولها وتخلص من الأدوية المنتهية الصلاحية بشكل آمن.",
+        "عند السعال أو العطس، استخدم مرفقك أو منديلاً ورقياً بدلاً من يديك لمنع انتشار العدوى.",
+        "عند رفع الأشياء الثقيلة من الأرض، اثنِ ركبتيك وليس ظهرك لتجنب الإصابة بالفتق أو آلام الظهر.",
+        "تناول حفنة من المكسرات النيئة غير المملحة يومياً يوفر للجسم دهوناً صحية ويعزز صحة القلب.",
+        "استبدل الخبز الأبيض والأرز الأبيض بالخبز الأسمر والأرز البني للاستفادة من العناصر الغذائية الكاملة.",
+        "امضغ طعامك ببطء، فذلك يساعد على الشعور بالشبع ويحسن عملية الهضم.",
+        "ارتداء أحذية مريحة وطبية تناسب شكل القدم يقي من آلام المفاصل والظهر في المستقبل.",
+        "إجراء فحص دوري للعينين كل سنة أو سنتين يكشف مبكراً عن مشاكل كالزرق (الجلوكوما) والمياه البيضاء.",
+        "ممارسة تمارين التنفس العميق لبضع دقائق يومياً تقلل من التوتر وتحسن من تدفق الأكسجين للدم.",
+        "جهّز صندوق إسعافات أولية في منزلك وسيارتك يحتوي على الضمادات والمطهرات والأدوية الأساسية.",
+        "تأكد من طهي اللحوم والدواجن جيداً حتى النضج التام لتجنب التسمم الغذائي والبكتيريا الضارة.",
+        "تجنب رفع صوت السماعات (سماعات الأذن) لمستوى عالٍ، وحافظ على فترة راحة للأذنين حمايةً للسمع.",
+        "اشرب كوباً من الماء بمجرد الاستيقاظ من النوم لتنشيط الأعضاء الداخلية وتعويض السوائل المفقودة.",
+        "اعتد على قراءة الملصقات الغذائية عند التسوق للانتباه لكميات السكر والصوديوم والدهون المتحولة.",
+        "الحفاظ على تواصل اجتماعي مع الأصدقاء والعائلة يعزز الصحة النفسية ويقلل من خطر الاكتئاب.",
+        "خذ فترات راحة قصيرة للوقوف والتمدد كل ساعة أثناء العمل المكتبي لتنشيط الدورة الدموية.",
+        "اغسل أدوات المطبخ وألواح التقطيع جيداً بعد استخدامها للحم النيء لمنع التلوث المتبادل.",
+        "خصص يوماً في الأسبوع لتقليل استخدام الهاتف ووسائل التواصل الاجتماعي لتحسين التركيز والصحة النفسية.",
+        "اعتمد على الشواء أو السلق أو الطبخ بالفرن بدلاً من القلي لتقليل السعرات والدهون الضارة.",
+        "لا تتجاهل الصداع المتكرر أو المستمر، واستشر طبيبك لتحديد السبب الكامن وراءه.",
+        "احرص على تهوية المنزل جيداً وفتح النوافذ يومياً لتجديد الهواء وتقليل تركيز الميكروبات والغبار.",
+        "استخدم أطباقاً أصغر حجماً عند تناول الطعام، فهذه الحيلة البصرية تساعدك على تقليل كميات الطعام.",
+        "تناول البروتين (كالبيض أو الزبادي) في وجبة الفطور يقلل من الشعور بالجوع طوال اليوم.",
+        "الضحك يومياً يقلل من هرمونات التوتر (الكورتيزول) ويعزز مناعة الجسم بشكل طبيعي.",
+        "لا تشارك أدواتك الشخصية كالمناشف أو فرشاة الأسنان مع الآخرين لمنع انتقال الفيروسات والبكتيريا."
     ];
-
-    function updateTipDisplay() {
+            function updateTipDisplay() {
         const tipEl = document.getElementById('dailyTipText');
         if (!tipEl) return;
         
-        const tipsToUse = healthTips.length > 0 ? healthTips : localFallbackTips;
-        const tip = tipsToUse[Math.floor(Math.random() * tipsToUse.length)];
+        // اختيار نصيحة عشوائية مباشرة من المصفوفة المحلية
+        const tip = localFallbackTips[Math.floor(Math.random() * localFallbackTips.length)];
         
         tipEl.style.opacity = '0';
         setTimeout(() => {
@@ -2757,26 +2810,51 @@ window.undoRespond = () => {
                 
             });
 }
-        // Tips Listener
-        getDocs(collection(db, 'medical_tips')).then((snapshot) => {
-            healthTips = [];
-            snapshot.forEach(doc => healthTips.push(doc.data().text));
-            if (tipInterval) clearInterval(tipInterval);
-            updateTipDisplay();
-            tipInterval = setInterval(updateTipDisplay, 12000);
-        });
+                    // تشغيل عرض النصائح محلياً
+        if (tipInterval) clearInterval(tipInterval);
+        updateTipDisplay();
+        tipInterval = setInterval(updateTipDisplay, 12000);
         
-        // Listings (تحويل إلى getDocs)
+                        // === 1. قراءة البيانات المحفوظة مسبقاً (0 قراءة على Firebase) ===
+        const cachedData = localStorage.getItem('cached_listings');
+        const forceUpdate = localStorage.getItem('force_listings_update') === 'true';
+        
+        if (cachedData) {
+            allData = JSON.parse(cachedData);
+            // إذا لم يكن هناك إجبار على التحديث، نعرض البيانات القديمة فوراً
+            if (!forceUpdate) {
+                renderData(); 
+                updateStats();
+            }
+        }
+
+        // === 2. جلب البيانات الحديثة من Firebase في الخلفية ===
         getDocs(collection(db, 'listings')).then((snapshot) => { 
-            allData = []; 
-            snapshot.forEach(doc => { allData.push({ id: doc.id, ...doc.data() }); }); 
-            renderData(); updateStats(); 
-            const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || ''; 
-            if (ctrlTitle.includes('لوحة:')) { 
-                const docName = ctrlTitle.replace('لوحة: ', '').trim(); 
-                const docData = allData.find(d => d.name === docName); 
-                if (docData && docData.type === 'doctor') renderDoctorDashboard(docData); 
-            } 
+            let freshData = []; 
+            snapshot.forEach(doc => { freshData.push({ id: doc.id, ...doc.data() }); }); 
+            
+            // 3. تحديث الواجهة فقط إذا كانت البيانات قد تغيرت أو طُلب التحديث
+            if (JSON.stringify(freshData) !== JSON.stringify(allData) || forceUpdate) {
+                allData = freshData;
+                renderData(); 
+                updateStats();
+                
+                // 4. حفظ البيانات الجديدة ومسح علامة التحديث
+                try {
+                    localStorage.setItem('cached_listings', JSON.stringify(allData));
+                    localStorage.removeItem('force_listings_update');
+                } catch (e) {
+                    console.error("LocalStorage limit exceeded", e);
+                }
+                
+                // تحديث لوحة التحكم إذا كانت مفتوحة
+                const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || ''; 
+                if (ctrlTitle.includes('لوحة:')) { 
+                    const docName = ctrlTitle.replace('لوحة: ', '').trim(); 
+                    const docData = allData.find(d => d.name === docName); 
+                    if (docData && docData.type === 'doctor') renderDoctorDashboard(docData); 
+                } 
+            }
         });
                             onSnapshot(collection(db, 'bookings'), (snapshot) => { 
     bookings = []; 
@@ -2795,14 +2873,13 @@ window.undoRespond = () => {
     } 
 });
 
-// === استغاثات الدم ===
-onSnapshot(collection(db, 'blood_requests'), (snapshot) => { 
+             // === استغاثات الدم (تحويل إلى getDocs لتقليل الاستهلاك) ===
+getDocs(collection(db, 'blood_requests')).then((snapshot) => { 
     bloodRequests = []; 
-    const twentyHoursAgo = Date.now() - (20 * 60 * 60 * 1000); // 20 ساعة بالميلي ثانية
+    const twentyHoursAgo = Date.now() - (20 * 60 * 60 * 1000); 
     snapshot.forEach(doc => { 
         const data = doc.data();
         const createdTime = data.createdAt?.seconds ? data.createdAt.seconds * 1000 : new Date(data.createdAt).getTime();
-        // إظهار الطلب فقط إذا لم يمضِ عليه 20 ساعة ولم تقم الإدارة بإنهائه
         if (createdTime > twentyHoursAgo && data.status !== 'resolved') {
             bloodRequests.push({ id: doc.id, ...data });
         }
@@ -3246,7 +3323,7 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         } catch (e) { showToast('خطأ في الحفظ'); } 
     }
 
-            window.openCtrlPanel = (title, contentHtml, headerColor = '#073D2E') => { 
+        window.openCtrlPanel = (title, contentHtml, headerColor = '#073D2E') => { 
         document.getElementById('ctrlTitle').textContent = title; 
         document.getElementById('ctrlContent').innerHTML = contentHtml; 
         const overlay = document.getElementById('ctrlOverlay');
@@ -3258,82 +3335,20 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         }
     }
 
-    window.closeCtrlPanel = (event) => { 
+   window.closeCtrlPanel = (event) => { 
         if (event && event.target.id !== 'ctrlOverlay') return; 
         document.getElementById('ctrlOverlay').classList.remove('active'); 
         unlockScroll(); 
         if (unsubscribeMedRequests) { unsubscribeMedRequests(); unsubscribeMedRequests = null; } 
+        // إيقاف الاستماع الحي للدردشة عند إغلاق النافذة
         if (activeFollowupUnsub) { activeFollowupUnsub(); activeFollowupUnsub = null; } 
+        currentFollowupBookingId = null;
     }
 
     window.openAdminLogin = () => { openCtrlPanel('لوحة الإدارة', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: var(--accent-light)"><i class="fas fa-user-shield text-2xl" style="color: var(--accent)"></i></div><h3 class="font-bold text-lg">دخول الإدارة</h3></div><form onsubmit="handleAdminLogin(event)" class="flex flex-col gap-4"><input type="password" id="adminPass" class="ctrl-input text-center" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--accent)">دخول</button></form></div>`, '#073D2E'); }
     window.handleAdminLogin = (e) => { e.preventDefault(); if (document.getElementById('adminPass').value === ADMIN_PASSWORD) renderAdminDashboard(); else { showToast('كلمة المرور خاطئة!'); document.getElementById('adminPass').value = ''; } }
     
-        window.seedMedicalTips = async () => {
-        const tips = [
-            "احرص على شرب 8 أكواب من الماء يومياً للحفاظ على ترطيب الجسم ووظائف الكلى.",
-            "تجنب شرب الشاي أو القهوة بعد الوجبات مباشرة لمنع تقليل امتصاص الحديد من الطعام.",
-            "المشي لمدة 30 دقيقة يومياً يقلل من خطر الإصابة بأمراض القلب والسكري.",
-            "لا تأخذ المضادات الحيوية دون وصفة طبية، فالاستهلاك الخاطئ يؤدي لمناعة البكتيريا.",
-            "النوم لمدة 7-8 ساعات يومياً يعزز مناعة الجسم ويحسن المزاج العام.",
-            "احرص على تناول وجبة الفطور، فهي أهم وجبة تمنحك الطاقة لبدء يومك.",
-            "غسل اليدين بالماء والصابون لمدة 20 ثانية هو أفضل طريقة لمنع انتشار العدوى.",
-            "الإكثار من تناول الخضروات والفواكه الطازجة يمد الجسم بالفيتامينات ومضادات الأكسدة.",
-            "تجنب استخدام الهاتف المحمول قبل النوم لتحسين جودة النوم.",
-            "الرضاعة الطبيعية لأول 6 أشهر توفر مناعة قوية للطفل.",
-            "الفحص الدوري لضغط الدم بعد سن الأربعين يقي من الجلطات والسكتات الدماغية.",
-            "الإقلاع عن التدخين يقلل خطر الإصابة بسرطان الرئة وأمراض القلب بشكل كبير.",
-            "الحفاظ على وزن صحي يحمي المفاصل والعمود الفقري من التآكل المبكر.",
-            "شرب الماء الدافئ بالليمون صباحاً يساعد في تنظيف الجهاز الهضمي وتنشيط الهضم.",
-            "الحصول على لقاح الإنفلونزا الموسمي يحمي من مضاعفات البرد الشديدة.",
-            "الابتعاد عن الأطعمة السريعة والمقليات يحافظ على صحة القلب والكبد.",
-            "المداومة على فحص الأسنان كل 6 أشهر يقي من تسوس الأسنان وأمراض اللثة.",
-            "تناول الأسماك الغنية بأوميغا 3 مرتين أسبوعياً يعزز صحة الدماغ والذاكرة.",
-            "التعامل مع الضغط النفسي عبر الرياضة أو التأمل يقي من الاكتئاب والقلق.",
-            "الابتعاد عن المشروبات الغازية لاحتوائها على نسب عالية من السكر والحمض.",
-            "ارتداء النظارات الشمسية يحمي العينين من الأشعة فوق البنفسجية الضارة.",
-            "تناول وجبات صغيرة ومتعددة أفضل من وجبات كبيرة وقليلة لتحسين الأيض.",
-            "المشي بعد تناول العشاء لمدة 15 دقيقة يساعد في خفض مستوى السكر في الدم.",
-            "غسل الخضار والفواكه جيداً قبل تناولها يقي من التسمم والعدوى المعوية.",
-            "النوم في غرفة مظلمة وهادئة يحفز إفراز الميلاتونين الضروري للنوم العميق.",
-            "الإقلال من الملح في الطعام يقي من ارتفاع ضغط الدم وأمراض الكلى.",
-            "التمدد واليوجا يقيان من آلام الظهر وتصلب العضلات.",
-            "استخدام واقي الشمس يومياً يحمي الجلد من التجاعيد المبكرة وسرطان الجلد.",
-            "الاطمئنان على سلامة الأطفال وإبعاد المواد الخطيرة والكيميائية عن متناولهم.",
-            "الاهتمام بالنظافة الشخصية كالاستحمام المنتظم وتقليم الأظافر يقي من الالتهابات.",
-            "الإكثار من تناول الألياف الموجودة في الشوفان والبقوليات يساعد على تحسين الهضم ومنع الإمساك.",
-            "الحفاظ على وضعية صحيحة أثناء الجلوس أمام الكمبيوتر يقي من آلام الرقبة والظهر المزمنة.",
-            "لحماية العينين من إجهاد الشاشات، اتبع قاعدة 20-20-20: كل 20 دقيقة، انظر لشيء على بعد 20 قدماً لمدة 20 ثانية.",
-            "احفظ الأدوية في مكان بارد وجاف بعيداً عن أشعة الشمس، ولا تتركها في خزنة السيارة أو الحمام.",
-            "تأكد دائماً من تاريخ انتهاء الأدوية قبل تناولها وتخلص من الأدوية المنتهية الصلاحية بشكل آمن.",
-            "عند السعال أو العطس، استخدم مرفقك أو منديلاً ورقياً بدلاً من يديك لمنع انتشار العدوى.",
-            "عند رفع الأشياء الثقيلة من الأرض، اثنِ ركبتيك وليس ظهرك لتجنب الإصابة بالفتق أو آلام الظهر.",
-            "تناول حفنة من المكسرات النيئة غير المملحة يومياً يوفر للجسم دهوناً صحية ويعزز صحة القلب.",
-            "استبدل الخبز الأبيض والأرز الأبيض بالخبز الأسمر والأرز البني للاستفادة من العناصر الغذائية الكاملة.",
-            "امضغ طعامك ببطء، فذلك يساعد على الشعور بالشبع ويحسن عملية الهضم.",
-            "ارتداء أحذية مريحة وطبية تناسب شكل القدم يقي من آلام المفاصل والظهر في المستقبل.",
-            "إجراء فحص دوري للعينين كل سنة أو سنتين يكشف مبكراً عن مشاكل كالزرق (الجلوكوما) والمياه البيضاء.",
-            "ممارسة تمارين التنفس العميق لبضع دقائق يومياً تقلل من التوتر وتحسن من تدفق الأكسجين للدم.",
-            "جهّز صندوق إسعافات أولية في منزلك وسيارتك يحتوي على الضمادات والمطهرات والأدوية الأساسية.",
-            "تأكد من طهي اللحوم والدواجن جيداً حتى النضج التام لتجنب التسمم الغذائي والبكتيريا الضارة.",
-            "تجنب رفع صوت السماعات (سماعات الأذن) لمستوى عالٍ، وحافظ على فترة راحة للأذنين حمايةً للسمع.",
-            "اشرب كوباً من الماء بمجرد الاستيقاظ من النوم لتنشيط الأعضاء الداخلية وتعويض السوائل المفقودة.",
-            "اعتد على قراءة الملصقات الغذائية عند التسوق للانتباه لكميات السكر والصوديوم والدهون المتحولة.",
-            "الحفاظ على تواصل اجتماعي مع الأصدقاء والعائلة يعزز الصحة النفسية ويقلل من خطر الاكتئاب.",
-            "خذ فترات راحة قصيرة للوقوف والتمدد كل ساعة أثناء العمل المكتبي لتنشيط الدورة الدموية.",
-            "اغسل أدوات المطبخ وألواح التقطيع جيداً بعد استخدامها للحم النيء لمنع التلوث المتبادل.",
-            "خصص يوماً في الأسبوع لتقليل استخدام الهاتف ووسائل التواصل الاجتماعي لتحسين التركيز والصحة النفسية.",
-            "اعتمد على الشواء أو السلق أو الطبخ بالفرن بدلاً من القلي لتقليل السعرات والدهون الضارة.",
-            "لا تتجاهل الصداع المتكرر أو المستمر، واستشر طبيبك لتحديد السبب الكامن وراءه.",
-            "احرص على تهوية المنزل جيداً وفتح النوافذ يومياً لتجديد الهواء وتقليل تركيز الميكروبات والغبار.",
-            "استخدم أطباقاً أصغر حجماً عند تناول الطعام، فهذه الحيلة البصرية تساعدك على تقليل كميات الطعام.",
-            "تناول البروتين (كالبيض أو الزبادي) في وجبة الفطور يقلل من الشعور بالجوع طوال اليوم.",
-            "الضحك يومياً يقلل من هرمونات التوتر (الكورتيزول) ويعزز مناعة الجسم بشكل طبيعي.",
-            "لا تشارك أدواتك الشخصية كالمناشف أو فرشاة الأسنان مع الآخرين لمنع انتقال الفيروسات والبكتيريا."
-        ];
-        try { for (const tip of tips) { await addDoc(collection(db, 'medical_tips'), { text: tip }); } showToast('تم إضافة 59 نصيحة طبية بنجاح!'); } catch (e) { showToast('خطأ في الترحيل'); }
-    }
-    
+
     // Dynamic Admin Form Fields
     window.updateAdminFormFields = (type) => {
         let html = '';
@@ -3443,7 +3458,7 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
 
         let bloodHtml = activeBloodRequests.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد استغاثات حالياً.</p>' : activeBloodRequests.map(b => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><span class="blood-type-badge text-sm py-1 px-3">${b.bloodType}</span><div><div class="text-sm font-semibold">${b.patientName} ${b.responsesCount > 0 ? '<span class="text-xs text-green-500">(مستجيب: '+b.responsesCount+')</span>' : ''}</div><div class="text-xs text-gray-500">${b.hospital}</div></div></div><button onclick="resolveBloodRequest('${b.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">إنهاء الطلب</button></div>`).join('');
         let medDonHtml = medicineDonations.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد أدوية مُتبرع بها حالياً.</p>' : medicineDonations.map(m => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><i class="fas fa-pills text-green-600"></i><div><div class="text-sm font-semibold">${m.medicineName} (${m.quantity})</div><div class="text-xs text-gray-500">ينتهي: ${m.expiryDate} | المتبرع: ${m.donorName}</div></div></div><button onclick="resolveMedicineDonation('${m.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">حذف/إنهاء</button></div>`).join('');
-                openCtrlPanel('لوحة الإدارة', `<div class="flex flex-col gap-6"> ${announcementsHtml} ${homeAdsHtml} ${radarAdminHtml} <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-tint text-red-600"></i> إدارة استغاثات الدم (${bloodRequests.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${bloodHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-hand-holding-medical text-green-600"></i> إدارة الأدوية الفائضة (${medicineDonations.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${medDonHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle ml-2" style="color: var(--accent)"></i> <span id="formTitle">إضافة منشأة</span></h4><form onsubmit="saveFacility(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="hidden" id="edit_id"><select id="new_type" class="ctrl-input text-sm" required onchange="updateAdminFormFields(this.value)"><option value="clinic">عيادة</option><option value="hospital">مشفى</option><option value="center">مركز</option><option value="lab">مخبر</option><option value="doctor">طبيب</option><option value="pharmacy">صيدلية</option></select><input type="text" id="new_name" class="ctrl-input text-sm" placeholder="الاسم" required><input type="text" id="new_specialty" class="ctrl-input text-sm" placeholder="التخصص الأساسي" required><input type="text" id="new_address" class="ctrl-input text-sm" placeholder="العنوان / الموقع" required><input type="text" id="new_phone" class="ctrl-input text-sm" placeholder="رقم الهاتف (اختياري)"><input type="text" id="new_hours" class="ctrl-input text-sm" placeholder="أوقات العمل"><input type="text" id="new_image_url" class="ctrl-input text-sm" placeholder="رابط الصورة (URL)"><textarea id="new_desc" class="ctrl-input text-sm col-span-2" placeholder="وصف عام" rows="2" required></textarea><div id="adminExtraFields" class="contents"></div><button type="submit" class="col-span-1 sm:col-span-2 py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--accent)"><i class="fas fa-save ml-1"></i> حفظ</button></form></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list ml-2"></i> المنشآت (${allData.length})</h4><div class="flex flex-col gap-2 max-h-96 overflow-y-auto">${listHtml}</div></div> <button onclick="seedDatabase()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: var(--gold); color: var(--gold)"><i class="fas fa-database ml-2"></i> ترحيل البيانات الافتراضية</button> <button onclick="seedMedicalTips()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: #EC4899; color: #EC4899"><i class="fas fa-lightbulb ml-2"></i> ترحيل 30 نصيحة طبية للفايربايس</button> </div>`, '#073D2E'); 
+                openCtrlPanel('لوحة الإدارة', `<div class="flex flex-col gap-6"> ${announcementsHtml} ${homeAdsHtml} ${radarAdminHtml} <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-tint text-red-600"></i> إدارة استغاثات الدم (${bloodRequests.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${bloodHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-hand-holding-medical text-green-600"></i> إدارة الأدوية الفائضة (${medicineDonations.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${medDonHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle ml-2" style="color: var(--accent)"></i> <span id="formTitle">إضافة منشأة</span></h4><form onsubmit="saveFacility(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="hidden" id="edit_id"><select id="new_type" class="ctrl-input text-sm" required onchange="updateAdminFormFields(this.value)"><option value="clinic">عيادة</option><option value="hospital">مشفى</option><option value="center">مركز</option><option value="lab">مخبر</option><option value="doctor">طبيب</option><option value="pharmacy">صيدلية</option></select><input type="text" id="new_name" class="ctrl-input text-sm" placeholder="الاسم" required><input type="text" id="new_specialty" class="ctrl-input text-sm" placeholder="التخصص الأساسي" required><input type="text" id="new_address" class="ctrl-input text-sm" placeholder="العنوان / الموقع" required><input type="text" id="new_phone" class="ctrl-input text-sm" placeholder="رقم الهاتف (اختياري)"><input type="text" id="new_hours" class="ctrl-input text-sm" placeholder="أوقات العمل"><input type="text" id="new_image_url" class="ctrl-input text-sm" placeholder="رابط الصورة (URL)"><textarea id="new_desc" class="ctrl-input text-sm col-span-2" placeholder="وصف عام" rows="2" required></textarea><div id="adminExtraFields" class="contents"></div><button type="submit" class="col-span-1 sm:col-span-2 py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--accent)"><i class="fas fa-save ml-1"></i> حفظ</button></form></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list ml-2"></i> المنشآت (${allData.length})</h4><div class="flex flex-col gap-2 max-h-96 overflow-y-auto">${listHtml}</div></div> <button onclick="seedDatabase()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: var(--gold); color: var(--gold)"><i class="fas fa-database ml-2"></i> ترحيل البيانات الافتراضية</button> </div>`, '#073D2E'); 
 
         renderAdminAnnouncements();
         fetchHomeAdsForAdmin();
@@ -3487,7 +3502,17 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         document.getElementById('new_image_url').value = item.image || ''; document.getElementById('formTitle').textContent = `تعديل: ${item.name}`; window.scrollTo({ top: 0, behavior: 'smooth' }); 
                 if(document.getElementById('new_latlng')) document.getElementById('new_latlng').value = item.latLng || '';
     }
-    window.deleteFacility = async (id) => { if (!confirm("متأكد من الحذف؟")) return; try { await deleteDoc(doc(db, 'listings', id)); showToast('تم الحذف'); renderAdminDashboard(); } catch (e) { showToast('خطأ'); } }
+    window.deleteFacility = async (id) => { 
+        if (!confirm("متأكد من الحذف؟")) return; 
+        try { 
+            await deleteDoc(doc(db, 'listings', id)); 
+            
+            // إجبار المتصفح على تحديث الكاش في المرة القادمة
+            localStorage.setItem('force_listings_update', 'true');
+            
+            showToast('تم الحذف'); renderAdminDashboard(); 
+        } catch (e) { showToast('خطأ'); } 
+    }
     window.saveFacility = async (e) => { 
         e.preventDefault(); 
         const id = document.getElementById('edit_id').value; const type = document.getElementById('new_type').value; const name = document.getElementById('new_name').value; const specialty = document.getElementById('new_specialty').value; const address = document.getElementById('new_address').value; const phone = document.getElementById('new_phone').value; const hours = document.getElementById('new_hours').value; const desc = document.getElementById('new_desc').value; const imgURL = document.getElementById('new_image_url').value.trim(); 
@@ -3523,16 +3548,27 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
             data.homeSample = document.getElementById('new_home_sample')?.value || 'لا';
         } 
         
-        try { 
+                try { 
             if (id) { await updateDoc(doc(db, 'listings', id), data); showToast('تم التعديل!'); } 
             else { if (!data.image) data.image = `https://picsum.photos/seed/new${Date.now()}/400/250`; await addDoc(collection(db, 'listings'), data); showToast('تمت الإضافة!'); } 
+            
+            // إجبار المتصفح على تحديث الكاش في المرة القادمة
+            localStorage.setItem('force_listings_update', 'true');
+            
             document.querySelector('form').reset(); document.getElementById('edit_id').value = ''; document.getElementById('formTitle').textContent = 'إضافة منشأة'; renderAdminDashboard(); 
-        } catch (err) { showToast('خطأ في الحفظ'); } 
-    }
+        } catch (err) { showToast('خطأ في الحفظ'); }
 
     window.openDoctorLogin = () => { openCtrlPanel('لوحة الطبيب', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: #DBEAFE"><i class="fas fa-user-md text-2xl" style="color: var(--doctor)"></i></div><h3 class="font-bold text-lg">دخول الطبيب</h3></div><form onsubmit="handleDoctorLogin(event)" class="flex flex-col gap-4"><input type="text" id="docName" class="ctrl-input text-center" placeholder="الاسم" required><input type="text" id="docPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--doctor)">دخول</button></form></div>`, '#2563EB'); }
     window.handleDoctorLogin = (e) => { e.preventDefault(); const name = document.getElementById('docName').value.trim(); const pass = document.getElementById('docPass').value.trim().toUpperCase(); const docData = allData.find(d => d.name === name && d.bookingPass === pass); if (docData) { renderDoctorDashboard(docData); } else { showToast('بيانات غير صحيحة!'); } }
-            window.renderDoctorDashboard = (doc) => { 
+    window.renderDoctorDashboard = (doc) => { 
+        // جلب أحدث الحجوزات من Firebase لضمان رؤية الطبيب للطلبات الجديدة (1 قراءة)
+        getDocs(collection(db, 'bookings')).then((snapshot) => {
+            bookings = [];
+            snapshot.forEach(d => bookings.push({ id: d.id, ...d.data() }));
+            
+            // الآن نعرض اللوحة بالبيانات المحدثة
+        const docBookings = bookings.filter(b => b.itemId === doc.id); 
+        const daysCheckboxes = daysOfWeek.map(day => `<label class="flex items-center gap-2"><input type="checkbox" name="docWorkingDays" value="${day}" class="day-checkbox" ${doc.workingDays?.includes(day) ? 'checked' : ''}><span class="text-sm">${day}</span></label>`).join(''); 
         const docBookings = bookings.filter(b => b.itemId === doc.id); 
         const daysCheckboxes = daysOfWeek.map(day => `<label class="flex items-center gap-2"><input type="checkbox" name="docWorkingDays" value="${day}" class="day-checkbox" ${doc.workingDays?.includes(day) ? 'checked' : ''}><span class="text-sm">${day}</span></label>`).join(''); 
         const bookingsListHtml = docBookings.length === 0 ? '<p class="text-sm text-center py-4" style="color: var(--muted)">لا توجد طلبات.</p>' : docBookings.map(b => { 
@@ -3828,8 +3864,25 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
     window.openBookingFollowup = (bookingId) => {
         currentFollowupBookingId = bookingId;
         openCtrlPanel('متابعة الحجز والدردشة', `<div id="followupContent" class="flex flex-col gap-4"><p class="text-center py-8 text-gray-400">جاري تحميل بيانات الحجز...</p></div>`, '#0E7C5F');
-        renderFollowupChat(bookingId);
-    }
+        
+        // تفعيل الاستماع الحي (onSnapshot) لمستند الحجز المحدد فقط
+        if (activeFollowupUnsub) activeFollowupUnsub(); // إيقاف أي استماع سابق
+        activeFollowupUnsub = onSnapshot(doc(db, 'bookings', bookingId), (docSnap) => {
+            if (docSnap.exists()) {
+                // تحديث بيانات هذا الحجز في المصفوفة المحلية
+                const index = bookings.findIndex(b => b.id === bookingId);
+                if (index !== -1) {
+                    bookings[index] = { id: docSnap.id, ...docSnap.data() };
+                } else {
+                    bookings.push({ id: docSnap.id, ...docSnap.data() });
+                }
+                renderFollowupChat(bookingId);
+            } else {
+                showToast("لم يتم العثور على الحجز.");
+                closeCtrlPanel();
+            }
+        });
+    } 
     window.renderFollowupChat = (bookingId) => {
         const booking = bookings.find(b => b.id === bookingId); const contentEl = document.getElementById('followupContent'); if (!contentEl) return;
         if (!booking) { contentEl.innerHTML = '<p class="text-center py-8 text-red-500">لم يتم العثور على الحجز.</p>'; return; }
@@ -4319,10 +4372,14 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
             el.innerText = current.toLocaleString('ar-EG');
         }, stepTime);
     }
-                        // === تبديل حالة المنشأة (مفتوح/مغلق/لا شيء) ===
-    window.setStatus = async (id, status) => {
+                   //المسؤولة عن تغيير حالة المفتوح/المغلق للطبيب والصيدلية//
+      window.setStatus = async (id, status) => {
         try {
             await updateDoc(doc(db, 'listings', id), { isOpen: status });
+            
+            // إجبار المتصفح على تحديث الكاش في المرة القادمة
+            localStorage.setItem('force_listings_update', 'true');
+            
             let msg = status === true ? 'تم تغيير الحالة إلى: مفتوح الآن' : status === false ? 'تم تغيير الحالة إلى: مغلق' : 'تم تعيين الحالة إلى: لا شيء (غير محدد)';
             showToast(msg);
         } catch (e) { showToast('حدث خطأ أثناء تحديث الحالة'); }
@@ -4449,24 +4506,63 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
         renderAdSlide(currentAdIndex);
     }
 
-    // === سلايدر الإعلانات (تحويل إلى getDocs) ===
-    getDocs(query(collection(db, 'homepage_ads'), where('isActive', '==', true))).then((snapshot) => {
-        const section = document.getElementById('homeMediaAdsSection');
-        activeAds = [];
-        snapshot.forEach(doc => activeAds.push({ id: doc.id, ...doc.data() }));
-        
-        if (activeAds.length === 0) {
-            section.classList.add('hidden');
-            if (adInterval) clearInterval(adInterval);
-        } else {
-            section.classList.remove('hidden');
-            currentAdIndex = 0;
-            renderAdSlide(currentAdIndex);
+                  // === 1. عرض الإعلانات المحفوظة محلياً فوراً (0 قراءة) ===
+        const cachedAds = localStorage.getItem('cached_home_ads');
+        if (cachedAds) {
+            activeAds = JSON.parse(cachedAds);
+            const section = document.getElementById('homeMediaAdsSection');
+            if (activeAds.length === 0) {
+                section.classList.add('hidden');
+            } else {
+                section.classList.remove('hidden');
+                currentAdIndex = 0;
+                renderAdSlide(currentAdIndex);
+            }
         }
-        
-        const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
-        if (ctrlTitle === 'لوحة الإدارة') fetchHomeAdsForAdmin();
-    });
+
+        // === 2. التحقق من رقم الإصدار من Firebase (1 قراءة فقط) ===
+        const adsConfigRef = doc(db, 'app_config', 'ads_sync');
+        getDoc(adsConfigRef).then(async (docSnap) => {
+            let serverTime = 0;
+            
+            if (!docSnap.exists()) {
+                // إنشاء مستند الإصدار لأول مرة
+                await setDoc(adsConfigRef, { lastUpdate: Date.now() });
+                serverTime = Date.now();
+            } else {
+                serverTime = docSnap.data().lastUpdate;
+            }
+
+            const localTime = parseInt(localStorage.getItem('ads_last_fetch') || '0');
+
+            // === 3. إذا تم تعديل الإعلان من لوحة الإدارة، نقوم بجلب الإعلانات الجديدة ===
+            if (serverTime > localTime) {
+                const adsQuery = query(collection(db, 'homepage_ads'), where('isActive', '==', true), limit(5));
+                const snapshot = await getDocs(adsQuery);
+                
+                activeAds = [];
+                snapshot.forEach(d => activeAds.push({ id: d.id, ...d.data() }));
+                
+                const section = document.getElementById('homeMediaAdsSection');
+                if (activeAds.length === 0) {
+                    section.classList.add('hidden');
+                    if (adInterval) clearInterval(adInterval);
+                } else {
+                    section.classList.remove('hidden');
+                    currentAdIndex = 0;
+                    renderAdSlide(currentAdIndex);
+                }
+
+                // حفظ الإعلانات الجديدة محلياً وتحديث وقت الحفظ
+                try {
+                    localStorage.setItem('cached_home_ads', JSON.stringify(activeAds));
+                    localStorage.setItem('ads_last_fetch', serverTime.toString());
+                } catch(e) {}
+            }
+            
+            const ctrlTitle = document.getElementById('ctrlTitle')?.textContent || '';
+            if (ctrlTitle === 'لوحة الإدارة') fetchHomeAdsForAdmin();
+        });
 
     let allHomeAds = [];
     async function fetchHomeAdsForAdmin() {
@@ -4515,6 +4611,8 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
                 isActive: document.getElementById('adActiveCheck').checked, 
                 createdAt: new Date().toISOString()
             });
+            // تحديث وقت آخر تعديل ليعرف الموقع أنه يوجد إعلان جديد
+await setDoc(doc(db, 'app_config', 'ads_sync'), { lastUpdate: Date.now() });
             showToast('تم حفظ الإعلان بنجاح!');
             e.target.reset();
             fetchHomeAdsForAdmin();
@@ -4524,6 +4622,8 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
     window.toggleHomeAdStatus = async (id, status) => {
         try {
             await updateDoc(doc(db, 'homepage_ads', id), { isActive: status });
+            // تحديث وقت آخر تعديل ليعرف الموقع أنه يوجد إعلان جديد
+await setDoc(doc(db, 'app_config', 'ads_sync'), { lastUpdate: Date.now() });
             showToast('تم تحديث حالة الإعلان');
             fetchHomeAdsForAdmin();
         } catch (err) { showToast('خطأ في التحديث'); }
@@ -4532,6 +4632,8 @@ onSnapshot(collection(db, 'blood_requests'), (snapshot) => {
     window.deleteHomeAd = async (id) => {
         try {
             await deleteDoc(doc(db, 'homepage_ads', id));
+            // تحديث وقت آخر تعديل ليعرف الموقع أنه يوجد إعلان جديد
+await setDoc(doc(db, 'app_config', 'ads_sync'), { lastUpdate: Date.now() });
             showToast('تم حذف الإعلان');
             fetchHomeAdsForAdmin();
         } catch (err) { showToast('خطأ في الحذف'); }
