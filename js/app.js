@@ -580,7 +580,7 @@ window.openBookingFollowup = (bookingId) => {
     // محاكاة الاستماع الحي (تحديث كل 5 ثوانٍ)
     if (activeFollowupUnsub) clearInterval(activeFollowupUnsub);
     fetchFollowupChat(bookingId);
-    activeFollowupUnsub = setInterval(() => fetchFollowupChat(bookingId), 5000);
+    activeFollowupUnsub = setInterval(() => fetchFollowupChat(bookingId), 10000);
 }
 
 async function fetchFollowupChat(bookingId) {
@@ -730,7 +730,6 @@ window.openDoctorScanner = (docId) => {
         (errorMessage) => { }
     ).catch(err => { showToast("تعذر الوصول للكاميرا."); });
 }
-
 window.fetchPatientHealthFile = async (userId, doctorData) => {
     try {
         const { data: p, error } = await supabase.from('health_files').select('*').eq('id', userId).single();
@@ -746,18 +745,57 @@ window.fetchPatientHealthFile = async (userId, doctorData) => {
             }
         }
 
-        document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-file-medical ml-2" style="color: var(--doctor)"></i> الملف الصحي للمريض</h3><button onclick="closeModal()" class="text-2xl">&times;</button><button onclick="openPrescriptionModal('${userId}', '${p.full_name}')" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg"><i class="fas fa-file-prescription"></i> إنشاء روشتة</button></div><div class="flex flex-col gap-3"><div class="flex items-center gap-4 p-3 rounded-xl" style="background: #DBEAFE"><i class="fas fa-user-circle text-3xl" style="color: var(--doctor)"></i><div><h4 class="font-bold text-lg">${p.full_name}</h4><p class="text-sm text-gray-600">${p.age || '-'} سنة | ${p.gender || '-'}</p></div></div><div class="grid grid-cols-2 gap-3 text-sm"><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">فصيلة الدم</div><div class="font-bold text-red-600">${p.blood_type || 'غير محدد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">الوزن</div><div class="font-bold">${p.weight || '-'} كغ</div></div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأمراض المزمنة</div><div class="font-semibold">${p.diseases || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الحساسية</div><div class="font-semibold text-red-600">${p.allergies || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأدوية الحالية</div><div class="font-semibold">${p.medications || 'لا يوجد'}</div></div>${specializedRecordHtml}<div class="p-3 rounded-xl bg-green-50 border border-green-200"><div class="text-xs text-green-700 mb-1">جهة طوارئ</div><div class="font-semibold">${p.emergency_name || ''} - <span dir="ltr">${p.emergency_phone || ''}</span></div></div></div></div>`;
+        // تمرير بيانات الطبيب الكاملة للروشتة
+        const docInfo = {
+            name: doctorData?.name || 'طبيب',
+            specialty: doctorData?.specialty || 'طبيب عام',
+            id: doctorData?.id || 'unknown'
+        };
+
+        document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-file-medical ml-2" style="color: var(--doctor)"></i> الملف الصحي للمريض</h3><button onclick="closeModal()" class="text-2xl">&times;</button><button onclick='openPrescriptionModal("${userId}", "${p.full_name}", ${JSON.stringify(docInfo)})' class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg"><i class="fas fa-file-prescription"></i> إنشاء روشتة</button></div><div class="flex flex-col gap-3"><div class="flex items-center gap-4 p-3 rounded-xl" style="background: #DBEAFE"><i class="fas fa-user-circle text-3xl" style="color: var(--doctor)"></i><div><h4 class="font-bold text-lg">${p.full_name}</h4><p class="text-sm text-gray-600">${p.age || '-'} سنة | ${p.gender || '-'}</p></div></div><div class="grid grid-cols-2 gap-3 text-sm"><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">فصيلة الدم</div><div class="font-bold text-red-600">${p.blood_type || 'غير محدد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">الوزن</div><div class="font-bold">${p.weight || '-'} كغ</div></div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأمراض المزمنة</div><div class="font-semibold">${p.diseases || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الحساسية</div><div class="font-semibold text-red-600">${p.allergies || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأدوية الحالية</div><div class="font-semibold">${p.medications || 'لا يوجد'}</div></div>${specializedRecordHtml}<div class="p-3 rounded-xl bg-green-50 border border-green-200"><div class="text-xs text-green-700 mb-1">جهة طوارئ</div><div class="font-semibold">${p.emergency_name || ''} - <span dir="ltr">${p.emergency_phone || ''}</span></div></div></div></div>`;
         document.getElementById('modalOverlay').classList.add('active');
         lockScroll();
     } catch (e) { showToast("خطأ في قراءة الملف."); }
 }
 
-window.openPrescriptionModal = (patientId, patientName) => {
+window.openPrescriptionModal = (patientId, patientName, doctorInfo) => {
+    window.currentDoctorInfo = doctorInfo; // حفظ بيانات الطبيب للختم
     closeModal(); 
-    document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-file-prescription ml-2" style="color: var(--doctor)"></i> إنشاء روشتة طبية</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div><div class="bg-blue-50 p-3 rounded-xl mb-4 text-sm text-blue-800">المريض: <b>${patientName}</b></div><form onsubmit="generatePrescription(event, '${patientId}', '${patientName}')"><div id="medListContainer" class="flex flex-col gap-3 mb-4"><div class="bg-gray-50 p-3 rounded-xl border"><div class="grid grid-cols-1 sm:grid-cols-3 gap-2"><input type="text" required class="ctrl-input text-sm" placeholder="اسم الدواء" name="drugName[]"><input type="text" required class="ctrl-input text-sm" placeholder="الجرعة" name="dose[]"><input type="text" required class="ctrl-input text-sm" placeholder="التكرار" name="freq[]"></div></div></div><button type="button" onclick="addPrescriptionRow()" class="w-full py-2 mb-4 rounded-xl border-2 border-dashed text-sm font-semibold" style="border-color: var(--doctor); color: var(--doctor)"><i class="fas fa-plus"></i> إضافة دواء آخر</button><div class="mb-4"><label class="block text-sm font-semibold mb-2">ملاحظات الطبيب</label><textarea class="ctrl-input text-sm" rows="2" placeholder="مثال: يؤخذ بعد الأكل" name="rxNotes"></textarea></div><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--doctor)"><i class="fas fa-save"></i> حفظ الروشتة</button></form></div>`;
+    document.getElementById('modalContent').innerHTML = `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg"><i class="fas fa-file-prescription ml-2" style="color: var(--doctor)"></i> إنشاء روشتة طبية</h3>
+                <button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button>
+            </div>
+            <div class="bg-blue-50 p-3 rounded-xl mb-4 text-sm text-blue-800 flex items-center gap-2">
+                <i class="fas fa-user"></i> المريض: <b>${patientName}</b>
+            </div>
+            <form onsubmit="generatePrescription(event, '${patientId}', '${patientName}')">
+                <div id="medListContainer" class="flex flex-col gap-3 mb-4">
+                    <div class="bg-gray-50 p-3 rounded-xl border" style="border-color: var(--border)">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input type="text" required class="ctrl-input text-sm" placeholder="اسم الدواء" name="drugName[]">
+                            <input type="text" required class="ctrl-input text-sm" placeholder="الجرعة (مثال: حبة)" name="dose[]">
+                            <input type="text" required class="ctrl-input text-sm" placeholder="التكرار (مثال: 3 مرات يومياً)" name="freq[]">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="addPrescriptionRow()" class="w-full py-2 mb-4 rounded-xl border-2 border-dashed text-sm font-semibold" style="border-color: var(--doctor); color: var(--doctor)">
+                    <i class="fas fa-plus"></i> إضافة دواء آخر
+                </button>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2">ملاحظات الطبيب / التعليمات</label>
+                    <textarea class="ctrl-input text-sm" rows="2" placeholder="مثال: يؤخذ بعد الأكل، مراجعة بعد أسبوع..." name="rxNotes"></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--doctor)">
+                    <i class="fas fa-save"></i> حفظ الروشتة في ملف المريض
+                </button>
+            </form>
+        </div>`;
     document.getElementById('modalOverlay').classList.add('active');
     lockScroll();
 }
+
 window.addPrescriptionRow = () => {
     const container = document.getElementById('medListContainer');
     const newRow = document.createElement('div');
@@ -772,23 +810,53 @@ window.generatePrescription = async (e, patientId, patientName) => {
     const doses = form.elements['dose[]'];
     const freqs = form.elements['freq[]'];
     const notes = form.elements['rxNotes'].value;
+
     let rxText = `📋 *روشتة طبية إلكترونية*\n_______________________\n`;
-    if (drugNames.length === undefined) { rxText += `\n💊 ${drugNames.value}\n   الجرعة: ${doses.value} | ${freqs.value}\n`; } 
-    else { for (let i = 0; i < drugNames.length; i++) { rxText += `\n${i + 1}. 💊 ${drugNames[i].value}\n   الجرعة: ${doses[i].value} | ${freqs[i].value}\n`; } }
+    
+    if (drugNames.length === undefined) {
+        rxText += `\n💊 ${drugNames.value}\n   الجرعة: ${doses.value} | ${freqs.value}\n`;
+    } else {
+        for (let i = 0; i < drugNames.length; i++) {
+            rxText += `\n${i + 1}. 💊 ${drugNames[i].value}\n   الجرعة: ${doses[i].value} | ${freqs[i].value}\n`;
+        }
+    }
     if (notes) rxText += `\n📝 *ملاحظات:* ${notes}\n`;
-    rxText += `_______________________\nيرجى الالتزام بالجرعات.`;
-    const doctorName = document.getElementById('ctrlTitle')?.textContent.replace('لوحة: ', '').trim() || 'طبيب';
+    rxText += `_______________________\nيرجى الالتزام بالجرعات ولا تنسَ المراجعة.`;
+
+    const docInfo = window.currentDoctorInfo || { name: 'طبيب', specialty: 'طبيب عام', id: 'unknown' };
+    const date = new Date();
+    
+    // توليد رمز تحقق أمني فريد لكل روشتة
+    const verCode = btoa(`${docInfo.id}-${date.getTime()}`).substring(0, 12).toUpperCase();
+
     try {
         const { data: docSnap, error } = await supabase.from('health_files').select('prescriptions').eq('id', patientId).single();
         if (error) return;
         const currentRx = docSnap.prescriptions || [];
-        currentRx.push({ doctor: doctorName, text: rxText, date: new Date().toISOString() });
+        
+        // حفظ الروشتة مع بيانات الختم الرقمي
+        currentRx.push({ 
+            doctor: docInfo.name, 
+            specialty: docInfo.specialty, 
+            verCode: verCode,
+            text: rxText, 
+            date: date.toISOString() 
+        });
+        
         await supabase.from('health_files').update({ prescriptions: currentRx }).eq('id', patientId);
         showToast('تم حفظ الروشتة في ملف المريض بنجاح!');
         closeModal();
         fetchPatientHealthFile(patientId, { specialty: 'general' }); 
     } catch (err) { showToast('خطأ في حفظ الروشتة'); }
 }
+window.addPrescriptionRow = () => {
+    const container = document.getElementById('medListContainer');
+    const newRow = document.createElement('div');
+    newRow.className = 'bg-gray-50 p-3 rounded-xl border relative';
+    newRow.innerHTML = `<button type="button" onclick="this.parentElement.remove()" class="absolute top-2 left-2 text-red-500"><i class="fas fa-times-circle"></i></button><div class="grid grid-cols-1 sm:grid-cols-3 gap-2"><input type="text" required class="ctrl-input text-sm" placeholder="اسم الدواء" name="drugName[]"><input type="text" required class="ctrl-input text-sm" placeholder="الجرعة" name="dose[]"><input type="text" required class="ctrl-input text-sm" placeholder="التكرار" name="freq[]"></div>`;
+    container.appendChild(newRow);
+}
+
 window.deletePrescription = async (rxDate) => {
     if (!confirm("هل أنت متأكد من حذف هذه الروشتة؟")) return;
     try {
