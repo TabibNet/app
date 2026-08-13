@@ -243,13 +243,57 @@ h1, h2, h3, h4, h5 { font-family: 'Noto Kufi Arabic', sans-serif; }
         .day-btn.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent-dark); }
         .day-checkbox { accent-color: var(--accent); width: 20px; height: 20px; cursor: pointer; }
 
-        html.dark { --bg: #0f172a; --bg-deep: #020617; --fg: #f8fafc; --fg-light: #cbd5e1; --muted: #94a3b8; --card: #1e293b; --border: #334155; --accent-light: #134e4a; }
-        html.dark .dot-pattern { background-image: radial-gradient(circle, #334155 1px, transparent 1px); }
-        html.dark .filter-btn { background: var(--card); border-color: var(--border); color: var(--fg); }
-        html.dark .bg-white { background-color: var(--card) !important; }
-        html.dark .text-gray-400, html.dark .text-gray-500 { color: var(--muted) !important; }
-        html.dark .border-gray-200 { border-color: var(--border) !important; }
-        
+        /* === الوضع المظلم المحسن (Dark Mode) === */
+html.dark {
+    --bg: #0f172a; /* خلفية الموقع الرئيسية */
+    --bg-deep: #020617; /* خلفية الأقسام العميقة */
+    --fg: #f8fafc; /* اللون النص الأساسي */
+    --fg-light: #cbd5e1; /* النصوص الثانوية */
+    --muted: #94a3b8; /* النصوص الباهتة */
+    --card: #1e293b; /* خلفية البطاقات والنوافذ */
+    --border: #334155; /* الحدود */
+    --accent-light: #134e4a; /* خلفية الأزرار الثانوية */
+}
+
+/* إجبار ألوان Tailwind على التكيف مع الوضع المظلم */
+html.dark .bg-white { background-color: var(--card) !important; }
+html.dark .bg-gray-50, html.dark .bg-gray-100 { background-color: var(--bg-deep) !important; }
+
+html.dark .text-gray-900, html.dark .text-gray-800 { color: var(--fg) !important; }
+html.dark .text-gray-700 { color: var(--fg-light) !important; }
+html.dark .text-gray-600, html.dark .text-gray-500, html.dark .text-gray-400 { color: var(--muted) !important; }
+
+html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border-gray-300 { border-color: var(--border) !important; }
+
+/* تحسين مظهر حقول الإدخال في الوضع المظلم */
+html.dark .ctrl-input {
+    background-color: var(--bg-deep) !important;
+    color: var(--fg) !important;
+    border-color: var(--border) !important;
+}
+html.dark .ctrl-input::placeholder { color: var(--muted) !important; }
+
+/* تحسين النوافذ المنبثقة واللوحات */
+html.dark .ctrl-content, html.dark .modal-content {
+    background-color: var(--card) !important;
+}
+html.dark .toast {
+    background-color: var(--fg) !important;
+    color: var(--bg) !important;
+}
+
+/* تحسين الأدوات الطبية والبطاقات الداخلية */
+html.dark .accordion-item { background-color: var(--card) !important; border-color: var(--border) !important; }
+html.dark .accordion-body { background-color: var(--bg-deep) !important; }
+html.dark .disease-card, html.dark .med-symbol-card, html.dark .med-donation-card, html.dark .burn-option {
+    background-color: var(--card) !important; border-color: var(--border) !important;
+}
+html.dark .file-input-label { background-color: var(--bg-deep) !important; color: var(--muted) !important; border-color: var(--border) !important; }
+
+/* تحسين النقاط والأنماط الخلفية */
+html.dark .dot-pattern { background-image: radial-gradient(circle, #334155 1px, transparent 1px) !important; }
+html.dark .filter-btn { background: var(--card) !important; border-color: var(--border) !important; color: var(--fg) !important; }
+
         .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10002; display: none; justify-content: center; align-items: center; cursor: zoom-out; padding: 20px; }
         .lightbox-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
         .lightbox-overlay img { max-width: 90%; max-height: 90%; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); transform: scale(0.8); transition: transform 0.3s ease; }
