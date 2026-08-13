@@ -1094,8 +1094,14 @@ window.submitMedicineDonation = async (e) => {
         showToast('حدث خطأ أثناء النشر'); 
     }
 }
-window.resolveMedicineDonation = async (id) => { try { await supabase.from('medicine_donations').update({ status: 'resolved' }).eq('id', id); showToast('تمت الإزالة.'); } catch (err) { showToast('خطأ'); } }
-
+window.resolveMedicineDonation = async (id) => { 
+    try { 
+        await supabase.from('medicine_donations').update({ status: 'resolved' }).eq('id', id); 
+        showToast('تمت الإزالة.'); 
+        await fetchMedicineDonations(); // جلب قائمة الأدوية المحدثة
+        renderAdminDashboard(); // إعادة بناء اللوحة
+    } catch (err) { showToast('خطأ'); } 
+}
 window.openBloodBank = () => {
     const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
     openCtrlPanel('بنك التبرع بالدم الرقمي (سوريا)', `
@@ -1183,8 +1189,14 @@ window.submitBloodRequest = async (e) => {
     }
 }
 
-window.resolveBloodRequest = async (id) => { try { await supabase.from('blood_requests').update({ status: 'resolved' }).eq('id', id); showToast('تم إنهاء الطلب.'); } catch (err) { showToast('خطأ'); } }
-
+window.resolveBloodRequest = async (id) => { 
+    try { 
+        await supabase.from('blood_requests').update({ status: 'resolved' }).eq('id', id); 
+        showToast('تم إنهاء الطلب.'); 
+        await fetchBloodRequests(); // جلب استغاثات الدم المحدثة
+        renderAdminDashboard(); // إعادة بناء اللوحة
+    } catch (err) { showToast('خطأ'); } 
+}
 window.respondToBloodRequest = (btnElement, reqId, patientName, phone) => {
     btnElement.disabled = true; btnElement.innerText = 'جاري التسجيل...'; btnElement.classList.add('opacity-50', 'cursor-not-allowed');
     const toast = document.getElementById('toast');
@@ -1211,9 +1223,10 @@ window.setStatus = async (id, status) => {
         localStorage.setItem('force_listings_update', 'true');
         let msg = status === true ? 'تم تغيير الحالة إلى: مفتوح' : status === false ? 'تم تغيير الحالة إلى: مغلق' : 'تم تعيين الحالة إلى: لا شيء';
         showToast(msg);
+        await fetchListings(); // جلب البيانات الجديدة
+        renderAdminDashboard(); // إعادة بناء اللوحة فوراً لتغيير لون الزر
     } catch (e) { showToast('حدث خطأ'); }
 }
-
 window.openMedicineFinder = () => { 
     document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-pills ml-2" style="color: var(--gold)"></i> ابحث عن دوائك</h3><button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button></div><div class="mb-4 p-3 rounded-xl text-sm" style="background: var(--accent-light); color: var(--accent-dark)"><i class="fas fa-info-circle ml-1"></i> اكتب الأدوية المطلوبة وحدد مستوى الإلحاح، وسنتولى إرسالها للصيدليات. سيقوم أول صيدلية يتوفر فيها الدواء بالاتصال بك مباشرة!</div><form onsubmit="submitMedicineRequest(event)"><div class="mb-4"><label class="block text-sm font-semibold mb-2">الأدوية المطلوبة (نصياً)</label><textarea id="medList" class="ctrl-input" rows="3" placeholder="مثال: كونكور 5مغ، كاتافلام، شراب سيتامول" required></textarea></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-semibold mb-2">اسم المريض (اختياري)</label><input type="text" id="medName" class="ctrl-input" placeholder="اكتب اسمك"></div><div><label class="block text-sm font-semibold mb-2">رقم الهاتف للتواصل</label><input type="tel" id="medPhone" class="ctrl-input" placeholder="09XXXXXXXX" required></div></div><div class="mb-4"><label class="block text-sm font-semibold mb-2">مستوى الإلحاح</label><select id="medUrgency" class="ctrl-input"><option value="عاجل جداً (طوارئ)">عاجل جداً (طوارئ)</option><option value="عاجل (خلال اليوم)">عاجل (خلال اليوم)</option><option value="عادي" selected>عادي</option></select></div><div class="mb-6"><label class="block text-sm font-semibold mb-2">صورة الوصفة الطبية (اختياري)</label><div class="file-input-wrapper"><label class="file-input-label" for="medImage"><i class="fas fa-camera text-2xl mb-2"></i><span>اضغط لاختيار صورة الوصفة (إن وجدت)</span><img id="imagePreview" class="preview-image hidden" src="" alt="معاينة"></label><input type="file" id="medImage" accept="image/*" onchange="previewMedicineImage(event)"></div></div><button type="submit" id="medSubmitBtn" class="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-paper-plane"></i> إرسال للصيدليات</button></form></div>`; 
     document.getElementById('modalOverlay').classList.add('active'); 
@@ -1424,7 +1437,13 @@ window.editFacility = (id) => {
 }
 window.deleteFacility = async (id) => { 
     if (!confirm("متأكد من الحذف؟")) return; 
-    try { await supabase.from('listings').delete().eq('id', id); localStorage.setItem('force_listings_update', 'true'); showToast('تم الحذف'); } catch (e) { showToast('خطأ'); } 
+    try { 
+        await supabase.from('listings').delete().eq('id', id); 
+        localStorage.setItem('force_listings_update', 'true'); 
+        showToast('تم الحذف'); 
+        await fetchListings(); 
+        renderAdminDashboard(); 
+    } catch (e) { showToast('خطأ'); } 
 }
 window.saveFacility = async (e) => { 
     e.preventDefault(); 
