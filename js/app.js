@@ -1,6 +1,5 @@
 import { supabase } from './supabase.js';
 
-const ADMIN_PASSWORD = "Alicon2006@";
 const IMGBB_API_KEY = "8a92929a2c1c90634ffc7ba88f2d481d"; 
 const daysOfWeek = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
 
@@ -1383,10 +1382,14 @@ window.saveFacility = async (e) => {
 
 // === الملف الصحي ===
 window.openHealthFile = async () => {
-    if (currentHealthFileId) {
+    // التحقق إذا كان المريض مسجل دخوله مسبقاً
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        currentHealthFileId = session.user.id;
         const { data: docSnap } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).single();
         if (docSnap) { renderHealthDashboard(docSnap); return; }
     }
+
     openCtrlPanel('الملف الصحي الذكي', `
         <div class="flex flex-col gap-4 max-w-md mx-auto w-full">
             <div class="bg-pink-50 border border-pink-200 rounded-xl p-4 text-pink-800 text-sm flex items-center gap-3">
@@ -1398,20 +1401,19 @@ window.openHealthFile = async () => {
                 <button onclick="switchHealthTab('register')" id="tabRegBtn" class="flex-1 py-2 rounded-lg text-sm font-bold text-gray-500">حساب جديد</button>
             </div>
             <form id="loginForm" onsubmit="handleHealthLogin(event)" class="flex flex-col gap-3">
-                <input type="text" id="loginUsername" class="ctrl-input" placeholder="اسم المستخدم" required>
+                <input type="email" id="loginEmail" class="ctrl-input" placeholder="البريد الإلكتروني" required>
                 <input type="password" id="loginPassword" class="ctrl-input" placeholder="كلمة المرور" required>
                 <button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: #EC4899">دخول</button>
             </form>
             <form id="registerForm" onsubmit="handleHealthRegister(event)" class="hidden flex-col gap-3">
                 <input type="text" id="regFullName" class="ctrl-input" placeholder="الاسم الكامل" required>
-                <input type="text" id="regUsername" class="ctrl-input" placeholder="اختر اسم مستخدم" required>
-                <input type="password" id="regPassword" class="ctrl-input" placeholder="اختر كلمة مرور" required>
+                <input type="email" id="regEmail" class="ctrl-input" placeholder="البريد الإلكتروني" required>
+                <input type="password" id="regPassword" class="ctrl-input" placeholder="اختر كلمة مرور قوية" required>
                 <button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: #EC4899">إنشاء الملف</button>
             </form>
         </div>
     `, '#EC4899');
 }
-
 window.switchHealthTab = (tab) => {
     const loginForm = document.getElementById('loginForm'); const regForm = document.getElementById('registerForm'); const loginBtn = document.getElementById('tabLoginBtn'); const regBtn = document.getElementById('tabRegBtn');
     if (tab === 'login') { loginForm.classList.remove('hidden'); loginForm.classList.add('flex'); regForm.classList.add('hidden'); regForm.classList.remove('flex'); loginBtn.classList.add('bg-white', 'shadow'); loginBtn.classList.remove('text-gray-500'); regBtn.classList.remove('bg-white', 'shadow'); regBtn.classList.add('text-gray-500'); } 
@@ -1419,27 +1421,54 @@ window.switchHealthTab = (tab) => {
 }
 window.handleHealthRegister = async (e) => {
     e.preventDefault();
-    const username = document.getElementById('regUsername').value.trim();
-    const { data: existing } = await supabase.from('health_files').select('id').eq('username', username);
-    if (existing && existing.length > 0) { showToast('اسم المستخدم محجوز'); return; }
-    const fullName = document.getElementById('regFullName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value.trim();
-    const { data, error } = await supabase.from('health_files').insert([{ username, password, full_name: fullName }]).select();
-    if (error) { showToast('خطأ في الإنشاء'); return; }
-    localStorage.setItem('healthFileId', data[0].id);
-    currentHealthFileId = data[0].id;
-    renderHealthDashboard(data[0]);
+    const fullName = document.getElementById('regFullName').value.trim();
+
+    // 1. إنشاء حساب مصادقة (Auth) للمريض
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) { 
+        showToast('حدث خطأ أثناء التسجيل: ' + error.message); 
+        return; 
+    }
+    
+    const userId = data.user.id;
+    
+    // 2. إنشاء صف فارغ في جدول الملف الصحي مرتبط بمعرف الحساب
+    const { error: dbError } = await supabase.from('health_files').insert([{ id: userId, full_name: fullName }]);
+    if (dbError) { 
+        showToast('تم إنشاء الحساب ولكن حدث خطأ في قاعدة البيانات'); 
+        return; 
+    }
+
+    showToast('تم إنشاء الحساب بنجاح! يرجى تأكيد بريدك الإلكتروني ثم تسجيل الدخول.');
+    switchHealthTab('login'); // العودة لشاشة الدخول
 }
 window.handleHealthLogin = async (e) => {
     e.preventDefault();
-    const username = document.getElementById('loginUsername').value.trim();
+    const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
-    const { data: snap } = await supabase.from('health_files').select('*').eq('username', username).eq('password', password);
-    if (!snap || snap.length === 0) { showToast('بيانات الدخول غير صحيحة'); return; }
-    localStorage.setItem('healthFileId', snap[0].id);
-    currentHealthFileId = snap[0].id;
-    renderHealthDashboard(snap[0]);
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { 
+        showToast('الإيميل أو كلمة المرور غير صحيحة، أو لم تقم بتأكيد بريدك الإلكتروني.'); 
+        return; 
+    }
+
+    // إذا نجح الدخول، نحضر بياناته الطبية
+    currentHealthFileId = data.user.id;
+    localStorage.setItem('healthFileId', currentHealthFileId);
+    
+    const { data: fileData } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).single();
+    if (fileData) {
+        renderHealthDashboard(fileData);
+    } else {
+        // إذا لم يجد له ملفاً، ينشئ له واحداً تلقائياً
+        const { data: newFile } = await supabase.from('health_files').insert([{ id: currentHealthFileId, full_name: 'مريض' }]).select().single();
+        renderHealthDashboard(newFile);
+    }
 }
+
 window.renderHealthDashboard = (data) => {
     openCtrlPanel(`الملف الصحي: ${data.full_name || data.fullName}`, `
         <div class="flex flex-col gap-5">
@@ -1534,8 +1563,13 @@ window.saveHealthProfile = async (e) => {
     };
     try { await supabase.from('health_files').update(data).eq('id', currentHealthFileId); showToast('تم الحفظ!'); renderHealthDashboard(data); } catch (err) { showToast('خطأ'); }
 }
-window.logoutHealthFile = () => { localStorage.removeItem('healthFileId'); currentHealthFileId = null; closeCtrlPanel(); showToast('تم الخروج'); }
-
+window.logoutHealthFile = async () => { 
+    await supabase.auth.signOut();
+    localStorage.removeItem('healthFileId'); 
+    currentHealthFileId = null; 
+    closeCtrlPanel(); 
+    showToast('تم تسجيل الخروج بنجاح'); 
+}
 // === الإحصائيات ===
 async function trackAndDisplayVisitors() {
     const cachedVisitors = localStorage.getItem('cached_visitors') || '0';
