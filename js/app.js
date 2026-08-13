@@ -694,7 +694,7 @@ window.logoutPharmacy = async () => {
     closeCtrlPanel();
     showToast('تم تسجيل الخروج بنجاح');
 }
-window.renderPharmacyDashboard = (pharm) => { 
+window.renderPharmacyDashboard = async (pharm) => { 
         const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         openPharmacyLogin();
@@ -773,7 +773,7 @@ window.logoutDoctor = async () => {
     closeCtrlPanel();
     showToast('تم تسجيل الخروج بنجاح');
 }
-window.renderDoctorDashboard = (doc) => { 
+window.renderDoctorDashboard = async (doc) => { 
         const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         openDoctorLogin();
