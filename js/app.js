@@ -870,62 +870,204 @@ window.deletePrescription = async (rxDate) => {
 };
 
 window.openMedicineDonation = () => {
-    openCtrlPanel('صندوق الأدوية الفائضة', `<div class="flex flex-col gap-5"><div class="bg-red-50 border-2 border-red-400 rounded-xl p-4 text-red-800"><div class="font-black text-lg mb-2"><i class="fas fa-exclamation-triangle"></i> تنبيه أمان</div><ul class="list-disc pr-5 space-y-1 text-sm font-bold"><li>الموقع يعمل كوسيط خيري فقط.</li><li>يُمنع نشر الأدوية النفسية أو المخدرة.</li><li>تأكد من تاريخ الصلاحية قبل الاستخدام.</li></ul></div><div class="bg-white p-5 rounded-xl border"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-hand-holding-medical text-green-600"></i> تبرع بدواء فائض</h4><form onsubmit="submitMedicineDonation(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="text" id="medDonorName" class="ctrl-input text-sm" placeholder="اسم المتبرع" required><input type="text" id="medDonationName" class="ctrl-input text-sm" placeholder="اسم الدواء التجاري" required><select id="medDonationType" class="ctrl-input text-sm"><option>حبوب / أقراص</option><option>شراب</option><option>كريم / مرهم</option><option>قطرات</option></select><input type="text" id="medDonationExpiry" class="ctrl-input text-sm" placeholder="تاريخ الانتهاء (10/2025)" required><input type="text" id="medDonationQty" class="ctrl-input text-sm" placeholder="الكمية" required><input type="tel" id="medDonationPhone" class="ctrl-input text-sm" placeholder="رقم الهاتف 09XX" required><textarea id="medDonationNotes" class="ctrl-input text-sm col-span-1 sm:col-span-2" rows="2" placeholder="ملاحظات"></textarea><button type="submit" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm" style="background: #059669;">نشر الدواء</button></form></div><div class="bg-white p-5 rounded-xl border"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list-alt text-green-600"></i> الأدوية المتوفرة</h4><div id="medicineDonationsList" class="flex flex-col gap-3"><p class="text-center py-8 text-gray-400 text-sm">جاري تحميل الأدوية...</p></div></div></div>`, '#059669');
+    openCtrlPanel('صندوق الأدوية الفائضة (تكافل طبي)', `
+        <div class="flex flex-col gap-5">
+            <div class="bg-red-50 border-2 border-red-400 rounded-xl p-4 text-red-800">
+                <div class="font-black text-lg mb-2 flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i> تنبيه أمان هام جداً</div>
+                <ul class="list-disc pr-5 space-y-1 text-sm font-bold">
+                    <li>الموقع يعمل كوسيط خيري فقط لتسهيل التواصل بين مجتمع ، ولا يتحمل أي مسؤولية عن طبيعة الأدوية.</li>
+                    <li>يُمنع منعاً باتاً نشر أو تبادل الأدوية النفسية، المخدرة، أو المهدئات الخاضعة للرقابة الطبية الصارمة.</li>
+                    <li>يجب على المستلم التأكد التام من تاريخ الصلاحية المطبوع على العلبة الأصلية ومن سلامة الدواء قبل استخدامه، ويفضل استشارة الصيدلاني.</li>
+                </ul>
+            </div>
+            
+            <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-hand-holding-medical text-green-600"></i> تبرع بدواء فائض</h4>
+                <form onsubmit="submitMedicineDonation(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input type="text" id="medDonorName" class="ctrl-input text-sm" placeholder="اسم المتبرع" required>
+                    <input type="text" id="medDonationName" class="ctrl-input text-sm" placeholder="اسم الدواء التجاري" required>
+                    <select id="medDonationType" class="ctrl-input text-sm">
+                        <option>حبوب / أقراص</option>
+                        <option>شراب /معلق</option>
+                        <option>كريم / مرهم</option>
+                        <option>قطرات (عين/أنف/أذن)</option>
+                        <option>أخرى</option>
+                    </select>
+                    <input type="text" id="medDonationExpiry" class="ctrl-input text-sm" placeholder="تاريخ الانتهاء (مثال: 10/2025)" required>
+                    <input type="text" id="medDonationQty" class="ctrl-input text-sm" placeholder="الكمية (مثال: علبة كاملة)" required>
+                    <input type="tel" id="medDonationPhone" class="ctrl-input text-sm" placeholder="رقم الهاتف 09XX" required>
+                    <textarea id="medDonationNotes" class="ctrl-input text-sm col-span-1 sm:col-span-2" rows="2" placeholder="ملاحظات (حالة العلبة، الحفظ، مكان التسليم)"></textarea>
+                    <button type="submit" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm" style="background: #059669;">
+                        <i class="fas fa-plus ml-2"></i> نشر الدواء للتبرع
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-list-alt text-green-600"></i> الأدوية المتوفرة للتبرع</h4>
+                <div id="medicineDonationsList" class="flex flex-col gap-3">
+                    <p class="text-center py-8 text-gray-400 text-sm">جاري تحميل الأدوية...</p>
+                </div>
+            </div>
+        </div>
+    `, '#059669');
     renderMedicineDonationsUI();
 }
+
 function renderMedicineDonationsUI() {
     const list = document.getElementById('medicineDonationsList');
     if (!list) return;
-    if (medicineDonations.length === 0) { list.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد أدوية متوفرة حالياً.</p>'; return; }
-    list.innerHTML = medicineDonations.map(m => `<div class="med-donation-card"><div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-pills text-green-600 text-xl"></i></div><div><div class="font-bold text-gray-800 text-sm">${m.medicine_name}</div><div class="text-xs text-gray-500 mt-1 flex flex-wrap gap-2"><span><i class="fas fa-flask ml-1"></i>${m.medicine_type}</span><span><i class="fas fa-box ml-1"></i>${m.quantity}</span><span class="text-red-500 font-bold"><i class="fas fa-calendar-times ml-1"></i> ينتهي: ${m.expiry_date}</span></div>${m.notes ? `<div class="text-xs text-gray-400 mt-1"><i class="fas fa-info-circle"></i> ${m.notes}</div>` : ''}</div></div><div class="flex gap-2 w-full sm:w-auto"><a href="tel:${m.phone}" class="flex-1 sm:flex-none bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"><i class="fas fa-phone"></i> اتصال</a></div></div></div>`).join('');
+    if (medicineDonations.length === 0) {
+        list.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد أدوية متوفرة حالياً. كن أول من يساهم في إنقاذ حياة.</p>';
+        return;
+    }
+    list.innerHTML = medicineDonations.map(m => {
+        return `
+            <div class="med-donation-card">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-pills text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-800 dark:text-gray-100 text-sm">${m.medicine_name}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap gap-2">
+                                <span><i class="fas fa-flask ml-1"></i>${m.medicine_type}</span>
+                                <span><i class="fas fa-box ml-1"></i>${m.quantity}</span>
+                                <span class="text-red-500 font-bold"><i class="fas fa-calendar-times ml-1"></i> ينتهي: ${m.expiry_date}</span>
+                            </div>
+                            ${m.notes ? `<div class="text-xs text-gray-400 dark:text-gray-500 mt-1"><i class="fas fa-info-circle"></i> ${m.notes}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <a href="tel:${m.phone}" class="flex-1 sm:flex-none bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال</a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
+
 window.submitMedicineDonation = async (e) => {
     e.preventDefault();
-    const donorName = document.getElementById('medDonorName').value.trim();
-    const medicineName = document.getElementById('medDonationName').value.trim();
-    const medicineType = document.getElementById('medDonationType').value;
+    const name = document.getElementById('medDonorName').value.trim();
+    const medName = document.getElementById('medDonationName').value.trim();
+    const medType = document.getElementById('medDonationType').value;
     const expiryDate = document.getElementById('medDonationExpiry').value.trim();
     const quantity = document.getElementById('medDonationQty').value.trim();
     const phoneInput = document.getElementById('medDonationPhone');
     const phone = phoneInput.value.trim();
     const notes = document.getElementById('medDonationNotes').value.trim();
+
     if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); return; }
     phoneInput.classList.remove('input-invalid');
+
     try {
-        await supabase.from('medicine_donations').insert([{ donor_name: donorName, medicine_name: medicineName, medicine_type: medicineType, expiry_date: expiryDate, quantity: quantity, phone: phone, notes: notes, status: 'active' }]);
-        showToast('بارك الله فيك! تم نشر الدواء.');
+        await supabase.from('medicine_donations').insert([{ 
+            donor_name: name, 
+            medicine_name: medName, 
+            medicine_type: medType, 
+            expiry_date: expiryDate, 
+            quantity: quantity, 
+            phone: phone, 
+            notes: notes, 
+            status: 'active' 
+        }]);
+        showToast('بارك الله فيك! تم نشر الدواء للتبرع.');
         document.querySelector('#ctrlContent form').reset();
-    } catch (err) { showToast('حدث خطأ أثناء النشر'); }
+    } catch (err) { 
+        showToast('حدث خطأ أثناء النشر'); 
+    }
 }
 window.resolveMedicineDonation = async (id) => { try { await supabase.from('medicine_donations').update({ status: 'resolved' }).eq('id', id); showToast('تمت الإزالة.'); } catch (err) { showToast('خطأ'); } }
 
 window.openBloodBank = () => {
     const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-    openCtrlPanel('بنك التبرع بالدم الرقمي', `<div class="flex flex-col gap-5"><div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-800 text-sm"><i class="fas fa-tint text-xl"></i> نظام رقمي لربط المرضى بالمتبرعين.</div><div class="bg-white p-5 rounded-xl border"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle text-red-600"></i> نشر طلب استغاثة</h4><form onsubmit="submitBloodRequest(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="text" id="bloodPatient" class="ctrl-input text-sm" placeholder="اسم المريض" required><select id="bloodType" class="ctrl-input text-sm" required>${bloodTypes.map(t => `<option value="${t}">الفصيلة: ${t}</option>`).join('')}</select><input type="text" id="bloodHospital" class="ctrl-input text-sm" placeholder="المشفى / المدينة" required><input type="tel" id="bloodPhone" class="ctrl-input text-sm" placeholder="رقم التواصل 09XX" required><textarea id="bloodNotes" class="ctrl-input text-sm col-span-1 sm:col-span-2" rows="2" placeholder="ملاحظات"></textarea><button type="submit" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm" style="background: #DC2626;">نشر الاستغاثة</button></form></div><div class="bg-white p-5 rounded-xl border"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list-alt text-red-600"></i> استغاثات الدم الحالية</h4><div id="bloodRequestsList" class="flex flex-col gap-3"><p class="text-center py-8 text-gray-400 text-sm">جاري تحميل الاستغاثات...</p></div></div></div>`, '#DC2626');
+    openCtrlPanel('بنك التبرع بالدم الرقمي (سوريا)', `
+        <div class="flex flex-col gap-5">
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-800 text-sm flex items-center gap-3">
+                <i class="fas fa-tint text-xl"></i>
+                <span>نظام رقمي لربط المرضى المحتاجين للدم بالمتبرعين في كل أنحاء سوريا. ساهم في إنقاذ حياة.</span>
+            </div>
+            
+            <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-plus-circle text-red-600"></i> نشر طلب استغاثة للدم</h4>
+                <form onsubmit="submitBloodRequest(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input type="text" id="bloodPatient" class="ctrl-input text-sm" placeholder="اسم المريض" required>
+                    <select id="bloodType" class="ctrl-input text-sm" required>
+                        ${bloodTypes.map(t => `<option value="${t}">الفصيلة: ${t}</option>`).join('')}
+                    </select>
+                    <input type="text" id="bloodHospital" class="ctrl-input text-sm" placeholder="المشفى / المدينة" required>
+                    <input type="tel" id="bloodPhone" class="ctrl-input text-sm" placeholder="رقم التواصل 09XX" required>
+                    <textarea id="bloodNotes" class="ctrl-input text-sm col-span-1 sm:col-span-2" rows="2" placeholder="ملاحظات (مثال: يحتاج 3 أكياس عاجلة)"></textarea>
+                    <button type="submit" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm" style="background: #DC2626;">
+                        <i class="fas fa-bullhorn ml-2"></i> نشر الاستغاثة
+                    </button>
+                </form>
+            </div>
+            
+            <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-list-alt text-red-600"></i> استغاثات الدم الحالية</h4>
+                <div id="bloodRequestsList" class="flex flex-col gap-3">
+                    <p class="text-center py-8 text-gray-400 text-sm">جاري تحميل الاستغاثات...</p>
+                </div>
+            </div>
+        </div>
+    `, '#DC2626');
     renderBloodBankUI();
 }
+
 function renderBloodBankUI() {
     const list = document.getElementById('bloodRequestsList');
     if (!list) return;
-    if (bloodRequests.length === 0) { list.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد استغاثات حالياً.</p>'; return; }
-    list.innerHTML = bloodRequests.map(req => `<div class="border rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4"><div class="blood-type-badge">${req.blood_type}</div><div class="flex-1 text-center sm:text-right"><div class="font-bold text-gray-800">${req.patient_name}</div><div class="text-xs text-gray-500 mt-1"><i class="fas fa-hospital ml-1"></i> ${req.hospital} ${req.notes ? `| <i class="fas fa-notes-medical ml-1"></i> ${req.notes}` : ''}</div></div><a href="tel:${req.phone}" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"><i class="fas fa-phone"></i> اتصال</a></div>`).join('');
+    if (bloodRequests.length === 0) {
+        list.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد استغاثات دم حالياً. شكراً لك.</p>';
+        return;
+    }
+    list.innerHTML = bloodRequests.map(req => {
+        return `
+            <div class="border rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4" style="border-color: var(--border)">
+                <div class="blood-type-badge">${req.blood_type}</div>
+                <div class="flex-1 text-center sm:text-right">
+                    <div class="font-bold text-gray-800">${req.patient_name}</div>
+                    <div class="text-xs text-gray-500 mt-1"><i class="fas fa-hospital ml-1"></i> ${req.hospital} ${req.notes ? `| <i class="fas fa-notes-medical ml-1"></i> ${req.notes}` : ''}</div>
+                </div>
+                <div class="flex gap-2">
+                    <a href="tel:${req.phone}" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال</a>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
+
 window.submitBloodRequest = async (e) => {
     e.preventDefault();
-    const patient_name = document.getElementById('bloodPatient').value.trim();
-    const blood_type = document.getElementById('bloodType').value;
+    const name = document.getElementById('bloodPatient').value.trim();
+    const bloodType = document.getElementById('bloodType').value;
     const hospital = document.getElementById('bloodHospital').value.trim();
     const phoneInput = document.getElementById('bloodPhone');
     const phone = phoneInput.value.trim();
     const notes = document.getElementById('bloodNotes').value.trim();
+
     if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); return; }
     phoneInput.classList.remove('input-invalid');
+
     try {
-        await supabase.from('blood_requests').insert([{ patient_name, blood_type, hospital, phone, notes, status: 'active' }]);
-        showToast('تم نشر استغاثتك بنجاح!');
+        await supabase.from('blood_requests').insert([{ 
+            patient_name: name, 
+            blood_type: bloodType, 
+            hospital: hospital, 
+            phone: phone, 
+            notes: notes, 
+            status: 'active' 
+        }]);
+        showToast('تم نشر استغاثتك بنجاح! سيتم التواصل معك قريباً.');
         document.querySelector('#ctrlContent form').reset();
-    } catch (err) { showToast('حدث خطأ أثناء النشر'); }
+    } catch (err) { 
+        showToast('حدث خطأ أثناء النشر'); 
+    }
 }
+
 window.resolveBloodRequest = async (id) => { try { await supabase.from('blood_requests').update({ status: 'resolved' }).eq('id', id); showToast('تم إنهاء الطلب.'); } catch (err) { showToast('خطأ'); } }
 
 window.respondToBloodRequest = (btnElement, reqId, patientName, phone) => {
