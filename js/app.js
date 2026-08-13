@@ -2340,10 +2340,39 @@ window.calcVaccines = () => {
     }).join('');
     resultContainer.innerHTML = html;
 }
-// === اسأل طبيب ===
+// === 1. Ask a Doctor Q&A (اسأل طبيب ) ===
+let allQuestions = [];
+
 window.openAskDoctor = (docName) => {
-    window.tempDoctorName = docName || null;
-    openCtrlPanel('اسأل طبيب', `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border"><h4 class="font-bold mb-4 text-sm">اطرح سؤالاً</h4><form onsubmit="submitQuestion(event)" class="flex flex-col gap-3"><input type="text" id="qaName" class="ctrl-input text-sm" placeholder="الاسم (اختياري)" required><select id="qaCategory" class="ctrl-input text-sm"><option>طب عام</option><option>أطفال</option><option>نسائية</option></select><textarea id="qaText" class="ctrl-input text-sm" rows="3" placeholder="اكتب سؤالك..." required></textarea><button type="submit" class="py-3 rounded-xl text-white font-bold text-sm" style="background: #0EA5E9">نشر السؤال</button></form></div><div class="bg-white p-5 rounded-xl border"><h4 class="font-bold mb-4 text-sm">الأسئلة</h4><div id="qaListContainer" class="flex flex-col gap-4"><p class="text-center py-8 text-gray-400 text-sm">جاري التحميل...</p></div></div></div>`, '#0EA5E9');
+    window.tempDoctorName = docName || null; // حفظ اسم الطبيب مؤقتاً
+
+    openCtrlPanel('اسأل طبيب ', `
+        <div class="flex flex-col gap-5">
+            <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 text-sky-800 text-sm flex items-center gap-3">
+                <i class="fas fa-comments text-xl"></i>
+                <span>اطرح سؤالك الطبي ليقوم الأطباء بالإجابة عليه. (الأسئلة عامة ولا تغني عن الكشف المباشر).</span>
+            </div>
+            <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-question-circle text-sky-600"></i> اطرح سؤالاً جديداً</h4>
+                <form onsubmit="submitQuestion(event)" class="flex flex-col gap-3">
+                    <input type="text" id="qaName" class="ctrl-input text-sm" placeholder="الاسم (اختياري - يمكن كتابة مجهول)" required>
+                    <select id="qaCategory" class="ctrl-input text-sm">
+                        <option>طب عام / باطنة</option><option>أطفال</option><option>نسائية وتوليد</option>
+                        <option>جلدية</option><option>عظمية</option><option>أسنان</option><option>أخرى</option>
+                    </select>
+                    <textarea id="qaText" class="ctrl-input text-sm" rows="3" placeholder="اكتب تفاصيل السؤال والأعراض بوضوح..." required></textarea>
+                    <button type="submit" class="py-3 rounded-xl text-white font-bold text-sm" style="background: #0EA5E9">نشر السؤال</button>
+                </form>
+            </div>
+            <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                <h4 class="font-bold mb-4 text-sm">الأسئلة والإجابات</h4>
+                <div id="qaListContainer" class="flex flex-col gap-4">
+                    <p class="text-center py-8 text-gray-400 text-sm">جاري تحميل الأسئلة...</p>
+                </div>
+            </div>
+        </div>
+    `, '#0EA5E9');
+
     fetchQuestions();
 }
 
@@ -2361,44 +2390,93 @@ async function fetchQuestions() {
 }
 
 function renderQAList() {
-    const container = document.getElementById('qaListContainer'); if (!container) return;
-    if (allQuestions.length === 0) { container.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد أسئلة.</p>'; return; }
+    const container = document.getElementById('qaListContainer');
+    if (!container) return;
+    if (allQuestions.length === 0) {
+        container.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد أسئلة حالياً. كن أول من يطرح سؤالاً!</p>';
+        return;
+    }
+
     const isDoctorMode = window.tempDoctorName ? true : false;
+
     container.innerHTML = allQuestions.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||'')).map(q => {
-        let answersHtml = (q.answers || []).map(ans => `<div class="bg-green-50 border border-green-200 p-3 rounded-lg mt-2 text-right"><div class="text-xs font-bold text-green-800">${ans.doctorName}</div><div class="text-sm text-gray-700 mt-1 whitespace-pre-line">${ans.text}</div></div>`).join('');
-        let answerSection = isDoctorMode ? `<textarea id="ansText_${q.id}" class="ctrl-input text-sm py-1" rows="2" placeholder="إجابتك..."></textarea><button onclick="submitAnswer('${q.id}')" class="mt-2 w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold">إرسال</button>` : `<p class="text-xs text-gray-400 text-center">يمكن للأطباء الإجابة.</p>`;
-        return `<div class="border rounded-xl p-4"><div><span class="text-xs px-2 py-1 rounded bg-sky-100 text-sky-700">${q.category}</span><h5 class="font-bold text-sm mt-2">${q.name}</h5></div><p class="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg mt-2">${q.text}</p>${answersHtml}<div class="mt-3 border-t pt-3">${answerSection}</div></div>`;
+        let answersHtml = '';
+        if (q.answers && q.answers.length > 0) {
+            answersHtml = q.answers.map(ans => `
+                <div class="bg-green-50 border border-green-200 p-3 rounded-lg mt-2 text-right">
+                    <div class="text-xs font-bold text-green-800 flex items-center gap-1"><i class="fas fa-user-md"></i> ${ans.doctorName}</div>
+                    <div class="text-sm text-gray-700 mt-1 whitespace-pre-line">${ans.text}</div>
+                </div>
+            `).join('');
+        }
+
+        let answerSection = '';
+        if (isDoctorMode) {
+            answerSection = `
+                <textarea id="ansText_${q.id}" class="ctrl-input text-sm py-1" rows="2" placeholder="اكتب إجابتك كطبيب..."></textarea>
+                <button onclick="submitAnswer('${q.id}')" class="mt-2 w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold">إرسال الإجابة</button>
+            `;
+        } else {
+            answerSection = `<p class="text-xs text-gray-400 text-center">يمكن للأطباء فقط الإجابة على هذا السؤال.</p>`;
+        }
+
+        return `
+            <div class="border rounded-xl p-4" style="border-color: var(--border)">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <span class="text-xs px-2 py-1 rounded bg-sky-100 text-sky-700 inline-block mb-1">${q.category}</span>
+                        <h5 class="font-bold text-sm text-gray-800">${q.name}</h5>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 whitespace-pre-line bg-gray-50 p-2 rounded-lg">${q.text}</p>
+                ${answersHtml}
+                <div class="mt-3 border-t pt-3" style="border-color: var(--border)">
+                    ${answerSection}
+                </div>
+            </div>
+        `;
     }).join('');
 }
 
 window.submitQuestion = async (e) => {
     e.preventDefault();
-    const { error } = await supabase.from('medical_questions').insert([{ 
-        name: document.getElementById('qaName').value || 'مجهول', 
-        category: document.getElementById('qaCategory').value, 
-        text: document.getElementById('qaText').value, 
-        status: 'open', 
-        answers: [] 
-    }]);
-    if (error) { 
-        showToast('حدث خطأ أثناء النشر: ' + error.message); 
-        console.error("Submit Error:", error); 
-        return; 
+    const name = document.getElementById('qaName').value.trim() || 'مجهول';
+    const category = document.getElementById('qaCategory').value;
+    const text = document.getElementById('qaText').value.trim();
+    if (!text) return;
+
+    try {
+        const { error } = await supabase.from('medical_questions').insert([{ name, category, text, status: 'open', answers: [] }]);
+        if (error) throw error;
+        showToast('تم نشر سؤالك بنجاح!');
+        e.target.reset();
+        fetchQuestions();
+    } catch (err) { 
+        showToast('حدث خطأ أثناء النشر: ' + err.message); 
+        console.error(err); 
     }
-    showToast('تم نشر سؤالك بنجاح!'); 
-    e.target.reset(); 
-    fetchQuestions();
 }
 
 window.submitAnswer = async (qId) => {
-    const text = document.getElementById(`ansText_${qId}`).value.trim(); if (!text) return;
+    const input = document.getElementById(`ansText_${qId}`);
+    const text = input.value.trim();
+    if (!text) return;
+
     const docName = window.tempDoctorName || 'طبيب';
+    
     try {
-        const q = allQuestions.find(x => x.id === qId); const currentAnswers = q.answers || [];
+        const q = allQuestions.find(x => x.id === qId);
+        if (!q) return;
+        const currentAnswers = q.answers || [];
         currentAnswers.push({ doctorName: docName, text: text, timestamp: new Date().toISOString() });
+        
         const { error } = await supabase.from('medical_questions').update({ answers: currentAnswers, status: 'answered' }).eq('id', qId);
         if (error) throw error;
-        showToast('تم نشر إجابتك!'); fetchQuestions();
-    } catch (err) { showToast('خطأ في الإرسال'); console.error(err); }
+        showToast('تم نشر إجابتك!');
+        fetchQuestions();
+    } catch (err) { 
+        showToast('خطأ في إرسال الإجابة: ' + err.message); 
+        console.error(err); 
+    }
 }
 // نهاية ملف app.js
