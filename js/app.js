@@ -796,13 +796,6 @@ window.openPrescriptionModal = (patientId, patientName, doctorInfo) => {
     lockScroll();
 }
 
-window.addPrescriptionRow = () => {
-    const container = document.getElementById('medListContainer');
-    const newRow = document.createElement('div');
-    newRow.className = 'bg-gray-50 p-3 rounded-xl border relative';
-    newRow.innerHTML = `<button type="button" onclick="this.parentElement.remove()" class="absolute top-2 left-2 text-red-500"><i class="fas fa-times-circle"></i></button><div class="grid grid-cols-1 sm:grid-cols-3 gap-2"><input type="text" required class="ctrl-input text-sm" placeholder="اسم الدواء" name="drugName[]"><input type="text" required class="ctrl-input text-sm" placeholder="الجرعة" name="dose[]"><input type="text" required class="ctrl-input text-sm" placeholder="التكرار" name="freq[]"></div>`;
-    container.appendChild(newRow);
-}
 window.generatePrescription = async (e, patientId, patientName) => {
     e.preventDefault();
     const form = e.target;
