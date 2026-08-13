@@ -156,6 +156,19 @@ window.setupOneSignal = async () => {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+        // التقاط تسجيل الدخول عبر جوجل عند العودة للموقع
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+            // تنظيف الرابط من أكواد جوجل
+            if (window.location.hash.includes('access_token')) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+            // فتح الملف الصحي تلقائياً للمريض (وليس للطبيب/الصيدلية)
+            if (session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
+                setTimeout(() => openHealthFile(), 500);
+            }
+        }
+    });
     setTimeout(() => {
         const splash = document.getElementById('appSplashScreen');
         if (splash) {
@@ -1451,7 +1464,19 @@ window.openHealthFile = async () => {
     if (session) {
         currentHealthFileId = session.user.id;
         const { data: docSnap } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).single();
-        if (docSnap) { renderHealthDashboard(docSnap); return; }
+        
+        if (docSnap) { 
+            renderHealthDashboard(docSnap); 
+            return; 
+        } else {
+            // إذا دخل عبر جوجل ولم يكن يملك ملفاً، ننشئ له واحداً تلقائياً
+            const defaultName = session.user.email ? session.user.email.split('@')[0] : 'مريض';
+            const { data: newFile } = await supabase.from('health_files').insert([{ id: currentHealthFileId, full_name: defaultName }]).select().single();
+            if (newFile) { 
+                renderHealthDashboard(newFile); 
+                return; 
+            }
+        }
     }
 
     openCtrlPanel('الملف الصحي الذكي', `
