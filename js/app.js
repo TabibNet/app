@@ -670,10 +670,38 @@ window.sendChatMessage = async (bookingId) => {
 }
 
 window.openPharmacyLogin = () => { openCtrlPanel('لوحة الصيدليات', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: var(--accent-light)"><i class="fas fa-prescription-bottle-medical text-2xl" style="color: var(--accent)"></i></div><h3 class="font-bold text-lg">دخول الصيدليات</h3></div><form onsubmit="handlePharmacyLogin(event)" class="flex flex-col gap-4"><input type="text" id="pharmName" class="ctrl-input text-center" placeholder="اسم الصيدلية" required><input type="text" id="pharmPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--accent)">دخول</button></form></div>`, '#0E7C5F'); }
-window.handlePharmacyLogin = (e) => { e.preventDefault(); const name = document.getElementById('pharmName').value.trim(); const pass = document.getElementById('pharmPass').value.trim().toUpperCase(); const pharmData = allData.find(d => d.name === name && d.type === 'pharmacy' && d.pharmacypass === pass); if (pharmData) { renderPharmacyDashboard(pharmData); } else { showToast('بيانات الدخول غير صحيحة!'); } }
+window.handlePharmacyLogin = async (e) => { 
+    e.preventDefault(); 
+    const name = document.getElementById('pharmName').value.trim(); 
+    const passInput = document.getElementById('pharmPass').value.trim();
+    const pass = passInput.toUpperCase();
+    
+    const dummyEmail = `pharm_${pass.toLowerCase()}@tabibnet.app`;
 
+    const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
+    if (error) { showToast('الرمز غير صحيح!'); return; }
+
+    const pharmData = allData.find(d => d.name === name && d.type === 'pharmacy' && d.pharmacypass === pass); 
+    if (pharmData) { 
+        renderPharmacyDashboard(pharmData); 
+    } else {
+        await supabase.auth.signOut();
+        showToast('اسم الصيدلية غير مطابق للرمز'); 
+    } 
+}
+window.logoutPharmacy = async () => {
+    await supabase.auth.signOut();
+    closeCtrlPanel();
+    showToast('تم تسجيل الخروج بنجاح');
+}
 window.renderPharmacyDashboard = (pharm) => { 
-    openCtrlPanel(`لوحة تحكم: ${pharm.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center justify-between flex-col sm:flex-row gap-4" style="border-color: var(--border)"><div class="flex items-center gap-4"><img src="${pharm.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${pharm.name}</h3><p class="text-sm" style="color: var(--pharmacy)">صيدلية</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${pharm.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button><button onclick="setStatus('${pharm.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مغلق</button><button onclick="setStatus('${pharm.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button></div></div><button onclick="toggleNightShift('${pharm.id}', ${!pharm.night})" class="w-full px-4 py-2 rounded-xl font-bold text-sm ${pharm.night ? 'bg-yellow-500 text-white' : 'bg-gray-200'}">${pharm.night ? 'إيقاف المناوبة الليلية' : 'تفعيل المناوبة الليلية'}</button></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm">طلبات الأدوية الواردة</h4><div id="requestsContainer" class="flex flex-col gap-3"><p class="text-center py-10" style="color: var(--muted)">جاري تحميل الطلبات...</p></div></div></div>`, '#0E7C5F'); 
+        const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        openPharmacyLogin();
+        showToast('يجب تسجيل الدخول أولاً');
+        return;
+    }
+    openCtrlPanel(`لوحة تحكم: ${pharm.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center justify-between flex-col sm:flex-row gap-4" style="border-color: var(--border)"><div class="flex items-center gap-4"><img src="${pharm.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${pharm.name}</h3><p class="text-sm" style="color: var(--pharmacy)">صيدلية</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${pharm.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button><button onclick="setStatus('${pharm.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مغلق</button><button onclick="setStatus('${pharm.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button></div></div><button onclick="toggleNightShift('${pharm.id}', ${!pharm.night})" class="w-full px-4 py-2 rounded-xl font-bold text-sm ${pharm.night ? 'bg-yellow-500 text-white' : 'bg-gray-200'}">${pharm.night ? 'إيقاف المناوبة الليلية' : 'تفعيل المناوبة الليلية'}</button></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm">طلبات الأدوية الواردة</h4><div id="requestsContainer" class="flex flex-col gap-3"><p class="text-center py-10" style="color: var(--muted)">جاري تحميل الطلبات...</p></div></div> <button onclick="logoutPharmacy()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button></div>`, '#0E7C5F'); 
     
     if (unsubscribeMedRequests) clearInterval(unsubscribeMedRequests); 
     fetchMedRequests(pharm.name);
@@ -713,6 +741,7 @@ async function fetchMedRequests(pharmName) {
         }
 
         html += `<div class="bg-white border rounded-xl p-4 flex flex-col gap-3" style="border-color: var(--border)"><div class="flex flex-col sm:flex-row gap-3 items-center">${req.image_url ? `<img src="${req.image_url}" class="w-full sm:w-24 h-24 object-cover rounded-lg cursor-zoom-in" onclick="openLightbox('${req.image_url}')">` : ''}<div class="flex-1 text-center sm:text-right"><h4 class="font-bold">${req.patient_name} <span class="text-xs text-yellow-600 font-mono">#${req.med_ref || ''}</span></h4><p class="text-sm text-gray-700 font-semibold">${req.med_list || ''}</p><p class="text-xs mt-1 text-red-500">الإلحاح: ${req.urgency || 'عادي'}</p><p class="text-xs" style="color: var(--muted)"><i class="fas fa-clock"></i> ${date}</p>${requestStatus}</div></div><div class="flex flex-col gap-2 mt-2 border-t pt-3" style="border-color: var(--border)">${interactionArea}</div></div>`; 
+     
     }); 
     container.innerHTML = html; 
 }
@@ -723,9 +752,34 @@ window.updateMedStatus = async (id, status) => { try { await supabase.from('medi
 window.updateMedNotes = async (id, notes) => { try { await supabase.from('medicine_requests').update({ notes: notes }).eq('id', id); showToast('تم حفظ الملاحظة'); } catch (e) { showToast('خطأ في الحفظ'); } }
 
 window.openDoctorLogin = () => { openCtrlPanel('لوحة الطبيب', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: #DBEAFE"><i class="fas fa-user-md text-2xl" style="color: var(--doctor)"></i></div><h3 class="font-bold text-lg">دخول الطبيب</h3></div><form onsubmit="handleDoctorLogin(event)" class="flex flex-col gap-4"><input type="text" id="docName" class="ctrl-input text-center" placeholder="الاسم" required><input type="text" id="docPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--doctor)">دخول</button></form></div>`, '#2563EB'); }
-window.handleDoctorLogin = (e) => { e.preventDefault(); const name = document.getElementById('docName').value.trim(); const pass = document.getElementById('docPass').value.trim().toUpperCase(); const docData = allData.find(d => d.name === name && d.bookingpass === pass); if (docData) { renderDoctorDashboard(docData); } else { showToast('بيانات غير صحيحة!'); } }
-
+window.handleDoctorLogin = async (e) => { 
+    e.preventDefault(); 
+    const name = document.getElementById('docName').value.trim(); 
+    const passInput = document.getElementById('docPass').value.trim();
+    const pass = passInput.toUpperCase();
+    const dummyEmail = `doc_${pass.toLowerCase()}@tabibnet.app`;
+    const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
+    if (error) { showToast('الرمز غير صحيح!'); return; }
+    const docData = allData.find(d => d.name === name && d.bookingpass === pass); 
+    if (docData) { 
+        renderDoctorDashboard(docData); 
+    } else {
+        await supabase.auth.signOut(); // طرد إذا كان الاسم خاطئاً
+        showToast('اسم الطبيب غير مطابق للرمز'); 
+    } 
+}
+window.logoutDoctor = async () => {
+    await supabase.auth.signOut();
+    closeCtrlPanel();
+    showToast('تم تسجيل الخروج بنجاح');
+}
 window.renderDoctorDashboard = (doc) => { 
+        const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        openDoctorLogin();
+        showToast('يجب تسجيل الدخول أولاً');
+        return;
+    }
     fetchBookings().then(() => {
         const docBookings = bookings.filter(b => b.itemid === doc.id); 
         const daysCheckboxes = daysOfWeek.map(day => `<label class="flex items-center gap-2"><input type="checkbox" name="docWorkingDays" value="${day}" class="day-checkbox" ${doc.workingdays?.includes(day) ? 'checked' : ''}><span class="text-sm">${day}</span></label>`).join(''); 
@@ -738,7 +792,7 @@ window.renderDoctorDashboard = (doc) => {
             if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="text-xs p-2 rounded-lg mb-1 ${msg.sender === 'doctor' ? 'bg-blue-100 text-left' : 'bg-gray-100 text-right'}">${msg.text}</div>`).join(''); }
             return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${b.name}</span><br><span class="text-xs" style="color: var(--muted)">${b.daystr}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${b.ref}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${b.phone}" class="text-xs text-blue-600">${b.phone}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
         }).join('');
-        openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button><button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
+        openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button><button onclick="logoutDoctor()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button><button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
     });
 }
 
@@ -1362,8 +1416,18 @@ window.saveFacility = async (e) => {
     let data = { type, name, phone, hours, description: desc, rating: 4.0 }; 
     if(document.getElementById('new_latlng')) data.latlng = document.getElementById('new_latlng').value.trim();
     if (imgURL) data.image = imgURL; 
-    if (!id && (type === 'doctor' || type === 'clinic')) { data.bookingpass = generateUniqueId(); } 
-    if (!id && type === 'pharmacy') { data.pharmacypass = generateUniqueId(); } 
+    if (!id && (type === 'doctor' || type === 'clinic')) { 
+        data.bookingpass = generateUniqueId(); 
+        
+        const docEmail = `doc_${data.bookingpass.toLowerCase()}@tabibnet.app`;
+        await supabase.auth.signUp({ email: docEmail, password: data.bookingpass });
+    } 
+    if (!id && type === 'pharmacy') { 
+        data.pharmacypass = generateUniqueId(); 
+        
+        const pharmEmail = `pharm_${data.pharmacypass.toLowerCase()}@tabibnet.app`;
+        await supabase.auth.signUp({ email: pharmEmail, password: data.pharmacypass });
+    } 
     
     if (type === 'hospital') { data.specialty = specialty; data.address = address; data.emergencyphone = document.getElementById('new_emergency')?.value || ''; data.floors = document.getElementById('new_floors')?.value || ''; data.departments = document.getElementById('new_extra')?.value || ''; } 
     else if (type === 'doctor') { data.specialty = specialty; data.clinic = address; data.consulthours = document.getElementById('new_consult_hours')?.value || ''; data.bookingnotes = document.getElementById('new_extra')?.value || ''; } 
