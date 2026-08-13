@@ -1438,17 +1438,18 @@ window.saveFacility = async (e) => {
     let data = { type, name, phone, hours, description: desc, rating: 4.0 }; 
     if(document.getElementById('new_latlng')) data.latlng = document.getElementById('new_latlng').value.trim();
     if (imgURL) data.image = imgURL; 
+    
     if (!id && (type === 'doctor' || type === 'clinic')) { 
         data.bookingpass = generateUniqueId(); 
-        
         const docEmail = `doc_${data.bookingpass.toLowerCase()}@tabibnet.app`;
-        await supabase.auth.signUp({ email: docEmail, password: data.bookingpass });
+        const { error: authError } = await supabase.auth.signUp({ email: docEmail, password: data.bookingpass });
+        if (authError) { showToast('خطأ في إنشاء حساب الطبيب: ' + authError.message); return; }
     } 
     if (!id && type === 'pharmacy') { 
         data.pharmacypass = generateUniqueId(); 
-        
         const pharmEmail = `pharm_${data.pharmacypass.toLowerCase()}@tabibnet.app`;
-        await supabase.auth.signUp({ email: pharmEmail, password: data.pharmacypass });
+        const { error: authError } = await supabase.auth.signUp({ email: pharmEmail, password: data.pharmacypass });
+        if (authError) { showToast('خطأ في إنشاء حساب الصيدلية: ' + authError.message); return; }
     } 
     
     if (type === 'hospital') { data.specialty = specialty; data.address = address; data.emergencyphone = document.getElementById('new_emergency')?.value || ''; data.floors = document.getElementById('new_floors')?.value || ''; data.departments = document.getElementById('new_extra')?.value || ''; } 
@@ -1459,11 +1460,23 @@ window.saveFacility = async (e) => {
     else if (type === 'lab') { data.specialty = specialty; data.address = address; data.tests = document.getElementById('new_extra')?.value || ''; data.homesample = document.getElementById('new_home_sample')?.value || 'لا'; } 
     
     try { 
-        if (id) { await supabase.from('listings').update(data).eq('id', id); showToast('تم التعديل!'); } 
-        else { if (!data.image) data.image = `https://picsum.photos/seed/new${Date.now()}/400/250`; await supabase.from('listings').insert([data]); showToast('تمت الإضافة!'); } 
+        if (id) { 
+            const { error } = await supabase.from('listings').update(data).eq('id', id); 
+            if (error) throw error; 
+            showToast('تم التعديل!'); 
+        } else { 
+            if (!data.image) data.image = `https://picsum.photos/seed/new${Date.now()}/400/250`; 
+            const { error } = await supabase.from('listings').insert([data]); 
+            if (error) throw error; 
+            showToast('تمت الإضافة بنجاح!'); 
+        } 
         localStorage.setItem('force_listings_update', 'true');
-        document.querySelector('form').reset(); document.getElementById('edit_id').value = ''; document.getElementById('formTitle').textContent = 'إضافة منشأة'; 
-    } catch (err) { showToast('خطأ في الحفظ'); }
+        await fetchListings(); 
+        renderAdminDashboard(); 
+    } catch (err) { 
+        showToast('خطأ في الحفظ: ' + err.message); 
+        console.error("Save Facility Error:", err); 
+    } 
 };
 
 // === الملف الصحي ===
@@ -1745,14 +1758,28 @@ window.renderAdSlide = (index) => {
     const isSingleAd = activeAds.length === 1;
     if (ad.type === 'image') {
         mediaHTML = `<a href="${ad.link || '#'}" target="_blank" class="block w-full h-full"><img src="${ad.content}" alt="إعلان" class="w-full h-full object-cover"></a>`;
+        // الصور تقلب كل 6 ثواني
         if (!isSingleAd) adInterval = setTimeout(nextAdSlide, 6000);
-    } else if (ad.type === 'video') {
-        const loopAttr = isSingleAd ? 'loop' : ''; const endedAttr = isSingleAd ? '' : 'onended="nextAdSlide()"';
-        mediaHTML = `<div class="relative w-full h-full bg-black"><video id="homeAdVideo" autoplay muted playsinline ${loopAttr} ${endedAttr} onerror="nextAdSlide()" class="w-full h-full object-cover"><source src="${ad.content}" type="video/mp4"></video></div>`;
-        if (!isSingleAd) adInterval = setTimeout(nextAdSlide, 30000);
+        } else if (ad.type === 'video') {
+        const loopAttr = isSingleAd ? 'loop' : ''; 
+        const endedAttr = isSingleAd ? '' : 'onended="nextAdSlide()"';
+        mediaHTML = `
+        <div class="relative w-full h-full bg-black">
+            <video id="homeAdVideo" autoplay muted playsinline ${loopAttr} ${endedAttr} onerror="nextAdSlide()" class="w-full h-full object-cover">
+                <source src="${ad.content}" type="video/mp4">
+            </video>
+            <button onclick="toggleAdVideoSound()" class="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-sm z-30 transition-all">
+                <i class="fas fa-volume-xmark" id="adVideoSoundIcon"></i>
+            </button>
+        </div>`;
     }
+    
     container.innerHTML = `<div class="w-full h-full">${mediaHTML}</div>`;
-    if (dotsContainer) { if (isSingleAd) dotsContainer.innerHTML = ''; else dotsContainer.innerHTML = activeAds.map((_, i) => `<span class="w-2 h-2 rounded-full bg-white/50 cursor-pointer ${i === index ? 'w-6 bg-white' : ''}" onclick="goToAdSlide(${i})"></span>`).join(''); }
+    
+    if (dotsContainer) { 
+        if (isSingleAd) dotsContainer.innerHTML = ''; 
+        else dotsContainer.innerHTML = activeAds.map((_, i) => `<span class="w-2 h-2 rounded-full bg-white/50 cursor-pointer ${i === index ? 'w-6 bg-white' : ''}" onclick="goToAdSlide(${i})"></span>`).join(''); 
+    }
 }
 window.nextAdSlide = () => { if (activeAds.length === 0) return; currentAdIndex = (currentAdIndex + 1) % activeAds.length; renderAdSlide(currentAdIndex); }
 window.prevAdSlide = () => { if (activeAds.length === 0) return; currentAdIndex = (currentAdIndex - 1 + activeAds.length) % activeAds.length; renderAdSlide(currentAdIndex); }
