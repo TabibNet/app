@@ -2478,5 +2478,5 @@ window.submitAnswer = async (qId) => {
         showToast('خطأ في إرسال الإجابة: ' + err.message); 
         console.error(err); 
     }
-}
+
 // نهاية ملف app.js
