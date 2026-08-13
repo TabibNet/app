@@ -156,26 +156,35 @@ window.setupOneSignal = async () => {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-        // التقاط تسجيل الدخول عبر جوجل عند العودة للموقع
+    // التقاط تسجيل الدخول عبر جوجل عند العودة للموقع
     supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
-            // تنظيف الرابط من أكواد جوجل
             if (window.location.hash.includes('access_token')) {
                 window.history.replaceState(null, '', window.location.pathname);
             }
-            // فتح الملف الصحي تلقائياً للمريض (وليس للطبيب/الصيدلية)
             if (session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
                 setTimeout(() => openHealthFile(), 500);
             }
         }
     });
-    setTimeout(() => {
-        const splash = document.getElementById('appSplashScreen');
-        if (splash) {
-            splash.classList.add('hidden');
-            setTimeout(() => { splash.style.display = 'none'; }, 1000);
+
+    // شاشة التحميل تظهر مرة واحدة فقط في كل جلسة (Session)
+    const splash = document.getElementById('appSplashScreen');
+    if (splash) {
+        if (sessionStorage.getItem('splashShown')) {
+            // إذا تم إظهارها مسبقاً، نخفيها فوراً دون أنيميشن
+            splash.style.display = 'none';
+        } else {
+            // إذا كانت المرة الأولى، نظهرها ونخفيها بعد 1.2 ثانية
+            setTimeout(() => {
+                splash.classList.add('hidden');
+                setTimeout(() => { splash.style.display = 'none'; }, 1000);
+                sessionStorage.setItem('splashShown', 'true'); // تسجيل أنها أُظهرت
+            }, 1200);
         }
-    }, 1200);
+    }
+
+    // ... (اترك باقي أكواد تحميل الصفحة كما هي أسفل هذا السطر)
 
     const langToggle = document.getElementById('langToggle');
     let isEnglish = document.cookie.includes('googtrans=/ar/en');
