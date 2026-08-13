@@ -131,7 +131,6 @@
                 <div class="hidden lg:flex items-center gap-6">
                     <a href="#home" class="text-white/80 hover:text-white text-sm transition-colors no-underline">الرئيسية</a>
                     <a href="#hospitals" class="text-white/80 hover:text-white text-sm transition-colors no-underline">المشافي</a>
-                    <a href="#clinics" class="text-white/80 hover:text-white text-sm transition-colors no-underline">العيادات</a>
                     <a href="#centers" class="text-white/80 hover:text-white text-sm transition-colors no-underline">المراكز</a>
                     <a href="#labs" class="text-white/80 hover:text-white text-sm transition-colors no-underline">المخابر</a>
                     <a href="#doctors" class="text-white/80 hover:text-white text-sm transition-colors no-underline">الأطباء</a>
@@ -316,7 +315,6 @@
             <div class="flex flex-col gap-1">
                 <a href="#home" onclick="toggleMobileMenu()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-home w-5"></i> الرئيسية</a>
                 <a href="#hospitals" onclick="toggleMobileMenu()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-hospital-symbol w-5"></i> المشافي</a>
-                <a href="#clinics" onclick="toggleMobileMenu()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-hospital w-5"></i> العيادات</a>
                 <a href="#centers" onclick="toggleMobileMenu()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-clinic-medical w-5"></i> المراكز الطبية</a>
                 <a href="#labs" onclick="toggleMobileMenu()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-flask w-5"></i> المخابر</a>
                 <a href="#doctors" onclick="toggleMobileMenu()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-xl px-4 py-3 text-sm transition-all flex items-center gap-3"><i class="fas fa-user-md w-5"></i> الأطباء</a>
@@ -386,7 +384,7 @@
     
     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 mb-6 text-white/80 text-sm"><i class="fas fa-map-marker-alt" style="color: var(--gold)"></i><span>مدينة الرحيبة - ريف دمشق</span></div>
                 <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight mb-6" style="font-family: 'Noto Kufi Arabic'"><span>دليلك الطبي الشامل</span></h1>
-                <p class="text-white/65 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">اعثر على أقرب مشفى، عيادة، مركز طبي، مخبر، طبيب أو صيدلية. دليلك الموثوق للرعاية الصحية.</p>
+                <p class="text-white/65 text-base sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">اعثر على أقرب مشفى، مركز طبي، مخبر، طبيب أو صيدلية. دليلك الموثوق للرعاية الصحية.</p>
                       <!-- Homepage Media Ads Slider Section -->
                                 <div id="homeMediaAdsSection" class="hidden mb-6 w-full max-w-2xl mx-auto">
                     <div class="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
@@ -421,7 +419,6 @@
 
                 <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4 mt-12 max-w-4xl mx-auto">
     <div class="stat-card p-3 sm:p-5 rounded-2xl text-center"><div class="text-xl sm:text-3xl font-black text-white" id="stat-hospital">0</div><div class="text-[9px] sm:text-xs text-white/50 mt-1">مشفى</div></div>
-    <div class="stat-card p-3 sm:p-5 rounded-2xl text-center"><div class="text-xl sm:text-3xl font-black text-white" id="stat-clinic">0</div><div class="text-[9px] sm:text-xs text-white/50 mt-1">عيادة</div></div>
     <div class="stat-card p-3 sm:p-5 rounded-2xl text-center"><div class="text-xl sm:text-3xl font-black text-white" id="stat-center">0</div><div class="text-[9px] sm:text-xs text-white/50 mt-1">مركز طبي</div></div>
     <div class="stat-card p-3 sm:p-5 rounded-2xl text-center"><div class="text-xl sm:text-3xl font-black text-white" id="stat-lab">0</div><div class="text-[9px] sm:text-xs text-white/50 mt-1">مخبر</div></div>
     <div class="stat-card p-3 sm:p-5 rounded-2xl text-center"><div class="text-xl sm:text-3xl font-black text-white" id="stat-doctor">0</div><div class="text-[9px] sm:text-xs text-white/50 mt-1">طبيب</div></div>
@@ -481,10 +478,6 @@
                         <i class="fas fa-hospital-symbol text-2xl mb-2" style="color:var(--hospital)"></i>
                         <span class="text-xs font-extrabold text-gray-700 dark:text-white">المشافي</span>
                     </button>
-                    <button class="filter-btn rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="clinic" onclick="setFilter('clinic', this)">
-                        <i class="fas fa-hospital text-2xl mb-2" style="color:var(--clinic)"></i>
-                        <span class="text-xs font-extrabold text-gray-700 dark:text-white">العيادات</span>
-                    </button>
                     <button class="filter-btn rounded-2xl flex flex-col items-center justify-center shadow-sm p-3 aspect-square" data-filter="center" onclick="setFilter('center', this)">
                         <i class="fas fa-clinic-medical text-2xl mb-2" style="color:var(--center)"></i>
                         <span class="text-xs font-extrabold text-gray-700 dark:text-white">المراكز</span>
@@ -506,7 +499,6 @@
             </section>
 
     <section id="hospitals" class="py-12 sm:py-16 dot-pattern" style="background: var(--bg)"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="text-center mb-10"><div class="ornament-line mb-3"><i class="fas fa-hospital-symbol text-sm" style="color: var(--hospital)"></i></div><h2 class="text-2xl sm:text-3xl font-black mb-3" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">المشافي والمرافق الكبرى</h2><p class="text-sm" style="color: var(--muted)">المشافي الوطنية والخاصة في منطقة الرحيبة وريف دمشق</p></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="hospitalsGrid"></div></div></section>
-    <section id="clinics" class="py-12 sm:py-16" style="background: var(--bg-deep)"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="text-center mb-10"><div class="ornament-line mb-3"><i class="fas fa-hospital text-sm" style="color: var(--clinic)"></i></div><h2 class="text-2xl sm:text-3xl font-black mb-3" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">العيادات الطبية</h2><p class="text-sm" style="color: var(--muted)">أبرز العيادات التخصصية </p></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="clinicsGrid"></div></div></section>
     <section id="centers" class="py-12 sm:py-16 dot-pattern" style="background: var(--bg)"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="text-center mb-10"><div class="ornament-line mb-3"><i class="fas fa-clinic-medical text-sm" style="color: var(--center)"></i></div><h2 class="text-2xl sm:text-3xl font-black mb-3" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">المراكز الطبية</h2><p class="text-sm" style="color: var(--muted)">مراكز طبية متكاملة تقدم خدمات صحية شاملة</p></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="centersGrid"></div></div></section>
     <section id="labs" class="py-12 sm:py-16" style="background: var(--bg-deep)"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="text-center mb-10"><div class="ornament-line mb-3"><i class="fas fa-flask text-sm" style="color: var(--lab)"></i></div><h2 class="text-2xl sm:text-3xl font-black mb-3" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">مخابر التحاليل الطبية</h2><p class="text-sm" style="color: var(--muted)">مخابر مجهزة بأحدث الأجهزة لجميع أنواع التحاليل</p></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="labsGrid"></div></div></section>
     <section id="doctors" class="py-12 sm:py-16 dot-pattern" style="background: var(--bg)"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="text-center mb-10"><div class="ornament-line mb-3"><i class="fas fa-user-md text-sm" style="color: var(--doctor)"></i></div><h2 class="text-2xl sm:text-3xl font-black mb-3" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">الأطباء المختصون</h2><p class="text-sm" style="color: var(--muted)">نخبة من الأطباء في مختلف التخصصات الطبية</p></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="doctorsGrid"></div></div></section>
@@ -600,7 +592,7 @@
                             <div><label class="block text-sm font-semibold mb-2" style="color: var(--fg-light)">الاسم الكامل</label><input type="text" required id="contactName" class="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2" style="border-color: var(--border); background: var(--bg)" placeholder="أدخل اسمك"></div>
                             <div><label class="block text-sm font-semibold mb-2" style="color: var(--fg-light)">رقم الهاتف</label><input type="tel" required id="contactPhone" class="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2" style="border-color: var(--border); background: var(--bg)" placeholder="09XXXXXXXX"></div>
                         </div>
-                        <div class="mb-4"><label class="block text-sm font-semibold mb-2" style="color: var(--fg-light)">نوع الإضافة</label><select required id="contactType" class="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2" style="border-color: var(--border); background: var(--bg)"><option value="">اختر النوع</option><option value="hospital">إضافة مشفى</option><option value="clinic">إضافة عيادة</option><option value="center">إضافة مركز طبي</option><option value="lab">إضافة مخبر</option><option value="doctor">إضافة طبيب</option><option value="pharmacy">إضافة صيدلية</option><option value="update">تحديث بيانات</option><option value="other">أخرى</option></select></div>
+                        <div class="mb-4"><label class="block text-sm font-semibold mb-2" style="color: var(--fg-light)">نوع الإضافة</label><select required id="contactType" class="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2" style="border-color: var(--border); background: var(--bg)"><option value="">اختر النوع</option><option value="hospital">إضافة مشفى</option><option value="center">إضافة مركز طبي</option><option value="lab">إضافة مخبر</option><option value="doctor">إضافة طبيب</option><option value="pharmacy">إضافة صيدلية</option><option value="update">تحديث بيانات</option><option value="other">أخرى</option></select></div>
                         <div class="mb-5"><label class="block text-sm font-semibold mb-2" style="color: var(--fg-light)">الرسالة</label><textarea required id="contactMessage" rows="4" class="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2 resize-none" style="border-color: var(--border); background: var(--bg)" placeholder="اكتب رسالتك هنا..."></textarea></div>
                         <button type="submit" class="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-paper-plane"></i> إرسال الطلب</button>
                     </form>
@@ -628,7 +620,7 @@
                         </div>
                     </div>
                     <p class="text-sm text-white/50 leading-relaxed">
-                        رحلتك الصحية تبدأ من هنا. نوفر لك وصولاً سهلاً وآمناً لأفضل المشافي، العيادات، والأطباء في مناطق قلمون الغربي والشرقي وريف دمشق، مع أدوات ذكية ومبادرات تكافلية لخدمة مجتمعنا.
+                        رحلتك الصحية تبدأ من هنا. نوفر لك وصولاً سهلاً وآمناً لأفضل المشافي، مراكز، والأطباء في مناطق القلمون الغربي والشرقي وريف دمشق، مع أدوات ذكية ومبادرات تكافلية لخدمة مجتمعنا.
                     </p>
                 </div>
 
@@ -638,7 +630,6 @@
                                         <ul class="space-y-3 text-sm">
                         <li><a href="#home" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> الرئيسية</a></li>
                         <li><a href="#hospitals" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> المشافي</a></li>
-                        <li><a href="#clinics" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> العيادات</a></li>
                         <li><a href="#doctors" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> الأطباء</a></li>
                         <li><a href="#labs" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> المخابر الطبية</a></li>
                         <li><a href="#pharmacies" class="text-white/50 hover:text-[var(--gold)] transition-colors flex items-center gap-2 group"><i class="fas fa-angle-left text-xs text-[var(--gold)]/50 group-hover:text-[var(--gold)]"></i> الصيدليات</a></li>
