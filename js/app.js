@@ -1144,10 +1144,22 @@ window.setStatus = async (id, status) => {
 }
 
 window.openMedicineFinder = () => { 
-    document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-pills ml-2" style="color: var(--gold)"></i> ابحث عن دوائك</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div><div class="mb-4 p-3 rounded-xl text-sm" style="background: var(--accent-light); color: var(--accent-dark)">اكتب الأدوية المطلوبة وسنتولى إرسالها للصيدليات.</div><form onsubmit="submitMedicineRequest(event)"><div class="mb-4"><label class="block text-sm font-semibold mb-2">الأدوية المطلوبة</label><textarea id="medList" class="ctrl-input" rows="3" placeholder="مثال: كونكور 5مغ" required></textarea></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-semibold mb-2">اسم المريض</label><input type="text" id="medName" class="ctrl-input" placeholder="اكتب اسمك"></div><div><label class="block text-sm font-semibold mb-2">رقم الهاتف</label><input type="tel" id="medPhone" class="ctrl-input" placeholder="09XXXXXXXX" required></div></div><div class="mb-4"><label class="block text-sm font-semibold mb-2">مستوى الإلحاح</label><select id="medUrgency" class="ctrl-input"><option value="عاجل جداً (طوارئ)">عاجل جداً (طوارئ)</option><option value="عاجل (خلال اليوم)">عاجل (خلال اليوم)</option><option value="عادي" selected>عادي</option></select></div><div class="mb-6"><label class="block text-sm font-semibold mb-2">صورة الوصفة الطبية (اختياري)</label><div class="file-input-wrapper"><label class="file-input-label" for="medImage"><i class="fas fa-camera text-2xl mb-2"></i><span>اضغط لاختيار صورة</span><img id="imagePreview" class="preview-image hidden" src="" alt="معاينة"></label><input type="file" id="medImage" accept="image/*" onchange="previewMedicineImage(event)"></div></div><button type="submit" id="medSubmitBtn" class="w-full py-3.5 rounded-xl text-white font-bold text-sm" style="background: var(--accent)"><i class="fas fa-paper-plane"></i> إرسال للصيدليات</button></form></div>`; 
-    document.getElementById('modalOverlay').classList.add('active'); lockScroll(); 
+    document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-pills ml-2" style="color: var(--gold)"></i> ابحث عن دوائك</h3><button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button></div><div class="mb-4 p-3 rounded-xl text-sm" style="background: var(--accent-light); color: var(--accent-dark)"><i class="fas fa-info-circle ml-1"></i> اكتب الأدوية المطلوبة وحدد مستوى الإلحاح، وسنتولى إرسالها للصيدليات. سيقوم أول صيدلية يتوفر فيها الدواء بالاتصال بك مباشرة!</div><form onsubmit="submitMedicineRequest(event)"><div class="mb-4"><label class="block text-sm font-semibold mb-2">الأدوية المطلوبة (نصياً)</label><textarea id="medList" class="ctrl-input" rows="3" placeholder="مثال: كونكور 5مغ، كاتافلام، شراب سيتامول" required></textarea></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-semibold mb-2">اسم المريض (اختياري)</label><input type="text" id="medName" class="ctrl-input" placeholder="اكتب اسمك"></div><div><label class="block text-sm font-semibold mb-2">رقم الهاتف للتواصل</label><input type="tel" id="medPhone" class="ctrl-input" placeholder="09XXXXXXXX" required></div></div><div class="mb-4"><label class="block text-sm font-semibold mb-2">مستوى الإلحاح</label><select id="medUrgency" class="ctrl-input"><option value="عاجل جداً (طوارئ)">عاجل جداً (طوارئ)</option><option value="عاجل (خلال اليوم)">عاجل (خلال اليوم)</option><option value="عادي" selected>عادي</option></select></div><div class="mb-6"><label class="block text-sm font-semibold mb-2">صورة الوصفة الطبية (اختياري)</label><div class="file-input-wrapper"><label class="file-input-label" for="medImage"><i class="fas fa-camera text-2xl mb-2"></i><span>اضغط لاختيار صورة الوصفة (إن وجدت)</span><img id="imagePreview" class="preview-image hidden" src="" alt="معاينة"></label><input type="file" id="medImage" accept="image/*" onchange="previewMedicineImage(event)"></div></div><button type="submit" id="medSubmitBtn" class="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-paper-plane"></i> إرسال للصيدليات</button></form></div>`; 
+    document.getElementById('modalOverlay').classList.add('active'); 
+    lockScroll(); 
 }
-window.previewMedicineImage = (event) => { const file = event.target.files[0]; const reader = new FileReader(); reader.onload = (e) => { const img = document.getElementById('imagePreview'); img.src = e.target.result; img.classList.remove('hidden'); }; reader.readAsDataURL(file); }
+
+window.previewMedicineImage = (event) => { 
+    const file = event.target.files[0]; 
+    const reader = new FileReader(); 
+    reader.onload = (e) => { 
+        const img = document.getElementById('imagePreview'); 
+        img.src = e.target.result; 
+        img.classList.remove('hidden'); 
+    }; 
+    reader.readAsDataURL(file); 
+}
+
 window.submitMedicineRequest = async (e) => { 
     e.preventDefault(); 
     const medList = document.getElementById('medList').value.trim();
@@ -1158,7 +1170,8 @@ window.submitMedicineRequest = async (e) => {
     const fileInput = document.getElementById('medImage'); 
     const file = fileInput.files[0]; 
     
-    if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); return; } 
+    if (!medList) { showToast('الرجاء كتابة الأدوية المطلوبة'); return; }
+    if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('الرجاء إدخال رقم هاتف صحيح'); return; } 
     phoneInput.classList.remove('input-invalid'); 
     
     const submitBtn = document.getElementById('medSubmitBtn'); 
@@ -1174,11 +1187,31 @@ window.submitMedicineRequest = async (e) => {
             if (imgbbData.success) imageUrl = imgbbData.data.url;
         }
         const medRef = `MED-${Math.floor(Math.random() * 900) + 100}`; 
-        await supabase.from('medicine_requests').insert([{ 
-            med_ref: medRef, med_list: medList, urgency: urgency, patient_name: name, patient_phone: phone, 
-            image_url: imageUrl, status: 'searching', notes: '', available_pharmacy: ''
+        const { error } = await supabase.from('medicine_requests').insert([{ 
+            med_ref: medRef, 
+            med_list: medList,
+            urgency: urgency,
+            patient_name: name, 
+            patient_phone: phone, 
+            image_url: imageUrl, 
+            status: 'searching', 
+            notes: '', 
+            available_pharmacy: ''
         }]); 
-        document.getElementById('modalContent').innerHTML = `<div class="p-8 text-center"><div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--accent-light)"><i class="fas fa-check text-4xl" style="color: var(--accent)"></i></div><h3 class="text-xl font-bold mb-2">تم إرسال طلبك بنجاح!</h3><p class="text-sm mb-2">رقم طلبك الدوائي هو:</p><div class="text-2xl font-black text-yellow-600 mb-4">#${medRef}</div><button onclick="copyText('${medRef}')" class="w-full py-3 rounded-xl text-white font-bold text-sm mb-2" style="background: var(--accent)"><i class="fas fa-copy ml-2"></i> نسخ الكود</button><button onclick="closeModal()" class="w-full py-2 rounded-xl border font-bold text-sm" style="border-color: var(--border)">حسناً</button></div>`; 
+        if (error) throw error;
+        
+        document.getElementById('modalContent').innerHTML = `
+        <div class="p-8 text-center">
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--accent-light)"><i class="fas fa-check text-4xl" style="color: var(--accent)"></i></div>
+            <h3 class="text-xl font-bold mb-2" style="font-family: 'Noto Kufi Arabic'">تم إرسال طلبك بنجاح!</h3>
+            <p class="text-sm mb-2" style="color: var(--muted)">رقم طلبك الدوائي هو:</p>
+            <div class="text-2xl font-black text-yellow-600 mb-4">#${medRef}</div>
+            <p class="text-sm mb-6" style="color: var(--muted)">احفظ هذا الرقم للاستعلام عن حالة الدواء لاحقاً في خانة الاستعلام السريع أعلى الصفحة.</p>
+            <button onclick="copyText('${medRef}')" class="w-full py-3 rounded-xl text-white font-bold text-sm mb-2" style="background: var(--accent)">
+                <i class="fas fa-copy ml-2"></i> نسخ الكود
+            </button>
+            <button onclick="closeModal()" class="w-full py-2 rounded-xl border font-bold text-sm" style="border-color: var(--border)">حسناً</button>
+        </div>`; 
     } catch (err) { 
         showToast('حدث خطأ أثناء إرسال الطلب'); 
         submitBtn.disabled = false; 
