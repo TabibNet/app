@@ -1782,6 +1782,14 @@ window.renderAdSlide = (index) => {
     }
 }
 window.nextAdSlide = () => { if (activeAds.length === 0) return; currentAdIndex = (currentAdIndex + 1) % activeAds.length; renderAdSlide(currentAdIndex); }
+window.toggleAdVideoSound = () => {
+    const video = document.getElementById('homeAdVideo');
+    const icon = document.getElementById('adVideoSoundIcon');
+    if (!video) return;
+    video.muted = !video.muted;
+    if (video.muted) { icon.className = 'fas fa-volume-xmark'; } 
+    else { icon.className = 'fas fa-volume-high'; }
+};
 window.prevAdSlide = () => { if (activeAds.length === 0) return; currentAdIndex = (currentAdIndex - 1 + activeAds.length) % activeAds.length; renderAdSlide(currentAdIndex); }
 window.goToAdSlide = (index) => { currentAdIndex = index; renderAdSlide(currentAdIndex); }
 window.saveHomeAd = async (e) => {
