@@ -688,7 +688,7 @@ window.renderDoctorDashboard = (doc) => {
             if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="text-xs p-2 rounded-lg mb-1 ${msg.sender === 'doctor' ? 'bg-blue-100 text-left' : 'bg-gray-100 text-right'}">${msg.text}</div>`).join(''); }
             return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${b.name}</span><br><span class="text-xs" style="color: var(--muted)">${b.daystr}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${b.ref}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${b.phone}" class="text-xs text-blue-600">${b.phone}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
         }).join('');
-        openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
+        openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button><button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
     });
 }
 
@@ -2340,5 +2340,65 @@ window.calcVaccines = () => {
     }).join('');
     resultContainer.innerHTML = html;
 }
+// === اسأل طبيب ===
+window.openAskDoctor = (docName) => {
+    window.tempDoctorName = docName || null;
+    openCtrlPanel('اسأل طبيب', `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border"><h4 class="font-bold mb-4 text-sm">اطرح سؤالاً</h4><form onsubmit="submitQuestion(event)" class="flex flex-col gap-3"><input type="text" id="qaName" class="ctrl-input text-sm" placeholder="الاسم (اختياري)" required><select id="qaCategory" class="ctrl-input text-sm"><option>طب عام</option><option>أطفال</option><option>نسائية</option></select><textarea id="qaText" class="ctrl-input text-sm" rows="3" placeholder="اكتب سؤالك..." required></textarea><button type="submit" class="py-3 rounded-xl text-white font-bold text-sm" style="background: #0EA5E9">نشر السؤال</button></form></div><div class="bg-white p-5 rounded-xl border"><h4 class="font-bold mb-4 text-sm">الأسئلة</h4><div id="qaListContainer" class="flex flex-col gap-4"><p class="text-center py-8 text-gray-400 text-sm">جاري التحميل...</p></div></div></div>`, '#0EA5E9');
+    fetchQuestions();
+}
 
+async function fetchQuestions() {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabase.from('medical_questions').select('*').in('status', ['open', 'answered']).gte('created_at', weekAgo);
+    if (error) { 
+        console.error("Error fetching questions:", error); 
+        const container = document.getElementById('qaListContainer');
+        if (container) container.innerHTML = '<p class="text-center py-8 text-red-500 text-sm">حدث خطأ في تحميل الأسئلة.</p>';
+        return; 
+    }
+    allQuestions = data || [];
+    renderQAList();
+}
+
+function renderQAList() {
+    const container = document.getElementById('qaListContainer'); if (!container) return;
+    if (allQuestions.length === 0) { container.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد أسئلة.</p>'; return; }
+    const isDoctorMode = window.tempDoctorName ? true : false;
+    container.innerHTML = allQuestions.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||'')).map(q => {
+        let answersHtml = (q.answers || []).map(ans => `<div class="bg-green-50 border border-green-200 p-3 rounded-lg mt-2 text-right"><div class="text-xs font-bold text-green-800">${ans.doctorName}</div><div class="text-sm text-gray-700 mt-1 whitespace-pre-line">${ans.text}</div></div>`).join('');
+        let answerSection = isDoctorMode ? `<textarea id="ansText_${q.id}" class="ctrl-input text-sm py-1" rows="2" placeholder="إجابتك..."></textarea><button onclick="submitAnswer('${q.id}')" class="mt-2 w-full py-2 rounded-lg bg-green-600 text-white text-sm font-semibold">إرسال</button>` : `<p class="text-xs text-gray-400 text-center">يمكن للأطباء الإجابة.</p>`;
+        return `<div class="border rounded-xl p-4"><div><span class="text-xs px-2 py-1 rounded bg-sky-100 text-sky-700">${q.category}</span><h5 class="font-bold text-sm mt-2">${q.name}</h5></div><p class="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg mt-2">${q.text}</p>${answersHtml}<div class="mt-3 border-t pt-3">${answerSection}</div></div>`;
+    }).join('');
+}
+
+window.submitQuestion = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase.from('medical_questions').insert([{ 
+        name: document.getElementById('qaName').value || 'مجهول', 
+        category: document.getElementById('qaCategory').value, 
+        text: document.getElementById('qaText').value, 
+        status: 'open', 
+        answers: [] 
+    }]);
+    if (error) { 
+        showToast('حدث خطأ أثناء النشر: ' + error.message); 
+        console.error("Submit Error:", error); 
+        return; 
+    }
+    showToast('تم نشر سؤالك بنجاح!'); 
+    e.target.reset(); 
+    fetchQuestions();
+}
+
+window.submitAnswer = async (qId) => {
+    const text = document.getElementById(`ansText_${qId}`).value.trim(); if (!text) return;
+    const docName = window.tempDoctorName || 'طبيب';
+    try {
+        const q = allQuestions.find(x => x.id === qId); const currentAnswers = q.answers || [];
+        currentAnswers.push({ doctorName: docName, text: text, timestamp: new Date().toISOString() });
+        const { error } = await supabase.from('medical_questions').update({ answers: currentAnswers, status: 'answered' }).eq('id', qId);
+        if (error) throw error;
+        showToast('تم نشر إجابتك!'); fetchQuestions();
+    } catch (err) { showToast('خطأ في الإرسال'); console.error(err); }
+}
 // نهاية ملف app.js
