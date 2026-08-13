@@ -679,7 +679,7 @@ window.handlePharmacyLogin = async (e) => {
     const dummyEmail = `pharm_${pass.toLowerCase()}@tabibnet.app`;
 
     const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
-    if (error) { showToast('الرمز غير صحيح!'); return; }
+    if (error) { showToast('خطأ: ' + error.message); return; }
 
     const pharmData = allData.find(d => d.name === name && d.type === 'pharmacy' && d.pharmacypass === pass); 
     if (pharmData) { 
@@ -759,7 +759,7 @@ window.handleDoctorLogin = async (e) => {
     const pass = passInput.toUpperCase();
     const dummyEmail = `doc_${pass.toLowerCase()}@tabibnet.app`;
     const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
-    if (error) { showToast('الرمز غير صحيح!'); return; }
+    if (error) { showToast('خطأ: ' + error.message); return; }
     const docData = allData.find(d => d.name === name && d.bookingpass === pass); 
     if (docData) { 
         renderDoctorDashboard(docData); 
