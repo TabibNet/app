@@ -1065,33 +1065,29 @@ function renderMedicineDonationsUI() {
 
 window.submitMedicineDonation = async (e) => {
     e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true; submitBtn.innerText = 'جاري النشر...';
+    
     const name = document.getElementById('medDonorName').value.trim();
     const medName = document.getElementById('medDonationName').value.trim();
     const medType = document.getElementById('medDonationType').value;
     const expiryDate = document.getElementById('medDonationExpiry').value.trim();
     const quantity = document.getElementById('medDonationQty').value.trim();
-    const phoneInput = document.getElementById('medDonationPhone');
+    const phoneInput = document.getElementById('medDonorPhone');
     const phone = phoneInput.value.trim();
     const notes = document.getElementById('medDonationNotes').value.trim();
 
-    if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); return; }
+    if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); submitBtn.disabled = false; submitBtn.innerText = 'نشر الدواء للتبرع'; return; }
     phoneInput.classList.remove('input-invalid');
 
     try {
-        await supabase.from('medicine_donations').insert([{ 
-            donor_name: name, 
-            medicine_name: medName, 
-            medicine_type: medType, 
-            expiry_date: expiryDate, 
-            quantity: quantity, 
-            phone: phone, 
-            notes: notes, 
-            status: 'active' 
-        }]);
+        await supabase.from('medicine_donations').insert([{ donor_name: name, medicine_name: medName, medicine_type: medType, expiry_date: expiryDate, quantity: quantity, phone: phone, notes: notes, status: 'active' }]);
         showToast('بارك الله فيك! تم نشر الدواء للتبرع.');
-        document.querySelector('#ctrlContent form').reset();
+        e.target.reset();
     } catch (err) { 
         showToast('حدث خطأ أثناء النشر'); 
+    } finally {
+        submitBtn.disabled = false; submitBtn.innerText = 'نشر الدواء للتبرع';
     }
 }
 window.resolveMedicineDonation = async (id) => { 
@@ -1163,6 +1159,9 @@ function renderBloodBankUI() {
 
 window.submitBloodRequest = async (e) => {
     e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true; submitBtn.innerText = 'جاري النشر...';
+    
     const name = document.getElementById('bloodPatient').value.trim();
     const bloodType = document.getElementById('bloodType').value;
     const hospital = document.getElementById('bloodHospital').value.trim();
@@ -1170,22 +1169,17 @@ window.submitBloodRequest = async (e) => {
     const phone = phoneInput.value.trim();
     const notes = document.getElementById('bloodNotes').value.trim();
 
-    if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); return; }
+    if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); submitBtn.disabled = false; submitBtn.innerText = 'نشر الاستغاثة'; return; }
     phoneInput.classList.remove('input-invalid');
 
     try {
-        await supabase.from('blood_requests').insert([{ 
-            patient_name: name, 
-            blood_type: bloodType, 
-            hospital: hospital, 
-            phone: phone, 
-            notes: notes, 
-            status: 'active' 
-        }]);
+        await supabase.from('blood_requests').insert([{ patient_name: name, blood_type: bloodType, hospital: hospital, phone: phone, notes: notes, status: 'active' }]);
         showToast('تم نشر استغاثتك بنجاح! سيتم التواصل معك قريباً.');
-        document.querySelector('#ctrlContent form').reset();
+        e.target.reset();
     } catch (err) { 
         showToast('حدث خطأ أثناء النشر'); 
+    } finally {
+        submitBtn.disabled = false; submitBtn.innerText = 'نشر الاستغاثة';
     }
 }
 
@@ -1193,8 +1187,8 @@ window.resolveBloodRequest = async (id) => {
     try { 
         await supabase.from('blood_requests').update({ status: 'resolved' }).eq('id', id); 
         showToast('تم إنهاء الطلب.'); 
-        await fetchBloodRequests(); // جلب استغاثات الدم المحدثة
-        renderAdminDashboard(); // إعادة بناء اللوحة
+        await fetchBloodRequests(); 
+        renderAdminDashboard();
     } catch (err) { showToast('خطأ'); } 
 }
 window.respondToBloodRequest = (btnElement, reqId, patientName, phone) => {
@@ -1223,12 +1217,12 @@ window.setStatus = async (id, status) => {
         localStorage.setItem('force_listings_update', 'true');
         let msg = status === true ? 'تم تغيير الحالة إلى: مفتوح' : status === false ? 'تم تغيير الحالة إلى: مغلق' : 'تم تعيين الحالة إلى: لا شيء';
         showToast(msg);
-        await fetchListings(); // جلب البيانات الجديدة
-        renderAdminDashboard(); // إعادة بناء اللوحة فوراً لتغيير لون الزر
+        await fetchListings(); 
+        renderAdminDashboard(); 
     } catch (e) { showToast('حدث خطأ'); }
 }
 window.openMedicineFinder = () => { 
-    document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-pills ml-2" style="color: var(--gold)"></i> ابحث عن دوائك</h3><button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button></div><div class="mb-4 p-3 rounded-xl text-sm" style="background: var(--accent-light); color: var(--accent-dark)"><i class="fas fa-info-circle ml-1"></i> اكتب الأدوية المطلوبة وحدد مستوى الإلحاح، وسنتولى إرسالها للصيدليات. سيقوم أول صيدلية يتوفر فيها الدواء بالاتصال بك مباشرة!</div><form onsubmit="submitMedicineRequest(event)"><div class="mb-4"><label class="block text-sm font-semibold mb-2">الأدوية المطلوبة (نصياً)</label><textarea id="medList" class="ctrl-input" rows="3" placeholder="مثال: كونكور 5مغ، كاتافلام، شراب سيتامول" required></textarea></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-semibold mb-2">اسم المريض (اختياري)</label><input type="text" id="medName" class="ctrl-input" placeholder="اكتب اسمك"></div><div><label class="block text-sm font-semibold mb-2">رقم الهاتف للتواصل</label><input type="tel" id="medPhone" class="ctrl-input" placeholder="09XXXXXXXX" required></div></div><div class="mb-4"><label class="block text-sm font-semibold mb-2">مستوى الإلحاح</label><select id="medUrgency" class="ctrl-input"><option value="عاجل جداً (طوارئ)">عاجل جداً (طوارئ)</option><option value="عاجل (خلال اليوم)">عاجل (خلال اليوم)</option><option value="عادي" selected>عادي</option></select></div><div class="mb-6"><label class="block text-sm font-semibold mb-2">صورة الوصفة الطبية (اختياري)</label><div class="file-input-wrapper"><label class="file-input-label" for="medImage"><i class="fas fa-camera text-2xl mb-2"></i><span>اضغط لاختيار صورة الوصفة (إن وجدت)</span><img id="imagePreview" class="preview-image hidden" src="" alt="معاينة"></label><input type="file" id="medImage" accept="image/*" onchange="previewMedicineImage(event)"></div></div><button type="submit" id="medSubmitBtn" class="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-paper-plane"></i> إرسال للصيدليات</button></form></div>`; 
+    document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-pills ml-2" style="color: var(--gold)"></i> ابحث عن دوائك</h3><button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button></div><div class="mb-4 p-3 rounded-xl text-sm bg-emerald-50 dark:bg-slate-700 text-emerald-800 dark:text-emerald-200 border border-emerald-100 dark:border-slate-600"><i class="fas fa-info-circle ml-1"></i> اكتب الأدوية المطلوبة وحدد مستوى الإلحاح، وسنتولى إرسالها للصيدليات. سيقوم أول صيدلية يتوفر فيها الدواء بالاتصال بك مباشرة!</div><form onsubmit="submitMedicineRequest(event)"><div class="mb-4"><label class="block text-sm font-semibold mb-2">الأدوية المطلوبة (نصياً)</label><textarea id="medList" class="ctrl-input" rows="3" placeholder="مثال: كريب ستوب، أبرة معينة، شراب سيتامول" required></textarea></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-semibold mb-2">اسم المريض (اختياري)</label><input type="text" id="medName" class="ctrl-input" placeholder="اكتب اسمك"></div><div><label class="block text-sm font-semibold mb-2">رقم الهاتف للتواصل</label><input type="tel" id="medPhone" class="ctrl-input" placeholder="09XXXXXXXX" required></div></div><div class="mb-4"><label class="block text-sm font-semibold mb-2">مستوى الإلحاح</label><select id="medUrgency" class="ctrl-input"><option value="عاجل جداً (طوارئ)">عاجل جداً (طوارئ)</option><option value="عاجل (خلال اليوم)">عاجل (خلال اليوم)</option><option value="عادي" selected>عادي</option></select></div><div class="mb-6"><label class="block text-sm font-semibold mb-2">صورة الوصفة الطبية (اختياري)</label><div class="file-input-wrapper"><label class="file-input-label" for="medImage"><i class="fas fa-camera text-2xl mb-2"></i><span>اضغط لاختيار صورة الوصفة (إن وجدت)</span><img id="imagePreview" class="preview-image hidden" src="" alt="معاينة"></label><input type="file" id="medImage" accept="image/*" onchange="previewMedicineImage(event)"></div></div><button type="submit" id="medSubmitBtn" class="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-paper-plane"></i> إرسال للصيدليات</button></form></div>`; 
     document.getElementById('modalOverlay').classList.add('active'); 
     lockScroll(); 
 }
@@ -1363,18 +1357,28 @@ window.updateAdminFormFields = (type) => {
 }
 
 window.renderAdminDashboard = async () => { 
-        // التحقق من تسجيل الدخول أولاً
+    // التحقق من تسجيل الدخول أولاً
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         openAdminLogin();
         showToast('يجب تسجيل الدخول أولاً');
         return;
     }
+
+    // 1. جلب آخر 5 ملفات صحية مسجلة
+    const { data: recentPatients } = await supabase.from('health_files').select('full_name, blood_type, created_at').order('created_at', { ascending: false }).limit(5);
+    let patientsHtml = '';
+    if (recentPatients && recentPatients.length > 0) {
+        patientsHtml = recentPatients.map(p => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-2"><i class="fas fa-user-circle text-gray-400"></i><span class="text-sm font-semibold">${p.full_name}</span></div><span class="text-xs text-red-500 font-bold">${p.blood_type || 'غير محدد'}</span></div>`).join('');
+    } else {
+        patientsHtml = '<p class="text-center text-gray-400 text-sm py-4">لا يوجد مرضى مسجلين بعد.</p>';
+    }
+    const patientsAdminHtml = `<div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-file-medical text-pink-600"></i> أحدث الملفات الصحية المسجلة</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${patientsHtml}</div></div>`;
+
     const radarAdminHtml = `<div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-satellite-dish text-indigo-600"></i> إدارة رادار الرحيبة الصحي</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div class="bg-gray-50 p-3 rounded-xl"><span class="text-xs text-gray-500 block mb-1">الفصل الافتراضي للزوار:</span><select id="adminRadarSeason" onchange="setRadarDefaultSeason()" class="ctrl-input text-sm"><option value="summer">☀️ صيف</option><option value="winter">❄️ شتاء</option></select></div><div class="bg-gray-50 p-3 rounded-xl flex flex-col justify-center"><span class="text-xs text-gray-500 block mb-1">تصفير العدادات الأسبوعي:</span><button onclick="resetRadarVotes()" class="bg-red-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-red-600 transition-all">تصفير العدادات</button></div></div></div>`;
     const homeAdsHtml = `<div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-photo-video text-purple-600"></i> إعلانات الصفحة الرئيسية (صور/فيديو)</h4><form onsubmit="saveHomeAd(event)" class="grid grid-cols-1 gap-3 mb-4"><select id="adType" class="ctrl-input text-sm"><option value="image">صورة (رابط مباشر ينتهي بـ .jpg أو .png)</option><option value="video">فيديو (رابط مباشر ينتهي بـ .mp4 فقط)</option></select><input type="text" id="adContent" class="ctrl-input text-sm" placeholder="الصق الرابط هنا..." required><input type="text" id="adLink" class="ctrl-input text-sm" placeholder="رابط التحويل عند الضغط (اختياري للصور)"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="adActiveCheck" class="w-5 h-5 accent-purple-600" checked> تفعيل وعرض الإعلان فوراً</label><button type="submit" class="py-2.5 rounded-xl text-white font-semibold text-sm" style="background: #8B5CF6"><i class="fas fa-plus ml-1"></i> إضافة إعلان</button></form><div id="adminHomeAdsList" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1"><p class="text-center text-gray-400 text-sm py-2">جاري تحميل الإعلانات...</p></div></div>`;
     const announcementsHtml = `<div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-bullhorn text-blue-600"></i> إدارة الشريط الإعلاني العلوي</h4><form onsubmit="saveAnnouncement(event)" class="grid grid-cols-1 gap-3 mb-4"><textarea id="annText" class="ctrl-input text-sm" rows="2" placeholder="نص الإعلان (مثال: افتتاحية قسم الطوارئ الجديد...)" required></textarea><input type="text" id="annLink" class="ctrl-input text-sm" placeholder="رابط التفاصيل (اتركه فارغاً لإخفاء الزر تماماً)"><input type="text" id="annLinkText" class="ctrl-input text-sm" placeholder="نص الزر (اختياري - افتراضي: اضغط هنا)"><button type="submit" class="py-2.5 rounded-xl text-white font-semibold text-sm" style="background: #2563EB"><i class="fas fa-paper-plane ml-1"></i> نشر الإعلان</button></form><div id="adminAnnouncementList" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1"><p class="text-center text-gray-400 text-sm py-2">جاري تحميل الإعلانات...</p></div></div>`;
     
-    // تم إعادة كود عرض كلمة المرور للطبيب والصيدلية هنا
     let listHtml = allData.map(item => `<div class="flex items-center justify-between p-3 rounded-xl border bg-white" style="border-color: var(--border)"><div class="flex flex-col gap-1"><div class="flex items-center gap-3"><span class="badge badge-${item.type}">${item.type}</span><span class="font-semibold text-sm">${item.name}</span></div>${item.bookingpass ? `<span class="text-[11px] text-gray-500">رمز الطبيب: <span class="font-mono font-bold text-blue-600">${item.bookingpass}</span></span>` : ''}${item.pharmacypass ? `<span class="text-[11px] text-gray-500">رمز الصيدلية: <span class="font-mono font-bold text-green-600">${item.pharmacypass}</span></span>` : ''}</div><div class="flex gap-2 items-center"> ${['doctor', 'pharmacy'].includes(item.type) ? `<div class="flex gap-1 bg-gray-50 p-1 rounded-lg border" style="border-color: var(--border)"><button onclick="setStatus('${item.id}', true)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen === true ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button><button onclick="setStatus('${item.id}', false)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen === false ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-100'}">مغلق</button><button onclick="setStatus('${item.id}', null)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen == null ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button></div>` : ''}<button onclick="editFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue/50"><i class="fas fa-edit"></i></button><button onclick="deleteFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-50"><i class="fas fa-trash"></i></button></div></div>`).join(''); 
 
     const twentyHoursAgo = new Date(Date.now() - (20 * 60 * 60 * 1000)).toISOString();
@@ -1382,7 +1386,8 @@ window.renderAdminDashboard = async () => {
     let bloodHtml = activeBloodRequests.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد استغاثات حالياً.</p>' : activeBloodRequests.map(b => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><span class="blood-type-badge text-sm py-1 px-3">${b.blood_type}</span><div><div class="text-sm font-semibold">${b.patient_name} ${b.responses_count > 0 ? '<span class="text-xs text-green-500">(مستجيب: '+b.responses_count+')</span>' : ''}</div><div class="text-xs text-gray-500">${b.hospital}</div></div></div><button onclick="resolveBloodRequest('${b.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">إنهاء الطلب</button></div>`).join('');
     let medDonHtml = medicineDonations.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد أدوية مُتبرع بها حالياً.</p>' : medicineDonations.map(m => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><i class="fas fa-pills text-green-600"></i><div><div class="text-sm font-semibold">${m.medicine_name} (${m.quantity})</div><div class="text-xs text-gray-500">ينتهي: ${m.expiry_date} | المتبرع: ${m.donor_name}</div></div></div><button onclick="resolveMedicineDonation('${m.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">حذف/إنهاء</button></div>`).join('');
 
-    openCtrlPanel('لوحة الإدارة', `<div class="flex flex-col gap-6"> ${announcementsHtml} ${homeAdsHtml} ${radarAdminHtml} <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-tint text-red-600"></i> إدارة استغاثات الدم (${bloodRequests.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${bloodHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-hand-holding-medical text-green-600"></i> إدارة الأدوية الفائضة (${medicineDonations.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${medDonHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle ml-2" style="color: var(--accent)"></i> <span id="formTitle">إضافة منشأة</span></h4><form onsubmit="saveFacility(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="hidden" id="edit_id"><select id="new_type" class="ctrl-input text-sm" required onchange="updateAdminFormFields(this.value)"><option value="hospital">مشفى</option><option value="center">مركز</option><option value="lab">مخبر</option><option value="doctor">طبيب</option><option value="pharmacy">صيدلية</option></select><input type="text" id="new_name" class="ctrl-input text-sm" placeholder="الاسم" required><input type="text" id="new_specialty" class="ctrl-input text-sm" placeholder="التخصص الأساسي" required><input type="text" id="new_address" class="ctrl-input text-sm" placeholder="العنوان / الموقع" required><input type="text" id="new_phone" class="ctrl-input text-sm" placeholder="رقم الهاتف (اختياري)"><input type="text" id="new_hours" class="ctrl-input text-sm" placeholder="أوقات العمل"><input type="text" id="new_image_url" class="ctrl-input text-sm" placeholder="رابط الصورة (URL)"><textarea id="new_desc" class="ctrl-input text-sm col-span-2" placeholder="وصف عام" rows="2" required></textarea><div id="adminExtraFields" class="contents"></div><button type="submit" class="col-span-1 sm:col-span-2 py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--accent)"><i class="fas fa-save ml-1"></i> حفظ</button></form></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list ml-2"></i> المنشآت (${allData.length})</h4><div class="flex flex-col gap-2 max-h-96 overflow-y-auto">${listHtml}</div></div> <button onclick="seedDatabase()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: var(--gold); color: var(--gold)"><i class="fas fa-database ml-2"></i> ترحيل البيانات الافتراضية</button> <button onclick="logoutAdmin()" class="w-full py-2.5 rounded-xl border font-semibold text-sm mt-2" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button> </div>`, '#073D2E'); 
+    openCtrlPanel('لوحة الإدارة', `<div class="flex flex-col gap-6"> ${announcementsHtml} ${homeAdsHtml} ${radarAdminHtml} ${patientsAdminHtml} <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-tint text-red-600"></i> إدارة استغاثات الدم (${bloodRequests.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${bloodHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-hand-holding-medical text-green-600"></i> إدارة الأدوية الفائضة (${medicineDonations.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${medDonHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle ml-2" style="color: var(--accent)"></i> <span id="formTitle">إضافة منشأة</span></h4><form onsubmit="saveFacility(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="hidden" id="edit_id"><select id="new_type" class="ctrl-input text-sm" required onchange="updateAdminFormFields(this.value)"><option value="hospital">مشفى</option><option value="center">مركز</option><option value="lab">مخبر</option><option value="doctor">طبيب</option><option value="pharmacy">صيدلية</option></select><input type="text" id="new_name" class="ctrl-input text-sm" placeholder="الاسم" required><input type="text" id="new_specialty" class="ctrl-input text-sm" placeholder="التخصص الأساسي" required><input type="text" id="new_address" class="ctrl-input text-sm" placeholder="العنوان / الموقع" required><input type="text" id="new_phone" class="ctrl-input text-sm" placeholder="رقم الهاتف (اختياري)"><input type="text" id="new_hours" class="ctrl-input text-sm" placeholder="أوقات العمل"><input type="text" id="new_image_url" class="ctrl-input text-sm" placeholder="رابط الصورة (URL)"><textarea id="new_desc" class="ctrl-input text-sm col-span-2" placeholder="وصف عام" rows="2" required></textarea><div id="adminExtraFields" class="contents"></div><button type="submit" class="col-span-1 sm:col-span-2 py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--accent)"><i class="fas fa-save ml-1"></i> حفظ</button></form></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list ml-2"></i> المنشآت (${allData.length})</h4><div class="flex flex-col gap-2 max-h-96 overflow-y-auto">${listHtml}</div></div> <button onclick="seedDatabase()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: var(--gold); color: var(--gold)"><i class="fas fa-database ml-2"></i> ترحيل البيانات الافتراضية</button> <button onclick="logoutAdmin()" class="w-full py-2.5 rounded-xl border font-semibold text-sm mt-2" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button> </div>`, '#073D2E'); 
+
     fetchAnnouncements();
     fetchHomeAdsForAdmin();
     updateAdminFormFields('doctor');
@@ -2755,6 +2760,9 @@ function renderQAList() {
 
 window.submitQuestion = async (e) => {
     e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true; submitBtn.innerText = 'جاري النشر...';
+    
     const name = document.getElementById('qaName').value.trim() || 'مجهول';
     const category = document.getElementById('qaCategory').value;
     const text = document.getElementById('qaText').value.trim();
@@ -2768,7 +2776,8 @@ window.submitQuestion = async (e) => {
         fetchQuestions();
     } catch (err) { 
         showToast('حدث خطأ أثناء النشر: ' + err.message); 
-        console.error(err); 
+    } finally {
+        submitBtn.disabled = false; submitBtn.innerText = 'نشر السؤال';
     }
 }
 
