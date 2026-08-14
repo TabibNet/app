@@ -173,10 +173,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('appSplashScreen');
     if (splash) {
         if (sessionStorage.getItem('splashShown')) {
-            // إذا تم إظهارها مسبقاً، نخفيها فوراً دون أنيميشن
+            
             splash.style.display = 'none';
         } else {
-            // إذا كانت المرة الأولى، نظهرها ونخفيها بعد 1.2 ثانية
+            
             setTimeout(() => {
                 splash.classList.add('hidden');
                 setTimeout(() => { splash.style.display = 'none'; }, 1000);
@@ -184,8 +184,6 @@ window.addEventListener('DOMContentLoaded', () => {
             }, 1200);
         }
     }
-
-    // ... (اترك باقي أكواد تحميل الصفحة كما هي أسفل هذا السطر)
 
     const langToggle = document.getElementById('langToggle');
        let isEnglish = document.cookie.includes('googtrans=/ar/en');
@@ -401,12 +399,14 @@ function createCard(item) {
     let detailsHTML = '';
     if (item.type === 'hospital') detailsHTML = `<div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || '24/7 طوارئ'}</span></div>${item.emergencyphone ? '<div class="detail-row"><i class="fas fa-ambulance" style="color: var(--danger)"></i><span style="color: var(--danger); font-weight: 700">طوارئ: ' + item.emergencyphone + '</span></div>' : ''}`;
     else if (item.type === 'doctor') detailsHTML = `<div class="detail-row"><i class="fas fa-graduation-cap"></i><span>${item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.clinic || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.consulthours || item.hours || ''}</span></div>`;
-    else if (item.type === 'clinic') detailsHTML = `<div class="detail-row"><i class="fas fa-stethoscope"></i><span>${item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || ''}</span></div>`;
     else if (item.type === 'center') detailsHTML = `<div class="detail-row"><i class="fas fa-star-of-life"></i><span>${item.services || item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || ''}</span></div>`;
     else if (item.type === 'lab') detailsHTML = `<div class="detail-row"><i class="fas fa-vials"></i><span>${item.tests || item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div>${item.homesample && item.homesample !== 'لا' ? '<div class="detail-row"><i class="fas fa-house-user" style="color: var(--accent)"></i><span style="color: var(--accent); font-weight: 600">يتوفر سحب منزلي</span></div>' : ''}`;
     else detailsHTML = `<div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || ''}</span></div>${item.night ? '<div class="detail-row"><i class="fas fa-moon" style="color: var(--gold)"></i><span style="color: var(--gold); font-weight: 600">صيدلية مناوبة</span></div>' : ''}`;
-    const canBook = item.type === 'doctor' || item.type === 'clinic';
+    
+    
+    const canBook = item.type === 'doctor';
     const bookingBtn = canBook ? `<button onclick="event.stopPropagation(); openBookingModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--accent);" aria-label="حجز"><i class="fas fa-calendar-plus"></i></button>` : '';
+    
     return `<div class="card ${t.cardClass} cursor-pointer" onclick="openModal('${item.id}')" data-type="${item.type}"><div class="relative h-40 overflow-hidden rounded-t-2xl"><img src="${item.image || 'https://picsum.photos/seed/default/400/250'}" alt="${item.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110 cursor-zoom-in" loading="lazy" onclick="event.stopPropagation(); openLightbox(this.src)"><div class="absolute top-3 right-3"><span class="badge ${t.badgeClass}">${t.label}</span></div><div class="absolute top-3 left-3 flex flex-col gap-1 items-start">
     ${['doctor', 'pharmacy'].includes(item.type) && item.isopen === true ? '<span class="badge" style="background:#10B981;color:white"><i class="fas fa-door-open ml-1"></i>مفتوح</span>' : ''}
     ${['doctor', 'pharmacy'].includes(item.type) && item.isopen === false ? '<span class="badge" style="background:#EF4444;color:white"><i class="fas fa-door-closed ml-1"></i>مغلق</span>' : ''}
@@ -431,7 +431,7 @@ function matchItem(item) {
     if (currentFilter !== 'all' && item.type !== currentFilter) return false; 
     if (!searchQuery) return true; 
     const q = searchQuery.toLowerCase(); 
-    return ['name', 'specialty', 'address', 'clinic', 'description', 'services', 'tests', 'departments', 'floors', 'homesample', 'nightdetails', 'consulthours', 'bookingnotes'].some(key => (item[key] || '').toLowerCase().includes(q)); 
+    return ['name', 'specialty', 'address',  'description', 'services', 'tests', 'departments', 'floors', 'homesample', 'nightdetails', 'consulthours', 'bookingnotes'].some(key => (item[key] || '').toLowerCase().includes(q)); 
 }
 
 window.setFilter = (filter, btn) => { 
@@ -682,7 +682,19 @@ window.renderFollowupChat = (bookingId) => {
     if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="flex ${msg.sender === 'patient' ? 'justify-start' : 'justify-end'}"><div class="max-w-[75%] p-3 rounded-xl text-sm ${msg.sender === 'patient' ? 'bg-gray-100 text-gray-800' : 'bg-blue-500 text-white'}">${msg.text}</div></div>`).join(''); } 
     else { chatHtml = '<p class="text-center text-xs text-gray-400 my-4">لا توجد رسائل بعد. انتظر رد العيادة.</p>'; }
     
-    contentEl.innerHTML = `<div class="bg-white p-4 rounded-xl border" style="border-color: var(--border)"><div class="flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${b.itemname}</div><div class="text-xs text-gray-500">${b.daystr}</div></div><div>${statusBadge}</div></div><div class="text-xs text-yellow-600 font-bold mt-2">رقم المرجع: #${b.ref}</div></div><div class="bg-white p-4 rounded-xl border flex flex-col h-96" style="border-color: var(--border)"><div class="flex-1 overflow-y-auto flex flex-col gap-2 mb-3 pr-1" id="chatBox">${chatHtml}</div><div class="flex gap-2 border-t pt-3" style="border-color: var(--border)"><input type="text" id="chatInput" class="ctrl-input text-sm" placeholder="اكتب رسالتك للطبيب..." onkeydown="if(event.key==='Enter') sendChatMessage('${bookingId}')"><button onclick="sendChatMessage('${bookingId}')" class="px-4 rounded-xl text-white" style="background: var(--accent)"><i class="fas fa-paper-plane"></i></button></div></div>`;
+    // === التحديث الذكي ===
+    const existingInput = document.getElementById('chatInput');
+    if (!existingInput) {
+        // إذا كانت أول مرة يفتح فيها الدردشة، نبني الواجهة كاملة
+        contentEl.innerHTML = `<div class="bg-white p-4 rounded-xl border" style="border-color: var(--border)"><div class="flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${b.itemname}</div><div class="text-xs text-gray-500">${b.daystr}</div></div><div id="statusBadgeContainer">${statusBadge}</div></div><div class="text-xs text-yellow-600 font-bold mt-2">رقم المرجع: #${b.ref}</div></div><div class="bg-white p-4 rounded-xl border flex flex-col h-96" style="border-color: var(--border)"><div class="flex-1 overflow-y-auto flex flex-col gap-2 mb-3 pr-1" id="chatBox">${chatHtml}</div><div class="flex gap-2 border-t pt-3" style="border-color: var(--border)"><input type="text" id="chatInput" class="ctrl-input text-sm" placeholder="اكتب رسالتك للطبيب..." onkeydown="if(event.key==='Enter') sendChatMessage('${bookingId}')"><button onclick="sendChatMessage('${bookingId}')" class="px-4 rounded-xl text-white" style="background: var(--accent)"><i class="fas fa-paper-plane"></i></button></div></div>`;
+    } else {
+        // إذا كان المريض موجوداً بالفعل في الدردشة، نحدث الرسائل وحالة الحجز فقط (دون لمس حقل الكتابة)
+        const chatBox = document.getElementById('chatBox');
+        const statusContainer = document.getElementById('statusBadgeContainer');
+        if (chatBox) chatBox.innerHTML = chatHtml;
+        if (statusContainer) statusContainer.innerHTML = statusBadge;
+    }
+
     const chatBox = document.getElementById('chatBox'); if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
 }
 
