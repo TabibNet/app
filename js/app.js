@@ -1077,7 +1077,7 @@ function renderMedicineDonationsUI() {
         const medType = document.getElementById('medDonationType').value;
         const expiryDate = document.getElementById('medDonationExpiry').value.trim();
         const quantity = document.getElementById('medDonationQty').value.trim();
-        const phoneInput = document.getElementById('medDonorPhone');
+        const phoneInput = document.getElementById('medDonationPhone');
         const phone = phoneInput.value.trim();
         const notes = document.getElementById('medDonationNotes').value.trim();
 
