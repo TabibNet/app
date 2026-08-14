@@ -1,5 +1,5 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-const CACHE_NAME = 'raheba-med-v20'; // تم تغيير الرقم إلى v7 لإجبار الهاتف على مسح كل الصفحات القديمة
+const CACHE_NAME = 'raheba-med-v21'; // تم تغيير الرقم إلى v7 لإجبار الهاتف على مسح كل الصفحات القديمة
 const CORE_ASSETS = [
   '/',
   '/index.html',
