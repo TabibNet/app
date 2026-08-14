@@ -1063,58 +1063,55 @@ function renderMedicineDonationsUI() {
     }).join('');
 }
 
-    window.submitMedicineDonation = async (e) => {
+     window.submitMedicineDonation = async (e) => {
     e.preventDefault();
     const btn = document.getElementById('medDonationSubmitBtn');
     if (!btn) return;
     
-    // تعطيل الزر وتغيير النص
     btn.disabled = true; 
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري النشر...';
     
-    const name = document.getElementById('medDonorName').value.trim();
-    const medName = document.getElementById('medDonationName').value.trim();
-    const medType = document.getElementById('medDonationType').value;
-    const expiryDate = document.getElementById('medDonationExpiry').value.trim();
-    const quantity = document.getElementById('medDonationQty').value.trim();
-    const phoneInput = document.getElementById('medDonorPhone');
-    const phone = phoneInput.value.trim();
-    const notes = document.getElementById('medDonationNotes').value.trim();
+    try {
+        const name = document.getElementById('medDonorName').value.trim();
+        const medName = document.getElementById('medDonationName').value.trim();
+        const medType = document.getElementById('medDonationType').value;
+        const expiryDate = document.getElementById('medDonationExpiry').value.trim();
+        const quantity = document.getElementById('medDonationQty').value.trim();
+        const phoneInput = document.getElementById('medDonorPhone');
+        const phone = phoneInput.value.trim();
+        const notes = document.getElementById('medDonationNotes').value.trim();
 
-    // التحقق من رقم الهاتف
-    if (!/^09\d{8}$/.test(phone)) { 
-        phoneInput.classList.add('input-invalid'); 
-        showToast('رقم هاتف غير صحيح'); 
-        btn.disabled = false; 
-        btn.innerHTML = '<i class="fas fa-plus ml-2"></i> نشر الدواء للتبرع';
-        return; 
-    }
-    phoneInput.classList.remove('input-invalid');
+        if (!/^09\d{8}$/.test(phone)) { 
+            phoneInput.classList.add('input-invalid'); 
+            showToast('رقم هاتف غير صحيح'); 
+            return; 
+        }
+        phoneInput.classList.remove('input-invalid');
 
-    // إرسال البيانات لـ Supabase
-    const { error } = await supabase.from('medicine_donations').insert([{ 
-        donor_name: name, 
-        medicine_name: medName, 
-        medicine_type: medType, 
-        expiry_date: expiryDate, 
-        quantity: quantity, 
-        phone: phone, 
-        notes: notes, 
-        status: 'active' 
-    }]);
+        const { error } = await supabase.from('medicine_donations').insert([{ 
+            donor_name: name, 
+            medicine_name: medName, 
+            medicine_type: medType, 
+            expiry_date: expiryDate, 
+            quantity: quantity, 
+            phone: phone, 
+            notes: notes, 
+            status: 'active' 
+        }]);
 
-    // إعادة الزر لحالته الطبيعية فوراً
-    btn.disabled = false; 
-    btn.innerHTML = '<i class="fas fa-plus ml-2"></i> نشر الدواء للتبرع';
+        if (error) throw error;
 
-    if (error) {
-        showToast('حدث خطأ أثناء النشر: ' + error.message);
-    } else {
         showToast('بارك الله فيك! تم نشر الدواء للتبرع.');
         document.querySelector('#ctrlContent form').reset();
-        // تحديث القائمة فوراً لتظهر الدواء الجديد
         await fetchMedicineDonations();
         renderMedicineDonationsUI();
+
+    } catch (err) {
+        showToast('حدث خطأ: ' + err.message);
+        console.error("Donation Error:", err);
+    } finally {
+        btn.disabled = false; 
+        btn.innerHTML = '<i class="fas fa-plus ml-2"></i> نشر الدواء للتبرع';
     }
 }
 window.resolveMedicineDonation = async (id) => { 
