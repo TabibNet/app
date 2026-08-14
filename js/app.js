@@ -187,7 +187,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // ... (اترك باقي أكواد تحميل الصفحة كما هي أسفل هذا السطر)
 
     const langToggle = document.getElementById('langToggle');
-    let isEnglish  document.cookie.includes('googtrans=/ar/en');
+       let isEnglish = document.cookie.includes('googtrans=/ar/en');
     function applyLangLayout() {
         if (!langToggle) return;
         if (isEnglish) {
@@ -391,7 +391,7 @@ function createCard(item) {
         doctor: { cardClass: 'doctor-card', badgeClass: 'badge-doctor', iconClass: 'cat-icon-doctor', icon: 'fa-user-md', label: 'طبيب', color: 'var(--doctor)' }, 
         pharmacy: { cardClass: 'pharmacy-card', badgeClass: 'badge-pharmacy', iconClass: 'cat-icon-pharmacy', icon: 'fa-pills', label: 'صيدلية', color: 'var(--pharmacy)' } 
     };
-    const t = typeMap[item.type] || typeMap.clinic;
+    const t = typeMap[item.type] || typeMap.doctor;
     const fullStars = Math.floor(item.rating || 0); const halfStar = (item.rating || 0) % 1 >= 0.5; let starsHTML = '';
     for (let i = 0; i < fullStars; i++) starsHTML += '<i class="fas fa-star"></i>';
     if (halfStar) starsHTML += '<i class="fas fa-star-half-alt"></i>';
@@ -454,7 +454,7 @@ window.openModal = (id) => {
         doctor: { label: 'طبيب', badgeClass: 'badge-doctor', color: 'var(--doctor)', icon: 'fa-user-md' }, 
         pharmacy: { label: 'صيدلية', badgeClass: 'badge-pharmacy', color: 'var(--pharmacy)', icon: 'fa-pills' } 
     }; 
-    const t = typeMap[item.type] || typeMap.clinic; 
+    const t = typeMap[item.type] || typeMap.doctor;
     const fullStars = Math.floor(item.rating || 0); 
     const halfStar = (item.rating || 0) % 1 >= 0.5; 
     let starsHTML = ''; 
