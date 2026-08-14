@@ -1846,7 +1846,7 @@ window.handleHealthLogin = async (e) => {
     renderHealthDashboard(fileData);
 };
 
-window.renderHealthDashboard = (data) => {
+ window.renderHealthDashboard = (data) => {
     openCtrlPanel(`الملف الصحي: ${data.full_name || data.fullName}`, `
         <div class="flex flex-col gap-5">
             <div class="bg-white p-6 rounded-2xl border-2 flex flex-col items-center" style="border-color: #EC4899;">
@@ -1880,6 +1880,8 @@ window.renderHealthDashboard = (data) => {
                 <div><label class="text-xs font-bold text-gray-500">هاتف جهة الطوارئ</label><input type="tel" id="hfEmergencyPhone" class="ctrl-input" value="${data.emergency_phone || ''}"></div>
                 <button type="submit" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm" style="background: #EC4899"><i class="fas fa-save ml-2"></i> حفظ التحديثات</button>
             </form>
+            
+            <!-- قسم الروشتات الطبية -->
             <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
                 <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-file-medical text-blue-600"></i> روشتي الطبية السابقة</h4>
                 <div class="flex flex-col gap-4 mt-2">
@@ -1901,31 +1903,35 @@ window.renderHealthDashboard = (data) => {
                                 </div>
                                 <div class="whitespace-pre-line font-sans text-gray-800 text-sm leading-loose" style="white-space: pre-wrap;">${rx.text}</div>
                                 <div class="mt-4 pt-4 border-t-2 border-double border-blue-300 flex justify-between items-end">
-    <div class="flex flex-col gap-0.5">
-        <span class="font-bold text-sm text-blue-900" style="font-family: 'Noto Kufi Arabic'">${rx.doctor || 'طبيب'}</span>
-        <span class="text-[10px] text-gray-500">${rx.specialty || 'طبيب عام'}</span>
-        <span class="text-[10px] text-gray-400">${new Date(rx.date).toLocaleString('ar-EG', { date: 'short', time: 'short' })}</span>
-    </div>
-    <div class="flex flex-col items-end gap-1">
-        <span class="bg-green-100 text-green-700 text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1 border border-green-200">
-            <i class="fas fa-shield-halved"></i> موثقة إلكترونياً
-        </span>
-        <span class="text-[9px] text-gray-400 font-mono" dir="ltr">VRX: ${rx.verCode || 'N/A'}</span>
-    </div>
-</div>
-     `).join('') 
-      : '<div class="text-center py-8 text-gray-400 text-sm flex flex-col items-center gap-2"><i class="fas fa-file-prescription text-4xl text-gray-200 mb-2"></i>لا توجد روشتات طبية محفوظة حالياً.</div>'}
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="font-bold text-sm text-blue-900" style="font-family: 'Noto Kufi Arabic'">${rx.doctor || 'طبيب'}</span>
+                                        <span class="text-[10px] text-gray-500">${rx.specialty || 'طبيب عام'}</span>
+                                        <span class="text-[10px] text-gray-400">${new Date(rx.date).toLocaleString('ar-EG', { date: 'short', time: 'short' })}</span>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="bg-green-100 text-green-700 text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1 border border-green-200">
+                                            <i class="fas fa-shield-halved"></i> موثقة إلكترونياً
+                                        </span>
+                                        <span class="text-[9px] text-gray-400 font-mono" dir="ltr">VRX: ${rx.verCode || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div> 
+                        `).join('') 
+                    : '<div class="text-center py-8 text-gray-400 text-sm flex flex-col items-center gap-2"><i class="fas fa-file-prescription text-4xl text-gray-200 mb-2"></i>لا توجد روشتات طبية محفوظة حالياً.</div>'}
                 </div>
             </div>
-            <!-- زر تسجيل الخروج -->
+            
             <button onclick="logoutHealthFile()" class="w-full py-3 rounded-xl border font-bold text-sm mt-4" style="border-color: #EC4899; color: #EC4899;">
                 <i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج من الملف الصحي
             </button>
         </div>
     `, '#EC4899');
+    
     const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = '';
-    new QRCode(qrContainer, { text: currentHealthFileId, width: 180, height: 180, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+    if (qrContainer) {
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, { text: currentHealthFileId || 'null', width: 180, height: 180, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+    }
 }
 
 window.saveHealthProfile = async (e) => {
