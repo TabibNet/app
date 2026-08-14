@@ -906,10 +906,25 @@ window.renderDoctorDashboard = async (doc) => {
                 <i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض
             </button>
 
-            <!-- 5. الميزات المدفوعة (تظهر فقط للمشتركين) -->
+                        <!-- 5. الميزات المدفوعة (تظهر فقط للمشتركين) -->
             ${doc.is_subscribed ? `
-                <button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold
+                <button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2" style="background: #2563EB;">
+                    <i class="fas fa-comments"></i> فتح قسم اسأل طبيب
+                </button>
+                <button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2" style="background: var(--doctor);">
+                    <i class="fas fa-save"></i> حفظ أيام العمل
+                </button>
+            ` : `
+                <div class="bg-gray-50 p-3 rounded-xl text-center text-xs text-gray-500 border border-dashed" style="border-color: var(--border);">
+                    <i class="fas fa-lock"></i> الميزات الإضافية مخصصة للأطباء المشتركين فقط.
+                </div>
+            `}
+        </div>`, '#2563EB'); // إغلاق الـ HTML والألوان بشكل صحيح
 
+    // إعداد التحديث الدوري للوحة (إذا كان موجوداً)
+    if (doctorDashboardInterval) clearInterval(doctorDashboardInterval);
+    // doctorDashboardInterval = setInterval(() => fetchBookings(), 10000); // اختياري
+}
 window.acceptBooking = async (bookingId) => { 
     const timeInput = document.getElementById(`time_${bookingId}`); const time = timeInput.value.trim(); 
     if (!time) { showToast('أدخل وقت الموعد'); return; } const booking = bookings.find(b => b.id === bookingId); if (!booking) return; 
