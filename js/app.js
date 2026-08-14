@@ -2950,93 +2950,176 @@ window.submitAnswer = async (qId) => {
     }
 }
 window.openPaymentModal = (type, name) => {
+    // 1. تحديد المميزات حسب نوع الحساب
+    let featuresHtml = '';
+    if (type === 'طبيب') {
+        featuresHtml = `
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">إدارة الحجوزات والمواعيد واستقبال الطلبات مباشرة.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">ظهور اسمك في <b>قمة نتائج البحث</b> قبل باقي الأطباء.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">إمكانية <b>الحجز الإلكتروني</b> للمرضى من خلال موقعك.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">غرفة محادثة <b>(دردشة مباشرة)</b> مع المريض داخل المنصة.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">إصدار <b>روشتات طبية إلكترونية موثقة</b> تُحفظ في ملف المريض.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">الوصول السريع للملف الصحي للمريض عبر <b>مسح رمز QR</b>.</span>
+            </div>
+        `;
+    } else { // مميزات الصيدلية
+        featuresHtml = `
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">ظهور اسم صيدليتك في <b>قمة نتائج البحث</b> قبل باقي الصيدليات.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">استقبال <b>طلبات الأدوية العاجلة</b> من المرضى مباشرة في لوحة التحكم.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">التحكم بإظهار حالة <b>(مفتوح / مغلق / مناوبة ليلية)</b> للمرضى.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">إحصائيات متقدمة (عدد الأدوية التي قمت بتوفيرها للمرضى).</span>
+            </div>
+        `;
+    }
+
+    // 2. بناء نافذة الدفع
     document.getElementById('modalContent').innerHTML = `
         <div class="p-6 text-center">
-            <!-- رأس النافذة -->
             <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center mb-4 shadow-lg shadow-orange/30">
                 <i class="fas fa-crown text-3xl text-white"></i>
             </div>
             <h3 class="text-xl font-black mb-1" style="font-family: 'Noto Kufi Arabic'">اشتراك ${type} الاحترافي</h3>
-            <p class="text-xs text-gray-500 mb-5">عزيزي/عزيزتي <b>${name}</b>، انضم لنخبة الأطباء المشتركين وافتح أقساماً متقدمة في موقعك.</p>
+            <p class="text-xs text-gray-500 mb-5">عزيزي/عزيزتي <b>${name}</b>، انضم لنخبة ${type === 'طبيب' ? 'الأطباء' : 'الصيدليات'} المشتركين للحصول على ميزات حصرية.</p>
 
-            <!-- 1. صندوق مميزات الاشتراك (كما طلبنا سابقاً) -->
+            <!-- صندوق مميزات الاشتراك الديناميكي -->
             <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right mb-6 space-y-3">
                 <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">إدارة الحجوزات والمواعيد واستقبال الطلبات مباشرة.</span>
+                    <i class="fas fa-star text-yellow-500 text-lg"></i>
+                    <span class="text-sm font-bold text-gray-800">الحصول على <b>شارة التوثيق الذهبية</b> لزيادة ثقة المرضى.</span>
                 </div>
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">ظهور اسمك في <b>قمة نتائج البحث</b> قبل باقي الأطباء.</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">الحصول على <b>شارة التوثيق الذهبية</b> بجانب اسمك لزيادة ثقة المرضى.</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">إمكانية <b>الحجز الإلكتروني</b> للمرضى من خلال موقعك مباشرة.</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">غرفة محادثة <b>(دردشة مباشرة)</b> مع المريض داخل المنصة.</span>
-                </div>
-               <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">إصدار <b>روشتات طبية إلكترونية موثقة</b> تُحفظ مباشرة داخل الملف الصحي للمريض.</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">الوصول السريع للملف الصحي للمريض عبر مسح <b>رمز الاستجابة السريع (QR)</b>.</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">إحصائيات متقدمة (عدد زيارات ملفك وعدد الحجوزات).</span>
-                </div>
+                ${featuresHtml}
             </div>
 
-            <!-- 2. قسم الدفع المباشر (بتصميم احترافي وأنيق جديد) -->
+            <!-- قسم الدفع المباشر -->
             <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 mb-5 relative overflow-hidden shadow-inner">
-                <!-- شارة الدفع السريع -->
                 <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold py-1 px-3 rounded-bl-xl flex items-center gap-1 shadow-sm">
                     <i class="fas fa-bolt"></i> دفع سريع ومباشر
                 </div>
                 
-                <h4 class="font-bold text-gray-800 text-base mb-4 mt-3 flex items-center justify-center gap-2" style="font-family: 'Noto Kufi Arabic'">
-                    <i class="fas fa-mobile-screen text-blue-500"></i> الدفع عبر شام كاش
-                </h4>
+                <h4 class="font-bold text-gray-800 text-base mb-4 mt-3" style="font-family: 'Noto Kufi Arabic'">اختر طريقة الدفع المناسبة لك:</h4>
                 
-                <!-- صورة الـ QR بإطار أنيق -->
-                <div class="bg-white p-2 rounded-2xl border-4 border-white shadow-lg w-44 h-44 mx-auto mb-5">
-                    <img src="https://z-cdn-media.chatglm.cn/files/533bb04c-b262-4f21-826a-71b187260747.png?auth_key=1886692436-f4137efd272049179bd92d56b0081347-0-fdecf35d303f970d7d8aac45cca966ba" alt="رمز الدفع شام كاش" class="w-full h-full rounded-lg object-contain">
+                <!-- أزرار اختيار طريقة الدفع -->
+                <div class="grid grid-cols-2 gap-3 mb-5">
+                    <button id="btn-shamcash" onclick="togglePaymentMethod('shamcash')" class="py-3 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 font-bold text-sm flex flex-col items-center justify-center gap-1 transition-all">
+                        <i class="fas fa-mobile-screen text-xl"></i>
+                        <span>شام كاش</span>
+                    </button>
+                    <button id="btn-cash" onclick="togglePaymentMethod('cash')" class="py-3 rounded-xl border-2 border-gray-300 bg-white text-gray-600 font-bold text-sm flex flex-col items-center justify-center gap-1 transition-all">
+                        <i class="fas fa-hand-holding-dollar text-xl"></i>
+                        <span>وجه لوجه</span>
+                    </button>
                 </div>
 
-                <!-- خطوات الدفع بتصميم قائمة أنيقة -->
-                <div class="text-right space-y-4">
-                    <div class="flex items-start gap-3">
-                        <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div>
-                        <div class="text-sm text-gray-700 leading-relaxed pt-0.5">افتح تطبيق <b>شام كاش</b> وامسح الرمز أعلاه لتتم عملية التحويل بكل سهولة.</div>
+                <!-- تفاصيل الدفع عبر شام كاش -->
+                <div id="shamcash-details" class="text-right">
+                    <div class="bg-white p-2 rounded-2xl border-4 border-white shadow-lg w-44 h-44 mx-auto mb-5">
+                        <img src="https://z-cdn-media.chatglm.cn/files/533bb04c-b262-4f21-826a-71b187260747.png?auth_key=1886692436-f4137efd272049179bd92d56b0081347-0-fdecf35d303f970d7d8aac45cca966ba" alt="رمز الدفع شام كاش" class="w-full h-full rounded-lg object-contain">
                     </div>
-                    <div class="flex items-start gap-3">
-                        <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div>
-                        <div class="text-sm text-gray-700 leading-relaxed pt-0.5">احفظ صورة (Screenshot) لإشعار الدفع الناجح.</div>
+                    <div class="space-y-3 mb-5">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div>
+                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">افتح تطبيق <b>شام كاش</b> وامسح الرمز أعلاه لتتم عملية التحويل بكل سهولة.</div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div>
+                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">احفظ صورة (Screenshot) لإشعار الدفع الناجح.</div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div>
+                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه وأرسل الصورة لتقوم الإدارة بتفعيل حسابك فوراً.</div>
+                        </div>
                     </div>
-                    <div class="flex items-start gap-3">
-                        <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div>
-                        <div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه وأرسل الصورة لتقوم الإدارة بتفعيل حسابك فوراً.</div>
+                </div>
+
+                <!-- تفاصيل الدفع وجه لوجه -->
+                <div id="cash-details" class="text-right hidden">
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-5">
+                        <div class="flex items-start gap-3 mb-3">
+                            <i class="fas fa-map-marker-alt text-red-500 text-xl mt-1"></i>
+                            <div class="text-sm text-gray-700 leading-relaxed">يمكنك الدفع نقداً في مقر الإدارة. يرجى التواصل معنا عبر الواتساب لتحديد موعد مناسب لزيارتنا.</div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-clock text-yellow-500 text-xl mt-1"></i>
+                            <div class="text-sm text-gray-700 leading-relaxed">أوقات العمل: من السبت إلى الخميس، 9 صباحاً حتى 5 مساءً.</div>
+                        </div>
+                    </div>
+                    <div class="space-y-3 mb-5">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div>
+                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه لمراسلة الإدارة وتحديد موعد الزيارة.</div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div>
+                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">قم بالدفع نقداً في مقر الإدارة واستلم الإيصال.</div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div>
+                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">سيتم تفعيل حسابك فوراً بعد تأكيد الدفع.</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- زر الإرسال عبر واتساب -->
             <a href="https://wa.me/963980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3.5 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-md hover:shadow-lg">
-                <i class="fas fa-whatsapp text-lg"></i> إرسال الإيصال وتفعيل الحساب
+                <i class="fas fa-whatsapp text-lg"></i> إرسال الإيصال / تحديد موعد
             </a>
             <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm transition-colors hover:bg-gray-50" style="border-color: var(--border); color: var(--muted)">إغلاق</button>
         </div>
     `;
     document.getElementById('modalOverlay').classList.add('active');
     lockScroll();
+}
+
+// دالة تبديل طريقة الدفع
+window.togglePaymentMethod = (method) => {
+    const shamcashDetails = document.getElementById('shamcash-details');
+    const cashDetails = document.getElementById('cash-details');
+    const btnShamcash = document.getElementById('btn-shamcash');
+    const btnCash = document.getElementById('btn-cash');
+
+    if (method === 'shamcash') {
+        shamcashDetails.classList.remove('hidden');
+        cashDetails.classList.add('hidden');
+        btnShamcash.classList.remove('border-gray-300', 'bg-white', 'text-gray-600');
+        btnShamcash.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
+        btnCash.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
+        btnCash.classList.add('border-gray-300', 'bg-white', 'text-gray-600');
+    } else {
+        shamcashDetails.classList.add('hidden');
+        cashDetails.classList.remove('hidden');
+        btnCash.classList.remove('border-gray-300', 'bg-white', 'text-gray-600');
+        btnCash.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
+        btnShamcash.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
+        btnShamcash.classList.add('border-gray-300', 'bg-white', 'text-gray-600');
+    }
 }
 window.toggleSubscription = async (id, currentStatus) => {
     try {
