@@ -866,55 +866,23 @@ window.renderDoctorDashboard = async (doc) => {
             return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${b.name}</span><br><span class="text-xs" style="color: var(--muted)">${b.daystr}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${b.ref}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${b.phone}" class="text-xs text-blue-600">${b.phone}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
         }).join('');
 
-        window.renderDoctorDashboard = async (doc) => { 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-        openDoctorLogin();
-        showToast('يجب تسجيل الدخول أولاً');
-        return;
-    }
-    
-    fetchBookings().then(() => {
-        const docBookings = bookings.filter(b => b.itemid === doc.id); 
-        const daysCheckboxes = daysOfWeek.map(day => `<label class="flex items-center gap-2"><input type="checkbox" name="docWorkingDays" value="${day}" class="day-checkbox" ${doc.workingdays?.includes(day) ? 'checked' : ''}><span class="text-sm">${day}</span></label>`).join(''); 
-        
-        const bookingsListHtml = docBookings.length === 0 ? '<p class="text-sm text-center py-4" style="color: var(--muted)">لا توجد طلبات.</p>' : docBookings.map(b => { 
-            let statusBadge = ''; let actionButtons = ''; 
-            if (b.status === 'accepted') { statusBadge = `<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #D1FAE5; color: #065F46">مقبول - ${b.time}</span>`; actionButtons = `<button onclick="updateBookingStatus('${b.id}', 'canceled')" class="text-xs text-white px-2 py-1 rounded bg-red-500">إلغاء</button><button onclick="updateBookingStatus('${b.id}', 'deleted')" class="text-xs text-white px-2 py-1 rounded bg-gray-800">حذف</button>`; } 
-            else if (b.status === 'canceled') { statusBadge = '<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #F3F4F6; color: #4B5563">ملغي</span>'; actionButtons = `<button onclick="updateBookingStatus('${b.id}', 'pending')" class="text-xs text-white px-2 py-1 rounded bg-gray-500">استعادة</button><button onclick="updateBookingStatus('${b.id}', 'deleted')" class="text-xs text-white px-2 py-1 rounded bg-gray-800">حذف</button>`; } 
-            else { statusBadge = '<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #FEF3C7; color: #92400E">طلب جديد</span>'; actionButtons = `<div class="flex flex-col gap-1 w-full"><input type="text" id="time_${b.id}" placeholder="حدد الموعد" class="ctrl-input text-sm py-1"><div class="flex gap-1"><button onclick="acceptBooking('${b.id}')" class="text-xs text-white px-2 py-1 rounded bg-green-600 flex-1">قبول</button><button onclick="updateBookingStatus('${b.id}', 'canceled')" class="text-xs text-white px-2 py-1 rounded bg-red-500">رفض</button></div></div>`; }
-            let chatHtml = '';
-            if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="text-xs p-2 rounded-lg mb-1 ${msg.sender === 'doctor' ? 'bg-blue-100 text-left' : 'bg-gray-100 text-right'}">${msg.text}</div>`).join(''); }
-            return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${b.name}</span><br><span class="text-xs" style="color: var(--muted)">${b.daystr}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${b.ref}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${b.phone}" class="text-xs text-blue-600">${b.phone}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
-        }).join('');
-
         openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5">
-            
             <!-- 1. بطاقة الطبيب -->
             <div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)">
                 <img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover">
-                <div>
-                    <h3 class="font-bold text-lg">${doc.name}</h3>
-                    <p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p>
-                </div>
+                <div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div>
             </div>
 
             <!-- 2. الإحصائيات (مجاني) -->
             <div class="grid grid-cols-3 gap-3">
                 <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
-                    <i class="fas fa-eye text-blue-500 text-xl mb-1"></i>
-                    <div class="text-2xl font-black text-gray-800">${doc.view_count || 0}</div>
-                    <div class="text-xs text-gray-500">زيارة الملف</div>
+                    <i class="fas fa-eye text-blue-500 text-xl mb-1"></i><div class="text-2xl font-black text-gray-800">${doc.view_count || 0}</div><div class="text-xs text-gray-500">زيارة الملف</div>
                 </div>
                 <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
-                    <i class="fas fa-calendar-check text-green-500 text-xl mb-1"></i>
-                    <div class="text-2xl font-black text-gray-800">${bookings.filter(b => b.itemid === doc.id).length}</div>
-                    <div class="text-xs text-gray-500">إجمالي الحجوزات</div>
+                    <i class="fas fa-calendar-check text-green-500 text-xl mb-1"></i><div class="text-2xl font-black text-gray-800">${bookings.filter(b => b.itemid === doc.id).length}</div><div class="text-xs text-gray-500">إجمالي الحجوزات</div>
                 </div>
                 <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
-                    <i class="fas fa-phone-alt text-purple-500 text-xl mb-1"></i>
-                    <div class="text-2xl font-black text-gray-800">${doc.phone_clicks || 0}</div>
-                    <div class="text-xs text-gray-500">نقرات الهاتف</div>
+                    <i class="fas fa-phone-alt text-purple-500 text-xl mb-1"></i><div class="text-2xl font-black text-gray-800">${doc.phone_clicks || 0}</div><div class="text-xs text-gray-500">نقرات الهاتف</div>
                 </div>
             </div>
 
@@ -933,18 +901,15 @@ window.renderDoctorDashboard = async (doc) => {
                 <i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض
             </button>
 
-            <!-- 5. الميزات المدفوعة (تظهر مشطوبة لغير المشتركين) -->
+            <!-- 5. الميزات المدفوعة -->
             <div class="bg-gray-50 p-4 rounded-xl border ${doc.is_subscribed ? 'border-blue-200' : 'border-dashed border-gray-300'}">
                 <h4 class="font-bold text-sm mb-3 text-gray-700 flex items-center gap-2"><i class="fas fa-crown text-yellow-500"></i> الميزات الاحترافية</h4>
-                
                 ${doc.is_subscribed ? `
-                    <!-- الأزرار مفعلة للمشترك -->
                     <button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-2" style="background: #2563EB;">
                         <i class="fas fa-comments"></i> فتح قسم اسأل طبيب
                     </button>
                     <p class="text-xs text-center text-gray-500">يمكنك إنشاء روشتة طبية من داخل ملف المريض بعد مسح QR.</p>
                 ` : `
-                    <!-- الأزرار معطلة ومشطوبة لغير المشترك -->
                     <button disabled class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-2 bg-gray-300 cursor-not-allowed line-through opacity-60">
                         <i class="fas fa-comments"></i> فتح قسم اسأل طبيب
                     </button>
@@ -957,7 +922,7 @@ window.renderDoctorDashboard = async (doc) => {
                 `}
             </div>
 
-            <!-- 6. أيام العمل (مجاني للتعديل) -->
+            <!-- 6. أيام العمل -->
             <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
                 <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-calendar-week" style="color: var(--doctor)"></i> أيام العمل</h4>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">${daysCheckboxes}</div>
@@ -978,6 +943,7 @@ window.renderDoctorDashboard = async (doc) => {
         </div>`, '#2563EB'); 
     });
 }
+
 window.acceptBooking = async (bookingId) => { 
     const timeInput = document.getElementById(`time_${bookingId}`); const time = timeInput.value.trim(); 
     if (!time) { showToast('أدخل وقت الموعد'); return; } const booking = bookings.find(b => b.id === bookingId); if (!booking) return; 
@@ -1016,9 +982,10 @@ window.openDoctorScanner = (docId) => {
         (errorMessage) => { }
     ).catch(err => { showToast("تعذر الوصول للكاميرا."); });
 }
+
 window.fetchPatientHealthFile = async (userId, doctorData) => {
     try {
-        const { data: p, error } = await supabase.from('health_files').select('*').eq('id', userId).single();
+        const { data: p, error } = await supabase.from('health_files').select('*').eq('id', userId).maybeSingle();
         if (error || !p) { showToast("لم يتم العثور على ملف بهذا الرمز."); return; }
         closeCtrlPanel();
         
@@ -1031,21 +998,24 @@ window.fetchPatientHealthFile = async (userId, doctorData) => {
             }
         }
 
-        // تمرير بيانات الطبيب الكاملة للروشتة
         const docInfo = {
             name: doctorData?.name || 'طبيب',
             specialty: doctorData?.specialty || 'طبيب عام',
             id: doctorData?.id || 'unknown'
         };
 
-        document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-file-medical ml-2" style="color: var(--doctor)"></i> الملف الصحي للمريض</h3><button onclick="closeModal()" class="text-2xl">&times;</button><button onclick='openPrescriptionModal("${userId}", "${p.full_name}", ${JSON.stringify(docInfo)})' class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg"><i class="fas fa-file-prescription"></i> إنشاء روشتة</button></div><div class="flex flex-col gap-3"><div class="flex items-center gap-4 p-3 rounded-xl" style="background: #DBEAFE"><i class="fas fa-user-circle text-3xl" style="color: var(--doctor)"></i><div><h4 class="font-bold text-lg">${p.full_name}</h4><p class="text-sm text-gray-600">${p.age || '-'} سنة | ${p.gender || '-'}</p></div></div><div class="grid grid-cols-2 gap-3 text-sm"><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">فصيلة الدم</div><div class="font-bold text-red-600">${p.blood_type || 'غير محدد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">الوزن</div><div class="font-bold">${p.weight || '-'} كغ</div></div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأمراض المزمنة</div><div class="font-semibold">${p.diseases || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الحساسية</div><div class="font-semibold text-red-600">${p.allergies || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأدوية الحالية</div><div class="font-semibold">${p.medications || 'لا يوجد'}</div></div>${specializedRecordHtml}<div class="p-3 rounded-xl bg-green-50 border border-green-200"><div class="text-xs text-green-700 mb-1">جهة طوارئ</div><div class="font-semibold">${p.emergency_name || ''} - <span dir="ltr">${p.emergency_phone || ''}</span></div></div></div></div>`;
+        const prescriptionBtn = doctorData?.is_subscribed 
+            ? `<button onclick='openPrescriptionModal("${userId}", "${p.full_name}", ${JSON.stringify(docInfo)})' class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg"><i class="fas fa-file-prescription"></i> إنشاء روشتة</button>` 
+            : `<button onclick="openPaymentModal('طبيب', '${doctorData?.name || 'طبيب'}')" class="text-xs bg-gray-300 text-gray-600 px-3 py-1.5 rounded-lg line-through cursor-not-allowed"><i class="fas fa-lock"></i> إنشاء روشتة</button>`;
+
+        document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-file-medical ml-2" style="color: var(--doctor)"></i> الملف الصحي للمريض</h3><button onclick="closeModal()" class="text-2xl">&times;</button>${prescriptionBtn}</div><div class="flex flex-col gap-3"><div class="flex items-center gap-4 p-3 rounded-xl" style="background: #DBEAFE"><i class="fas fa-user-circle text-3xl" style="color: var(--doctor)"></i><div><h4 class="font-bold text-lg">${p.full_name}</h4><p class="text-sm text-gray-600">${p.age || '-'} سنة | ${p.gender || '-'}</p></div></div><div class="grid grid-cols-2 gap-3 text-sm"><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">فصيلة الدم</div><div class="font-bold text-red-600">${p.blood_type || 'غير محدد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">الوزن</div><div class="font-bold">${p.weight || '-'} كغ</div></div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأمراض المزمنة</div><div class="font-semibold">${p.diseases || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الحساسية</div><div class="font-semibold text-red-600">${p.allergies || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأدوية الحالية</div><div class="font-semibold">${p.medications || 'لا يوجد'}</div></div>${specializedRecordHtml}<div class="p-3 rounded-xl bg-green-50 border border-green-200"><div class="text-xs text-green-700 mb-1">جهة طوارئ</div><div class="font-semibold">${p.emergency_name || ''} - <span dir="ltr">${p.emergency_phone || ''}</span></div></div></div></div>`;
         document.getElementById('modalOverlay').classList.add('active');
         lockScroll();
     } catch (e) { showToast("خطأ في قراءة الملف."); }
 }
 
 window.openPrescriptionModal = (patientId, patientName, doctorInfo) => {
-    window.currentDoctorInfo = doctorInfo; // حفظ بيانات الطبيب للختم
+    window.currentDoctorInfo = doctorInfo; 
     closeModal(); 
     document.getElementById('modalContent').innerHTML = `
         <div class="p-6">
@@ -1104,24 +1074,13 @@ window.generatePrescription = async (e, patientId, patientName) => {
 
     const docInfo = window.currentDoctorInfo || { name: 'طبيب', specialty: 'طبيب عام', id: 'unknown' };
     const date = new Date();
-    
-    // توليد رمز تحقق أمني فريد لكل روشتة
     const verCode = btoa(`${docInfo.id}-${date.getTime()}`).substring(0, 12).toUpperCase();
 
     try {
         const { data: docSnap, error } = await supabase.from('health_files').select('prescriptions').eq('id', patientId).single();
         if (error) return;
         const currentRx = docSnap.prescriptions || [];
-        
-        // حفظ الروشتة مع بيانات الختم الرقمي
-        currentRx.push({ 
-            doctor: docInfo.name, 
-            specialty: docInfo.specialty, 
-            verCode: verCode,
-            text: rxText, 
-            date: date.toISOString() 
-        });
-        
+        currentRx.push({ doctor: docInfo.name, specialty: docInfo.specialty, verCode: verCode, text: rxText, date: date.toISOString() });
         await supabase.from('health_files').update({ prescriptions: currentRx }).eq('id', patientId);
         showToast('تم حفظ الروشتة في ملف المريض بنجاح!');
         closeModal();
@@ -1139,7 +1098,7 @@ window.addPrescriptionRow = () => {
 window.deletePrescription = async (rxDate) => {
     if (!confirm("هل أنت متأكد من حذف هذه الروشتة؟")) return;
     try {
-        const { data: docSnap, error } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).single();
+        const { data: docSnap, error } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).maybeSingle();
         if (error) return;
         const updatedRx = (docSnap.prescriptions || []).filter(p => p.date !== rxDate);
         await supabase.from('health_files').update({ prescriptions: updatedRx }).eq('id', currentHealthFileId);
@@ -1147,7 +1106,7 @@ window.deletePrescription = async (rxDate) => {
         renderHealthDashboard({ ...docSnap, prescriptions: updatedRx });
     } catch (err) { showToast('حدث خطأ أثناء الحذف'); }
 };
-
+            
 window.openMedicineDonation = () => {
     openCtrlPanel('صندوق الأدوية الفائضة (تكافل طبي)', `
         <div class="flex flex-col gap-5">
