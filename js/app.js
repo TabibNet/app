@@ -1241,9 +1241,33 @@ window.setStatus = async (id, status) => {
         localStorage.setItem('force_listings_update', 'true');
         let msg = status === true ? 'تم تغيير الحالة إلى: مفتوح' : status === false ? 'تم تغيير الحالة إلى: مغلق' : 'تم تعيين الحالة إلى: لا شيء';
         showToast(msg);
-        await fetchListings(); 
-        renderAdminDashboard(); 
-    } catch (e) { showToast('حدث خطأ'); }
+        // 1. تحديث البيانات في الذاكرة محلياً
+        const item = allData.find(d => d.id === id);
+        if (item) item.isopen = status;
+        const buttons = document.querySelectorAll(`button[onclick*="setStatus('${id}',"]`);
+        
+        if (buttons.length > 0) {
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-green-500', 'bg-red-500', 'bg-gray-700', 'text-white', 'shadow', 'hover:bg-gray-100');
+                btn.classList.add('text-gray-500');
+                
+                const onclickAttr = btn.getAttribute('onclick');
+                if (onclickAttr.includes('true') && status === true) {
+                    btn.classList.add('bg-green-500', 'text-white', 'shadow');
+                    btn.classList.remove('text-gray-500');
+                } else if (onclickAttr.includes('false') && status === false) {
+                    btn.classList.add('bg-red-500', 'text-white', 'shadow');
+                    btn.classList.remove('text-gray-500');
+                } else if (onclickAttr.includes('null') && status === null) {
+                    btn.classList.add('bg-gray-700', 'text-white', 'shadow');
+                    btn.classList.remove('text-gray-500');
+                }
+            });
+        }
+
+    } catch (e) { 
+        showToast('حدث خطأ'); 
+    }
 }
 window.openMedicineFinder = () => { 
     document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-pills ml-2" style="color: var(--gold)"></i> ابحث عن دوائك</h3><button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button></div><div class="mb-4 p-3 rounded-xl text-sm bg-emerald-50 dark:bg-slate-700 text-emerald-800 dark:text-emerald-200 border border-emerald-100 dark:border-slate-600"><i class="fas fa-info-circle ml-1"></i> اكتب الأدوية المطلوبة وحدد مستوى الإلحاح، وسنتولى إرسالها للصيدليات. سيقوم أول صيدلية يتوفر فيها الدواء بالاتصال بك مباشرة!</div><form onsubmit="submitMedicineRequest(event)"><div class="mb-4"><label class="block text-sm font-semibold mb-2">الأدوية المطلوبة (نصياً)</label><textarea id="medList" class="ctrl-input" rows="3" placeholder="مثال: كريب ستوب، أبرة معينة، شراب سيتامول" required></textarea></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-semibold mb-2">اسم المريض (اختياري)</label><input type="text" id="medName" class="ctrl-input" placeholder="اكتب اسمك"></div><div><label class="block text-sm font-semibold mb-2">رقم الهاتف للتواصل</label><input type="tel" id="medPhone" class="ctrl-input" placeholder="09XXXXXXXX" required></div></div><div class="mb-4"><label class="block text-sm font-semibold mb-2">مستوى الإلحاح</label><select id="medUrgency" class="ctrl-input"><option value="عاجل جداً (طوارئ)">عاجل جداً (طوارئ)</option><option value="عاجل (خلال اليوم)">عاجل (خلال اليوم)</option><option value="عادي" selected>عادي</option></select></div><div class="mb-6"><label class="block text-sm font-semibold mb-2">صورة الوصفة الطبية (اختياري)</label><div class="file-input-wrapper"><label class="file-input-label" for="medImage"><i class="fas fa-camera text-2xl mb-2"></i><span>اضغط لاختيار صورة الوصفة (إن وجدت)</span><img id="imagePreview" class="preview-image hidden" src="" alt="معاينة"></label><input type="file" id="medImage" accept="image/*" onchange="previewMedicineImage(event)"></div></div><button type="submit" id="medSubmitBtn" class="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-paper-plane"></i> إرسال للصيدليات</button></form></div>`; 
