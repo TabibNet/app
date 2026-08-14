@@ -832,22 +832,12 @@ window.handleDoctorLogin = async (e) => {
 
     const docData = allData.find(d => d.name === name && d.bookingpass === pass); 
     if (docData) { 
-        if (!docData.is_subscribed) {
-            await supabase.auth.signOut();
-            showToast('انتهت فترة الاشتراك. يرجى التجديد لمتابعة استخدام اللوحة.');
-            openPaymentModal('طبيب', docData.name); 
-            return;
-        }
+        // تم إزالة شرط المنع، يتم السماح بالدخول للوحة دائماً
         renderDoctorDashboard(docData); 
     } else {
         await supabase.auth.signOut();
         showToast('اسم الطبيب غير مطابق للرمز'); 
     } 
-}
-window.logoutDoctor = async () => {
-    await supabase.auth.signOut();
-    closeCtrlPanel();
-    showToast('تم تسجيل الخروج بنجاح');
 }
 window.renderDoctorDashboard = async (doc) => { 
         const { data: { session } } = await supabase.auth.getSession();
@@ -868,8 +858,8 @@ window.renderDoctorDashboard = async (doc) => {
             if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="text-xs p-2 rounded-lg mb-1 ${msg.sender === 'doctor' ? 'bg-blue-100 text-left' : 'bg-gray-100 text-right'}">${msg.text}</div>`).join(''); }
             return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${b.name}</span><br><span class="text-xs" style="color: var(--muted)">${b.daystr}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${b.ref}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${b.phone}" class="text-xs text-blue-600">${b.phone}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
         }).join('');
-        openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div> ${doc.is_subscribed ? `
-<div class="grid grid-cols-2 gap-3">
+        openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div> <!-- 1. صندوق الإحصائيات (متاح للجميع مجاناً) -->
+<div class="grid grid-cols-2 gap-3 mb-4">
     <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
         <i class="fas fa-eye text-blue-500 text-xl mb-1"></i>
         <div class="text-2xl font-black text-gray-800">${doc.view_count || 0}</div>
@@ -881,11 +871,24 @@ window.renderDoctorDashboard = async (doc) => {
         <div class="text-xs text-gray-500">إجمالي الحجوزات</div>
     </div>
 </div>
+
+<!-- 2. أزرار الميزات المتقدمة (مقفلة لغير المشتركين) -->
+ ${doc.is_subscribed ? `
+    <button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button>
+    <button onclick="logoutDoctor()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button>
+    <button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button>
 ` : `
-<div class="bg-yellow-50 border border-yellow-200 p-3 rounded-xl text-xs text-yellow-800 text-center">
-    <i class="fas fa-lock ml-1"></i> الإحصائيات المتقدمة (عدد الزوار والحجوزات) متاحة فقط للأطباء المشتركين.
-</div>
-`}<div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button><button onclick="logoutDoctor()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button><button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
+    <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 p-4 rounded-xl text-center mb-4">
+        <i class="fas fa-lock text-2xl text-yellow-500 mb-2"></i>
+        <h4 class="font-bold text-sm text-gray-800 mb-1">الميزات المتقدمة مقفلة</h4>
+        <p class="text-xs text-gray-600 mb-3">الروشتات الإلكترونية، الدردشة مع المريض، ومسح رمز QR متاحة فقط للأطباء المشتركين.</p>
+        <button onclick="openPaymentModal('طبيب', '${doc.name}')" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold text-sm shadow-md">
+            <i class="fas fa-crown ml-1"></i> ترقية للاشتراك الآن
+        </button>
+    </div>
+    <button onclick="logoutDoctor()" class="w-full py-3 rounded-xl border font-bold text-sm mt-2" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button>
+`}
+<div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button><button onclick="logoutDoctor()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button><button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
 
             // تفعيل التحديث الحي (كل 5 ثوانٍ) للوحة الطبيب
     if (doctorDashboardInterval) clearInterval(doctorDashboardInterval);
