@@ -156,14 +156,14 @@ window.setupOneSignal = async () => {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-    // التقاط تسجيل الدخول عبر جوجل عند العودة للموقع
+        
     supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
             if (window.location.hash.includes('access_token')) {
                 window.history.replaceState(null, '', window.location.pathname);
-            }
-            if (session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
-                setTimeout(() => openHealthFile(), 500);
+                if (session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
+                    setTimeout(() => openHealthFile(), 500);
+                }
             }
         }
     });
@@ -187,7 +187,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // ... (اترك باقي أكواد تحميل الصفحة كما هي أسفل هذا السطر)
 
     const langToggle = document.getElementById('langToggle');
-    let isEnglish = document.cookie.includes('googtrans=/ar/en');
+    let isEnglish  document.cookie.includes('googtrans=/ar/en');
     function applyLangLayout() {
         if (!langToggle) return;
         if (isEnglish) {
@@ -1012,8 +1012,8 @@ window.openMedicineDonation = () => {
                     <input type="text" id="medDonationQty" class="ctrl-input text-sm" placeholder="الكمية (مثال: علبة كاملة)" required>
                     <input type="tel" id="medDonationPhone" class="ctrl-input text-sm" placeholder="رقم الهاتف 09XX" required>
                     <textarea id="medDonationNotes" class="ctrl-input text-sm col-span-1 sm:col-span-2" rows="2" placeholder="ملاحظات (حالة العلبة، الحفظ، مكان التسليم)"></textarea>
-                    <button type="submit" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm" style="background: #059669;">
-                        <i class="fas fa-plus ml-2"></i> نشر الدواء للتبرع
+                    <button type="submit" id="medDonationSubmitBtn" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm" style="background: #059669;">
+                       <i class="fas fa-plus ml-2"></i> نشر الدواء للتبرع
                     </button>
                 </form>
             </div>
@@ -1063,10 +1063,14 @@ function renderMedicineDonationsUI() {
     }).join('');
 }
 
-window.submitMedicineDonation = async (e) => {
+    window.submitMedicineDonation = async (e) => {
     e.preventDefault();
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true; submitBtn.innerText = 'جاري النشر...';
+    const btn = document.getElementById('medDonationSubmitBtn');
+    if (!btn) return;
+    
+    // تعطيل الزر وتغيير النص
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري النشر...';
     
     const name = document.getElementById('medDonorName').value.trim();
     const medName = document.getElementById('medDonationName').value.trim();
@@ -1077,17 +1081,40 @@ window.submitMedicineDonation = async (e) => {
     const phone = phoneInput.value.trim();
     const notes = document.getElementById('medDonationNotes').value.trim();
 
-    if (!/^09\d{8}$/.test(phone)) { phoneInput.classList.add('input-invalid'); showToast('رقم هاتف غير صحيح'); submitBtn.disabled = false; submitBtn.innerText = 'نشر الدواء للتبرع'; return; }
+    // التحقق من رقم الهاتف
+    if (!/^09\d{8}$/.test(phone)) { 
+        phoneInput.classList.add('input-invalid'); 
+        showToast('رقم هاتف غير صحيح'); 
+        btn.disabled = false; 
+        btn.innerHTML = '<i class="fas fa-plus ml-2"></i> نشر الدواء للتبرع';
+        return; 
+    }
     phoneInput.classList.remove('input-invalid');
 
-    try {
-        await supabase.from('medicine_donations').insert([{ donor_name: name, medicine_name: medName, medicine_type: medType, expiry_date: expiryDate, quantity: quantity, phone: phone, notes: notes, status: 'active' }]);
+    // إرسال البيانات لـ Supabase
+    const { error } = await supabase.from('medicine_donations').insert([{ 
+        donor_name: name, 
+        medicine_name: medName, 
+        medicine_type: medType, 
+        expiry_date: expiryDate, 
+        quantity: quantity, 
+        phone: phone, 
+        notes: notes, 
+        status: 'active' 
+    }]);
+
+    // إعادة الزر لحالته الطبيعية فوراً
+    btn.disabled = false; 
+    btn.innerHTML = '<i class="fas fa-plus ml-2"></i> نشر الدواء للتبرع';
+
+    if (error) {
+        showToast('حدث خطأ أثناء النشر: ' + error.message);
+    } else {
         showToast('بارك الله فيك! تم نشر الدواء للتبرع.');
-        e.target.reset();
-    } catch (err) { 
-        showToast('حدث خطأ أثناء النشر'); 
-    } finally {
-        submitBtn.disabled = false; submitBtn.innerText = 'نشر الدواء للتبرع';
+        document.querySelector('#ctrlContent form').reset();
+        // تحديث القائمة فوراً لتظهر الدواء الجديد
+        await fetchMedicineDonations();
+        renderMedicineDonationsUI();
     }
 }
 window.resolveMedicineDonation = async (id) => { 
