@@ -403,9 +403,17 @@ function createCard(item) {
     else if (item.type === 'lab') detailsHTML = `<div class="detail-row"><i class="fas fa-vials"></i><span>${item.tests || item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div>${item.homesample && item.homesample !== 'لا' ? '<div class="detail-row"><i class="fas fa-house-user" style="color: var(--accent)"></i><span style="color: var(--accent); font-weight: 600">يتوفر سحب منزلي</span></div>' : ''}`;
     else detailsHTML = `<div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || ''}</span></div>${item.night ? '<div class="detail-row"><i class="fas fa-moon" style="color: var(--gold)"></i><span style="color: var(--gold); font-weight: 600">صيدلية مناوبة</span></div>' : ''}`;
     
-    
-    const canBook = item.type === 'doctor';
-    const bookingBtn = canBook ? `<button onclick="event.stopPropagation(); openBookingModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--accent);" aria-label="حجز"><i class="fas fa-calendar-plus"></i></button>` : '';
+        const canBook = item.type === 'doctor';
+    let bookingBtn = '';
+    if (canBook) {
+        if (item.is_subscribed) {
+            // زر الحجز مفعّل للمشتركين
+            bookingBtn = `<button onclick="event.stopPropagation(); openBookingModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--accent);" aria-label="حجز"><i class="fas fa-calendar-plus"></i></button>`;
+        } else {
+            // زر الحجز معطّل لغير المشتركين
+            bookingBtn = `<button onclick="event.stopPropagation(); showToast('الحجز الإلكتروني متاح فقط للأطباء المشتركين. يرجى الاتصال هاتفياً.')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all opacity-40 cursor-not-allowed" style="border-color: var(--border); color: var(--muted);" aria-label="الحجز متوقف"><i class="fas fa-calendar-xmark"></i></button>`;
+        }
+    }
     
     return `<div class="card ${t.cardClass} cursor-pointer" onclick="openModal('${item.id}')" data-type="${item.type}"><div class="relative h-40 overflow-hidden rounded-t-2xl"><img src="${item.image || 'https://picsum.photos/seed/default/400/250'}" alt="${item.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110 cursor-zoom-in" loading="lazy" onclick="event.stopPropagation(); openLightbox(this.src)"><div class="absolute top-3 right-3"><span class="badge ${t.badgeClass}">${t.label}</span></div><div class="absolute top-3 left-3 flex flex-col gap-1 items-start">
     ${['doctor', 'pharmacy'].includes(item.type) && item.isopen === true ? '<span class="badge" style="background:#10B981;color:white"><i class="fas fa-door-open ml-1"></i>مفتوح</span>' : ''}
@@ -2944,37 +2952,63 @@ window.submitAnswer = async (qId) => {
 window.openPaymentModal = (type, name) => {
     document.getElementById('modalContent').innerHTML = `
         <div class="p-6 text-center">
-            <div class="w-16 h-16 mx-auto rounded-full bg-yellow-100 flex items-center justify-center mb-4">
-                <i class="fas fa-money-bill-wave text-3xl text-yellow-500"></i>
+            <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center mb-4 shadow-lg shadow-orange/30">
+                <i class="fas fa-crown text-3xl text-white"></i>
             </div>
-            <h3 class="text-xl font-bold mb-2">تفعيل اشتراك ${type}</h3>
-            <p class="text-sm text-gray-600 mb-4">عزيزي/عزيزتي <b>${name}</b>، لتفعيل لوحة التحكم الخاصة بك، يرجى دفع رسوم الاشتراك الشهري عبر إحدى الطرق التالية:</p>
-            
-            <div class="bg-gray-50 p-4 rounded-xl text-right space-y-3 mb-4">
+            <h3 class="text-xl font-black mb-1" style="font-family: 'Noto Kufi Arabic'">اشتراك ${type} الاحترافي</h3>
+            <p class="text-xs text-gray-500 mb-5">عزيزي/عزيزتي <b>${name}</b>، انضم لنخبة الأطباء المشتركين وافتح أقساماً متقدمة في موقعك.</p>
+
+            <!-- صندوق مميزات الاشتراك -->
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right mb-5 space-y-3">
                 <div class="flex items-center gap-3">
-                    <i class="fas fa-mobile-alt text-blue-500 text-xl"></i>
-                    <div>
-                        <div class="font-bold text-sm">شام كاش</div>
-                        <div class="text-xs text-gray-500" dir="ltr">0934XXXXXX</div>
-                    </div>
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">إدارة الحجوزات والمواعيد واستقبال الطلبات مباشرة.</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <i class="fas fa-handshake text-green-500 text-xl"></i>
-                    <div>
-                        <div class="font-bold text-sm">دفع وجه لوجه</div>
-                        <div class="text-xs text-gray-500">تواصل مع الإدارة لتحديد موعد</div>
-                    </div>
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">ظهور اسمك في <b>قمة نتائج البحث</b> قبل باقي الأطباء.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">الحصول على <b>شارة التوثيق الذهبية</b> ♻️ بجانب اسمك لزيادة ثقة المرضى.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">إمكانية <b>الحجز الإلكتروني</b> للمرضى من خلال موقعك مباشرة.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">درجة محادثة <b>(دردشة مباشرة)</b> مع المريض داخل المنصة.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">إحصائيات متقدمة (عدد زيارات ملفك وعدد الحجوزات).</span>
                 </div>
             </div>
 
-            <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-xl text-xs text-yellow-800 mb-4">
-                بعد إتمام الدفع، يرجى إرسال صورة الإيصال أو إشعار التحويل إلى واتساب الإدارة، وسيتم تفعيل حسابك فوراً.
+            <div class="bg-white p-3 rounded-2xl border-2 border-dashed border-gray-300 shadow-sm mb-5 inline-block">
+                <img src="https://z-cdn-media.chatglm.cn/files/533bb04c-b262-4f21-826a-71b187260747.png?auth_key=1886690696-8ab96329580445558db43a6900eb4a6a-0-ccb561cf13d626214c72e9ef01620ff4" alt="رمز الدفع شام كاش" class="w-52 h-52 mx-auto rounded-lg object-contain">
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-xl text-right space-y-3 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-yellow-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                    <div class="text-sm font-semibold text-gray-700">امسح الرمز أعلاه وأكمل عملية الدفع عبر (شام كاش).</div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-yellow-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                    <div class="text-sm font-semibold text-gray-700">التقط صورة (سكرين شوت) لإشعار نجاح عملية الدفع.</div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-yellow-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                    <div class="text-sm font-semibold text-gray-700">اضغط على زر الواتساب بالأسفل وأرسل الصورة ليتم تفعيل حسابك فوراً.</div>
+                </div>
             </div>
             
-            <a href="https://wa.me/963980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all">
-                <i class="fas fa-whatsapp"></i> إرسال الإيصال عبر واتساب
+            <a href="https://wa.me/963980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-sm">
+                <i class="fas fa-whatsapp text-lg"></i> إرسال الإيصال وتفعيل الحساب
             </a>
-            <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm" style="border-color: var(--border)">إغلاق</button>
+            <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm" style="border-color: var(--border); color: var(--muted)">إغلاق</button>
         </div>
     `;
     document.getElementById('modalOverlay').classList.add('active');
