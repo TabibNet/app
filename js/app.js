@@ -456,14 +456,15 @@ window.handleSearch = (value) => { searchQuery = value.trim(); const heroSearch 
 window.resetSearch = () => { searchQuery = ''; currentFilter = 'all'; const heroSearch = document.getElementById('heroSearch'); if(heroSearch) heroSearch.value = ''; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }); const allBtn = document.querySelector('[data-filter="all"]'); allBtn.classList.add('active'); allBtn.style.background = 'var(--accent)'; allBtn.style.color = 'white'; allBtn.style.borderColor = 'var(--accent)'; renderData(); }
 
 window.openModal = (id) => { 
-        const item = allData.find(d => d.id === id);
-    if (item && ['doctor', 'pharmacy'].includes(item.type)) {
+    const item = allData.find(d => d.id === id);
+    if (!item) return;
+    
+    if (['doctor', 'pharmacy'].includes(item.type)) {
         const newCount = (item.view_count || 0) + 1;
         supabase.from('listings').update({ view_count: newCount }).eq('id', id).then();
         item.view_count = newCount;
     }
-    const item = allData.find(d => d.id === id); 
-    if (!item) return; 
+    
     const typeMap = { 
         hospital: { label: 'مشفى', badgeClass: 'badge-hospital', color: 'var(--hospital)', icon: 'fa-hospital-symbol' }, 
         center: { label: 'مركز طبي', badgeClass: 'badge-center', color: 'var(--center)', icon: 'fa-clinic-medical' }, 
@@ -1505,7 +1506,18 @@ window.renderAdminDashboard = async () => {
     const homeAdsHtml = `<div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-photo-video text-purple-600"></i> إعلانات الصفحة الرئيسية (صور/فيديو)</h4><form onsubmit="saveHomeAd(event)" class="grid grid-cols-1 gap-3 mb-4"><select id="adType" class="ctrl-input text-sm"><option value="image">صورة (رابط مباشر ينتهي بـ .jpg أو .png)</option><option value="video">فيديو (رابط مباشر ينتهي بـ .mp4 فقط)</option></select><input type="text" id="adContent" class="ctrl-input text-sm" placeholder="الصق الرابط هنا..." required><input type="text" id="adLink" class="ctrl-input text-sm" placeholder="رابط التحويل عند الضغط (اختياري للصور)"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="adActiveCheck" class="w-5 h-5 accent-purple-600" checked> تفعيل وعرض الإعلان فوراً</label><button type="submit" class="py-2.5 rounded-xl text-white font-semibold text-sm" style="background: #8B5CF6"><i class="fas fa-plus ml-1"></i> إضافة إعلان</button></form><div id="adminHomeAdsList" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1"><p class="text-center text-gray-400 text-sm py-2">جاري تحميل الإعلانات...</p></div></div>`;
     const announcementsHtml = `<div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-bullhorn text-blue-600"></i> إدارة الشريط الإعلاني العلوي</h4><form onsubmit="saveAnnouncement(event)" class="grid grid-cols-1 gap-3 mb-4"><textarea id="annText" class="ctrl-input text-sm" rows="2" placeholder="نص الإعلان (مثال: افتتاحية قسم الطوارئ الجديد...)" required></textarea><input type="text" id="annLink" class="ctrl-input text-sm" placeholder="رابط التفاصيل (اتركه فارغاً لإخفاء الزر تماماً)"><input type="text" id="annLinkText" class="ctrl-input text-sm" placeholder="نص الزر (اختياري - افتراضي: اضغط هنا)"><button type="submit" class="py-2.5 rounded-xl text-white font-semibold text-sm" style="background: #2563EB"><i class="fas fa-paper-plane ml-1"></i> نشر الإعلان</button></form><div id="adminAnnouncementList" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1"><p class="text-center text-gray-400 text-sm py-2">جاري تحميل الإعلانات...</p></div></div>`;
     
-    let listHtml = allData.map(item => `<div class="flex items-center justify-between p-3 rounded-xl border bg-white" style="border-color: var(--border)"><div class="flex flex-col gap-1"><div class="flex items-center gap-3"><span class="badge badge-${item.type}">${item.type}</span><span class="font-semibold text-sm">${item.name}</span></div>${item.bookingpass ? `<span class="text-[11px] text-gray-500">رمز الطبيب: <span class="font-mono font-bold text-blue-600">${item.bookingpass}</span></span>` : ''}${item.pharmacypass ? `<span class="text-[11px] text-gray-500">رمز الصيدلية: <span class="font-mono font-bold text-green-600">${item.pharmacypass}</span></span>` : ''}</div><div class="flex gap-2 items-center"> ${['doctor', 'pharmacy'].includes(item.type) ? `<div class="flex gap-1 bg-gray-50 p-1 rounded-lg border" style="border-color: var(--border)"><button onclick="setStatus('${item.id}', true)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen === true ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button><button onclick="setStatus('${item.id}', false)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen === false ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-100'}">مغلق</button><button onclick="setStatus('${item.id}', null)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen == null ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button></div>` : ''}<button onclick="editFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue/50"><i class="fas fa-edit"></i></button><button onclick="deleteFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-50"><i class="fas fa-trash"></i></button></div></div>`).join(''); 
+    let listHtml = allData.map(item => `<div class="flex items-center justify-between p-3 rounded-xl border bg-white" style="border-color: var(--border)"><div class="flex flex-col gap-1"><div class="flex items-center gap-3"><span class="badge badge-${item.type}">${item.type}</span><span class="font-semibold text-sm">${item.name}</span></div>${item.bookingpass ? `<span class="text-[11px] text-gray-500">رمز الطبيب: <span class="font-mono font-bold text-blue-600">${item.bookingpass}</span></span>` : ''}${item.pharmacypass ? `<span class="text-[11px] text-gray-500">رمز الصيدلية: <span class="font-mono font-bold text-green-600">${item.pharmacypass}</span></span>` : ''}</div><div class="flex gap-2 items-center"> ${['doctor', 'pharmacy'].includes(item.type) ? `
+<div class="flex flex-col gap-1">
+    <div class="flex gap-1 bg-gray-50 p-1 rounded-lg border" style="border-color: var(--border)">
+        <button onclick="setStatus('${item.id}', true)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen === true ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button>
+        <button onclick="setStatus('${item.id}', false)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen === false ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-100'}">مغلق</button>
+        <button onclick="setStatus('${item.id}', null)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen == null ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button>
+    </div>
+    <button onclick="toggleSubscription('${item.id}', ${!item.is_subscribed})" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.is_subscribed ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}">
+        ${item.is_subscribed ? 'مشترك (إلغاء)' : 'تفعيل اشتراك'}
+    </button>
+</div>
+` : ''} <button onclick="editFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue/50"><i class="fas fa-edit"></i></button><button onclick="deleteFacility('${item.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-50"><i class="fas fa-trash"></i></button></div></div>`).join(''); 
 
     const twentyHoursAgo = new Date(Date.now() - (20 * 60 * 60 * 1000)).toISOString();
     const activeBloodRequests = bloodRequests.filter(b => b.created_at > twentyHoursAgo);
@@ -2959,7 +2971,7 @@ window.openPaymentModal = (type, name) => {
                 بعد إتمام الدفع، يرجى إرسال صورة الإيصال أو إشعار التحويل إلى واتساب الإدارة، وسيتم تفعيل حسابك فوراً.
             </div>
             
-            <a href="https://wa.me/9630980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all">
+            <a href="https://wa.me/963980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all">
                 <i class="fas fa-whatsapp"></i> إرسال الإيصال عبر واتساب
             </a>
             <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm" style="border-color: var(--border)">إغلاق</button>
