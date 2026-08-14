@@ -2952,14 +2952,15 @@ window.submitAnswer = async (qId) => {
 window.openPaymentModal = (type, name) => {
     document.getElementById('modalContent').innerHTML = `
         <div class="p-6 text-center">
+            <!-- رأس النافذة -->
             <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center mb-4 shadow-lg shadow-orange/30">
                 <i class="fas fa-crown text-3xl text-white"></i>
             </div>
             <h3 class="text-xl font-black mb-1" style="font-family: 'Noto Kufi Arabic'">اشتراك ${type} الاحترافي</h3>
             <p class="text-xs text-gray-500 mb-5">عزيزي/عزيزتي <b>${name}</b>، انضم لنخبة الأطباء المشتركين وافتح أقساماً متقدمة في موقعك.</p>
 
-            <!-- صندوق مميزات الاشتراك -->
-            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right mb-5 space-y-3">
+            <!-- 1. صندوق مميزات الاشتراك (كما طلبنا سابقاً) -->
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right mb-6 space-y-3">
                 <div class="flex items-center gap-3">
                     <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
                     <span class="text-sm font-semibold text-gray-700">إدارة الحجوزات والمواعيد واستقبال الطلبات مباشرة.</span>
@@ -2970,7 +2971,7 @@ window.openPaymentModal = (type, name) => {
                 </div>
                 <div class="flex items-center gap-3">
                     <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">الحصول على <b>شارة التوثيق الذهبية</b> ♻️ بجانب اسمك لزيادة ثقة المرضى.</span>
+                    <span class="text-sm font-semibold text-gray-700">الحصول على <b>شارة التوثيق الذهبية</b> بجانب اسمك لزيادة ثقة المرضى.</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
@@ -2978,7 +2979,15 @@ window.openPaymentModal = (type, name) => {
                 </div>
                 <div class="flex items-center gap-3">
                     <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">درجة محادثة <b>(دردشة مباشرة)</b> مع المريض داخل المنصة.</span>
+                    <span class="text-sm font-semibold text-gray-700">غرفة محادثة <b>(دردشة مباشرة)</b> مع المريض داخل المنصة.</span>
+                </div>
+               <div class="flex items-center gap-3">
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">إصدار <b>روشتات طبية إلكترونية موثقة</b> تُحفظ مباشرة داخل الملف الصحي للمريض.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">الوصول السريع للملف الصحي للمريض عبر مسح <b>رمز الاستجابة السريع (QR)</b>.</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
@@ -2986,29 +2995,44 @@ window.openPaymentModal = (type, name) => {
                 </div>
             </div>
 
-            <div class="bg-white p-3 rounded-2xl border-2 border-dashed border-gray-300 shadow-sm mb-5 inline-block">
-                <img src="https://z-cdn-media.chatglm.cn/files/533bb04c-b262-4f21-826a-71b187260747.png?auth_key=1886690696-8ab96329580445558db43a6900eb4a6a-0-ccb561cf13d626214c72e9ef01620ff4" alt="رمز الدفع شام كاش" class="w-52 h-52 mx-auto rounded-lg object-contain">
+            <!-- 2. قسم الدفع المباشر (بتصميم احترافي وأنيق جديد) -->
+            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 mb-5 relative overflow-hidden shadow-inner">
+                <!-- شارة الدفع السريع -->
+                <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold py-1 px-3 rounded-bl-xl flex items-center gap-1 shadow-sm">
+                    <i class="fas fa-bolt"></i> دفع سريع ومباشر
+                </div>
+                
+                <h4 class="font-bold text-gray-800 text-base mb-4 mt-3 flex items-center justify-center gap-2" style="font-family: 'Noto Kufi Arabic'">
+                    <i class="fas fa-mobile-screen text-blue-500"></i> الدفع عبر شام كاش
+                </h4>
+                
+                <!-- صورة الـ QR بإطار أنيق -->
+                <div class="bg-white p-2 rounded-2xl border-4 border-white shadow-lg w-44 h-44 mx-auto mb-5">
+                    <img src="https://z-cdn-media.chatglm.cn/files/533bb04c-b262-4f21-826a-71b187260747.png?auth_key=1886692436-f4137efd272049179bd92d56b0081347-0-fdecf35d303f970d7d8aac45cca966ba" alt="رمز الدفع شام كاش" class="w-full h-full rounded-lg object-contain">
+                </div>
+
+                <!-- خطوات الدفع بتصميم قائمة أنيقة -->
+                <div class="text-right space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div>
+                        <div class="text-sm text-gray-700 leading-relaxed pt-0.5">افتح تطبيق <b>شام كاش</b> وامسح الرمز أعلاه لتتم عملية التحويل بكل سهولة.</div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div>
+                        <div class="text-sm text-gray-700 leading-relaxed pt-0.5">احفظ صورة (Screenshot) لإشعار الدفع الناجح.</div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div>
+                        <div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه وأرسل الصورة لتقوم الإدارة بتفعيل حسابك فوراً.</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-gray-50 p-4 rounded-xl text-right space-y-3 mb-5">
-                <div class="flex items-center gap-3">
-                    <div class="bg-yellow-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
-                    <div class="text-sm font-semibold text-gray-700">امسح الرمز أعلاه وأكمل عملية الدفع عبر (شام كاش).</div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="bg-yellow-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
-                    <div class="text-sm font-semibold text-gray-700">التقط صورة (سكرين شوت) لإشعار نجاح عملية الدفع.</div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="bg-yellow-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
-                    <div class="text-sm font-semibold text-gray-700">اضغط على زر الواتساب بالأسفل وأرسل الصورة ليتم تفعيل حسابك فوراً.</div>
-                </div>
-            </div>
-            
-            <a href="https://wa.me/963980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-sm">
+            <!-- زر الإرسال عبر واتساب -->
+            <a href="https://wa.me/963980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3.5 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-md hover:shadow-lg">
                 <i class="fas fa-whatsapp text-lg"></i> إرسال الإيصال وتفعيل الحساب
             </a>
-            <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm" style="border-color: var(--border); color: var(--muted)">إغلاق</button>
+            <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm transition-colors hover:bg-gray-50" style="border-color: var(--border); color: var(--muted)">إغلاق</button>
         </div>
     `;
     document.getElementById('modalOverlay').classList.add('active');
