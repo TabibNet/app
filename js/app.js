@@ -1785,30 +1785,38 @@ window.handleHealthLogin = async (e) => {
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { 
-        showToast('الإيميل أو كلمة المرور غير صحيحة، أو لم تقم بتأكيد بريدك الإلكتروني.'); 
+        console.error("Auth Error:", error);
+        showToast('خطأ: ' + error.message); 
         return; 
     }
 
     currentHealthFileId = data.user.id;
     localStorage.setItem('healthFileId', currentHealthFileId);
     
-    let { data: fileData, error: fileError } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).single();
+    // استخدام maybeSingle لمنع خطأ إذا كان الملف غير موجود
+    let { data: fileData, error: fileError } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).maybeSingle();
+    
+    if (fileError) { 
+        console.error("DB Fetch Error:", fileError);
+        showToast('خطأ في جلب الملف: ' + fileError.message); 
+        return; 
+    }
     
     // إذا لم يجد ملفاً للمريض، يقوم بإنشاء واحد جديد فوراً
-    if (fileError || !fileData) {
+    if (!fileData) {
         const defaultName = data.user.email ? data.user.email.split('@')[0] : 'مريض';
         const { data: newFile, error: insertError } = await supabase.from('health_files').insert([{ id: currentHealthFileId, full_name: defaultName }]).select().single();
         if (insertError) {
-            showToast('تعذر إنشاء ملف صحي جديد: ' + insertError.message);
+            console.error("DB Insert Error:", insertError);
+            showToast('تعذر إنشاء ملف صحي: ' + insertError.message);
             return;
         }
         fileData = newFile;
     }
     
-    // عرض لوحة الملف الصحي بالبيانات الصحيحة
+    // عرض لوحة الملف الصحي
     renderHealthDashboard(fileData);
 };
-
  window.renderHealthDashboard = (data) => {
     openCtrlPanel(`الملف الصحي: ${data.full_name || data.fullName}`, `
         <div class="flex flex-col gap-5">
