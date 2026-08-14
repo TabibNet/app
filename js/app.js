@@ -411,7 +411,10 @@ function createCard(item) {
     ${['doctor', 'pharmacy'].includes(item.type) && item.isopen === true ? '<span class="badge" style="background:#10B981;color:white"><i class="fas fa-door-open ml-1"></i>مفتوح</span>' : ''}
     ${['doctor', 'pharmacy'].includes(item.type) && item.isopen === false ? '<span class="badge" style="background:#EF4444;color:white"><i class="fas fa-door-closed ml-1"></i>مغلق</span>' : ''}
     ${item.night ? '<span class="badge" style="background:rgba(196,150,44,0.9);color:white"><i class="fas fa-moon ml-1"></i>ليلي</span>' : ''}
-</div></div><div class="p-5"><div class="flex items-start gap-3 mb-3"><div class="cat-icon ${t.iconClass}"><i class="fas ${t.icon}"></i></div><div class="flex-1 min-w-0"><h3 class="font-bold text-sm mb-1 leading-tight" style="font-family: 'Noto Kufi Arabic'; color: var(--fg);">${item.name}</h3><div class="flex items-center gap-1 text-[11px]" style="color: ${t.color};">${starsHTML}<span class="mr-1 font-semibold">${item.rating || 0}</span></div></div></div><div class="flex flex-col gap-1.5 mb-4">${detailsHTML}</div><div class="flex items-center gap-2"> ${item.phone ? `<a href="tel:${item.phone}" onclick="event.stopPropagation()" class="call-btn flex-1 py-2.5 rounded-xl text-white text-xs font-semibold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i><span dir="ltr">${item.phone}</span></a>` : `<div class="flex-1 py-2.5 rounded-xl text-gray-400 text-xs font-semibold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i><span>لا يوجد رقم</span></div>`}${bookingBtn}<button onclick="event.stopPropagation(); openModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--muted);" aria-label="تفاصيل"><i class="fas fa-info-circle"></i></button></div></div></div>`;
+</div></div><div class="p-5"><div class="flex items-start gap-3 mb-3"><div class="cat-icon ${t.iconClass}"><i class="fas ${t.icon}"></i></div><div class="flex-1 min-w-0"><h3 class="font-bold text-sm mb-1 leading-tight" style="font-family: 'Noto Kufi Arabic'; color: var(--fg);">
+    ${item.name}
+    ${(['doctor', 'pharmacy'].includes(item.type) && item.is_subscribed) ? '<span class="verified-badge verified-gold"><i class="fas fa-circle-check"></i> موثق</span>' : ''}
+</h3><div class="flex items-center gap-1 text-[11px]" style="color: ${t.color};">${starsHTML}<span class="mr-1 font-semibold">${item.rating || 0}</span></div></div></div><div class="flex flex-col gap-1.5 mb-4">${detailsHTML}</div><div class="flex items-center gap-2"> ${item.phone ? `<a href="tel:${item.phone}" onclick="event.stopPropagation()" class="call-btn flex-1 py-2.5 rounded-xl text-white text-xs font-semibold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i><span dir="ltr">${item.phone}</span></a>` : `<div class="flex-1 py-2.5 rounded-xl text-gray-400 text-xs font-semibold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i><span>لا يوجد رقم</span></div>`}${bookingBtn}<button onclick="event.stopPropagation(); openModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--muted);" aria-label="تفاصيل"><i class="fas fa-info-circle"></i></button></div></div></div>`;
 }
 
 function renderData() {
@@ -423,7 +426,14 @@ function renderData() {
         pharmacy: { el: document.getElementById('pharmaciesGrid'), section: document.getElementById('pharmacies'), data: allData.filter(d => d.type === 'pharmacy').sort((a,b) => (b.night === true) - (a.night === true)) } 
     };
     let total = 0;
-    for (const [type, g] of Object.entries(grids)) { const filtered = g.data.filter(matchItem); const show = filtered.length > 0 && (currentFilter === 'all' || currentFilter === type); g.el.innerHTML = filtered.map(createCard).join(''); g.section.style.display = show ? '' : 'none'; total += filtered.length; }
+    for (const [type, g] of Object.entries(grids)) { 
+    let filtered = g.data.filter(matchItem); 
+    filtered.sort((a, b) => (b.is_subscribed === true) - (a.is_subscribed === true));
+    const show = filtered.length > 0 && (currentFilter === 'all' || currentFilter === type); 
+    g.el.innerHTML = filtered.map(createCard).join(''); 
+    g.section.style.display = show ? '' : 'none'; 
+    total += filtered.length; 
+}
     document.getElementById('noResults').style.display = total === 0 ? '' : 'none';
 }
 
@@ -446,6 +456,12 @@ window.handleSearch = (value) => { searchQuery = value.trim(); const heroSearch 
 window.resetSearch = () => { searchQuery = ''; currentFilter = 'all'; const heroSearch = document.getElementById('heroSearch'); if(heroSearch) heroSearch.value = ''; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }); const allBtn = document.querySelector('[data-filter="all"]'); allBtn.classList.add('active'); allBtn.style.background = 'var(--accent)'; allBtn.style.color = 'white'; allBtn.style.borderColor = 'var(--accent)'; renderData(); }
 
 window.openModal = (id) => { 
+        const item = allData.find(d => d.id === id);
+    if (item && ['doctor', 'pharmacy'].includes(item.type)) {
+        const newCount = (item.view_count || 0) + 1;
+        supabase.from('listings').update({ view_count: newCount }).eq('id', id).then();
+        item.view_count = newCount;
+    }
     const item = allData.find(d => d.id === id); 
     if (!item) return; 
     const typeMap = { 
@@ -720,6 +736,12 @@ window.handlePharmacyLogin = async (e) => {
 
     const pharmData = allData.find(d => d.name === name && d.type === 'pharmacy' && d.pharmacypass === pass); 
     if (pharmData) { 
+        if (!pharmData.is_subscribed) {
+            await supabase.auth.signOut();
+            showToast('انتهت فترة الاشتراك. يرجى التجديد لمتابعة استخدام اللوحة.');
+            openPaymentModal('صيدلية', pharmData.name);
+            return;
+        }
         renderPharmacyDashboard(pharmData); 
     } else {
         await supabase.auth.signOut();
@@ -795,13 +817,21 @@ window.handleDoctorLogin = async (e) => {
     const passInput = document.getElementById('docPass').value.trim();
     const pass = passInput.toUpperCase();
     const dummyEmail = `doc_${pass.toLowerCase()}@tabibnet.app`;
+    
     const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
     if (error) { showToast('خطأ: ' + error.message); return; }
+
     const docData = allData.find(d => d.name === name && d.bookingpass === pass); 
     if (docData) { 
+        if (!docData.is_subscribed) {
+            await supabase.auth.signOut();
+            showToast('انتهت فترة الاشتراك. يرجى التجديد لمتابعة استخدام اللوحة.');
+            openPaymentModal('طبيب', docData.name); 
+            return;
+        }
         renderDoctorDashboard(docData); 
     } else {
-        await supabase.auth.signOut(); // طرد إذا كان الاسم خاطئاً
+        await supabase.auth.signOut();
         showToast('اسم الطبيب غير مطابق للرمز'); 
     } 
 }
@@ -829,7 +859,24 @@ window.renderDoctorDashboard = async (doc) => {
             if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="text-xs p-2 rounded-lg mb-1 ${msg.sender === 'doctor' ? 'bg-blue-100 text-left' : 'bg-gray-100 text-right'}">${msg.text}</div>`).join(''); }
             return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${b.name}</span><br><span class="text-xs" style="color: var(--muted)">${b.daystr}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${b.ref}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${b.phone}" class="text-xs text-blue-600">${b.phone}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
         }).join('');
-        openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button><button onclick="logoutDoctor()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button><button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
+        openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)"><img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div></div> ${doc.is_subscribed ? `
+<div class="grid grid-cols-2 gap-3">
+    <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
+        <i class="fas fa-eye text-blue-500 text-xl mb-1"></i>
+        <div class="text-2xl font-black text-gray-800">${doc.view_count || 0}</div>
+        <div class="text-xs text-gray-500">زيارة الملف</div>
+    </div>
+    <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
+        <i class="fas fa-calendar-check text-green-500 text-xl mb-1"></i>
+        <div class="text-2xl font-black text-gray-800">${bookings.filter(b => b.itemid === doc.id).length}</div>
+        <div class="text-xs text-gray-500">إجمالي الحجوزات</div>
+    </div>
+</div>
+` : `
+<div class="bg-yellow-50 border border-yellow-200 p-3 rounded-xl text-xs text-yellow-800 text-center">
+    <i class="fas fa-lock ml-1"></i> الإحصائيات المتقدمة (عدد الزوار والحجوزات) متاحة فقط للأطباء المشتركين.
+</div>
+`}<div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${doc.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500'}">مفتوح</button><button onclick="setStatus('${doc.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500'}">مغلق</button><button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button></div></div><button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2" style="background: #0D9488"><i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض</button><button onclick="logoutDoctor()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button><button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-3" style="background: #0EA5E9"><i class="fas fa-comments"></i> الإجابة على أسئلة المرضى</button> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-calendar-day ml-2" style="color: var(--doctor)"></i> طلبات المواعيد (${docBookings.length})</h4><div class="flex flex-col gap-2">${bookingsListHtml}</div></div><div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-cog ml-2"></i> أيام العمل</h4><div class="mb-4 grid grid-cols-4 sm:grid-cols-7 gap-2">${daysCheckboxes}</div><button onclick="saveDoctorSettings('${doc.id}')" class="w-full py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--doctor)">حفظ</button></div></div>`, '#2563EB'); 
 
             // تفعيل التحديث الحي (كل 5 ثوانٍ) للوحة الطبيب
     if (doctorDashboardInterval) clearInterval(doctorDashboardInterval);
@@ -2881,5 +2928,52 @@ window.submitAnswer = async (qId) => {
         showToast('خطأ في إرسال الإجابة: ' + err.message); 
         console.error(err); 
     }
+}
+window.openPaymentModal = (type, name) => {
+    document.getElementById('modalContent').innerHTML = `
+        <div class="p-6 text-center">
+            <div class="w-16 h-16 mx-auto rounded-full bg-yellow-100 flex items-center justify-center mb-4">
+                <i class="fas fa-money-bill-wave text-3xl text-yellow-500"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">تفعيل اشتراك ${type}</h3>
+            <p class="text-sm text-gray-600 mb-4">عزيزي/عزيزتي <b>${name}</b>، لتفعيل لوحة التحكم الخاصة بك، يرجى دفع رسوم الاشتراك الشهري عبر إحدى الطرق التالية:</p>
+            
+            <div class="bg-gray-50 p-4 rounded-xl text-right space-y-3 mb-4">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-mobile-alt text-blue-500 text-xl"></i>
+                    <div>
+                        <div class="font-bold text-sm">شام كاش</div>
+                        <div class="text-xs text-gray-500" dir="ltr">0934XXXXXX</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-handshake text-green-500 text-xl"></i>
+                    <div>
+                        <div class="font-bold text-sm">دفع وجه لوجه</div>
+                        <div class="text-xs text-gray-500">تواصل مع الإدارة لتحديد موعد</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-xl text-xs text-yellow-800 mb-4">
+                بعد إتمام الدفع، يرجى إرسال صورة الإيصال أو إشعار التحويل إلى واتساب الإدارة، وسيتم تفعيل حسابك فوراً.
+            </div>
+            
+            <a href="https://wa.me/9630980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all">
+                <i class="fas fa-whatsapp"></i> إرسال الإيصال عبر واتساب
+            </a>
+            <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm" style="border-color: var(--border)">إغلاق</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('active');
+    lockScroll();
+}
+window.toggleSubscription = async (id, currentStatus) => {
+    try {
+        await supabase.from('listings').update({ is_subscribed: currentStatus }).eq('id', id);
+        showToast(currentStatus ? 'تم تفعيل الاشتراك بنجاح!' : 'تم إلغاء الاشتراك.');
+        await fetchListings();
+        renderAdminDashboard();
+    } catch (e) { showToast('حدث خطأ'); }
 }
 // نهاية ملف app.js
