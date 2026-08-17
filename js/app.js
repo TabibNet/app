@@ -3092,7 +3092,7 @@ window.openPaymentModal = (type, name) => {
                 <i class="fas fa-crown text-3xl text-white"></i>
             </div>
             <h3 class="text-xl font-black mb-1" style="font-family: 'Noto Kufi Arabic'">اشتراك ${type} الاحترافي</h3>
-            <p class="text-xs text-gray-500 mb-5">عزيزي/عزيزتي <b>${name}</b>، انضم لنخبة ${type === 'طبيب' ? 'الأطباء' : 'الصيدليات'} المشتركين للحصول على ميزات حصرية.</p>
+            <p class="text-xs text-gray-500 mb-5">أهلا دكتور/ة <b>${name}</b>، انضم لنخبة ${type === 'طبيب' ? 'الأطباء' : 'الصيدليات'} وأفتح أقساماً متقدة في موقعك .</p>
 
             <!-- صندوق مميزات الاشتراك الديناميكي -->
             <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right mb-6 space-y-3">
