@@ -3119,7 +3119,7 @@ window.openPaymentModal = (type, name) => {
                     </button>
                     <button id="btn-cash" onclick="togglePaymentMethod('cash')" class="py-3 rounded-xl border-2 border-gray-300 bg-white text-gray-600 font-bold text-sm flex flex-col items-center justify-center gap-1 transition-all">
                         <i class="fas fa-hand-holding-dollar text-xl"></i>
-                        <span>وجه لوجه</span>
+                        <span>دفع النقدي(المباشر)</span>
                     </button>
                 </div>
 
@@ -3144,26 +3144,16 @@ window.openPaymentModal = (type, name) => {
                     </div>
                 </div>
 
-                <!-- تفاصيل الدفع وجه لوجه -->
+                                <!-- تفاصيل الدفع وجه لوجه -->
                 <div id="cash-details" class="text-right hidden">
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-5">
-                        <div class="flex items-start gap-3 mb-3">
-                            <i class="fas fa-map-marker-alt text-red-500 text-xl mt-1"></i>
-                            <div class="text-sm text-gray-700 leading-relaxed">يمكنك الدفع نقداً في مقر الإدارة. يرجى التواصل معنا عبر الواتساب لتحديد موعد مناسب لزيارتنا.</div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <i class="fas fa-clock text-yellow-500 text-xl mt-1"></i>
-                            <div class="text-sm text-gray-700 leading-relaxed">أوقات العمل: من السبت إلى الخميس، 9 صباحاً حتى 5 مساءً.</div>
-                        </div>
-                    </div>
                     <div class="space-y-3 mb-5">
                         <div class="flex items-start gap-3">
                             <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div>
-                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه لمراسلة الإدارة وتحديد موعد الزيارة.</div>
+                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه لمراسلة الإدارة .</div>
                         </div>
                         <div class="flex items-start gap-3">
                             <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div>
-                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">قم بالدفع نقداً في مقر الإدارة واستلم الإيصال.</div>
+                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">قم بالدفع نقدياً (مباشر) .</div>
                         </div>
                         <div class="flex items-start gap-3">
                             <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div>
@@ -3173,8 +3163,8 @@ window.openPaymentModal = (type, name) => {
                 </div>
             </div>
 
-            <a href="https://wa.me/963980390813?text=مرحباً، أريد تفعيل اشتراك ${type}: ${name}" target="_blank" class="w-full py-3.5 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-md hover:shadow-lg">
-                <i class="fas fa-whatsapp text-lg"></i> إرسال الإيصال / تحديد موعد
+                        <a id="dynamicWpBtn" data-type="${type}" data-name="${name}" href="https://wa.me/963980390813?text=مرحباً، أريد تأكيد دفع اشتراك ${type}: ${name}" target="_blank" class="w-full py-3.5 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-md hover:shadow-lg">
+                <i class="fas fa-whatsapp text-lg"></i> <span id="dynamicWpBtnText">تأكيد الدفع عبر الواتساب</span>
             </a>
             <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm transition-colors hover:bg-gray-50" style="border-color: var(--border); color: var(--muted)">إغلاق</button>
         </div>
@@ -3184,11 +3174,18 @@ window.openPaymentModal = (type, name) => {
 }
 
 // دالة تبديل طريقة الدفع
+// دالة تبديل طريقة الدفع
 window.togglePaymentMethod = (method) => {
     const shamcashDetails = document.getElementById('shamcash-details');
     const cashDetails = document.getElementById('cash-details');
     const btnShamcash = document.getElementById('btn-shamcash');
     const btnCash = document.getElementById('btn-cash');
+
+    // عناصر الزر الديناميكي
+    const dynamicBtn = document.getElementById('dynamicWpBtn');
+    const dynamicBtnText = document.getElementById('dynamicWpBtnText');
+    const type = dynamicBtn.dataset.type;
+    const name = dynamicBtn.dataset.name;
 
     if (method === 'shamcash') {
         shamcashDetails.classList.remove('hidden');
@@ -3197,6 +3194,10 @@ window.togglePaymentMethod = (method) => {
         btnShamcash.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
         btnCash.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
         btnCash.classList.add('border-gray-300', 'bg-white', 'text-gray-600');
+        
+        // تعديل الزر لـ شام كاش
+        dynamicBtnText.innerText = "تأكيد الدفع عبر الواتساب";
+        dynamicBtn.href = `https://wa.me/963980390813?text=مرحباً، أريد تأكيد دفع اشتراك ${type}: ${name}`;
     } else {
         shamcashDetails.classList.add('hidden');
         cashDetails.classList.remove('hidden');
@@ -3204,8 +3205,13 @@ window.togglePaymentMethod = (method) => {
         btnCash.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
         btnShamcash.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
         btnShamcash.classList.add('border-gray-300', 'bg-white', 'text-gray-600');
+        
+        // تعديل الزر لـ وجه لوجه
+        dynamicBtnText.innerText = "تنسيق موعد الدفع عبر الواتساب";
+        dynamicBtn.href = `https://wa.me/963980390813?text=مرحباً، أريد تنسيق موعد دفع (نقدي مباشر) لاشتراك ${type}: ${name}`;
     }
-}
+};
+
 window.toggleSubscription = async (id, currentStatus) => {
     try {
         await supabase.from('listings').update({ is_subscribed: currentStatus }).eq('id', id);
