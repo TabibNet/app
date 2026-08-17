@@ -3041,6 +3041,7 @@ window.submitAnswer = async (qId) => {
         console.error(err); 
     }
 }
+
 window.openPaymentModal = (type, name) => {
     // 1. تحديد المميزات حسب نوع الحساب
     let featuresHtml = '';
