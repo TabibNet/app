@@ -158,14 +158,27 @@ window.setupOneSignal = async () => {
 
 window.addEventListener('DOMContentLoaded', () => {
         
-    supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
+            // تنظيف الرابط من رمز جوجل إذا وجد
             if (window.location.hash.includes('access_token')) {
                 window.history.replaceState(null, '', window.location.pathname);
-                if (session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
+            }
+            
+            // التحقق إذا كان المستخدم قادماً للتو من تسجيل الدخول بجوجل
+            const isGoogleLoginIntent = sessionStorage.getItem('google_login_intent') === 'true';
+            
+            // التأكد أن المستخدم مريض وليس طبيباً/صيدلية
+            if (session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
+                // نفتح الملف إذا كان الرابط يحتوي رمز الدخول، أو إذا كان ينتظر الدخول بجوجل
+                if (window.location.hash.includes('access_token') || isGoogleLoginIntent) {
+                    sessionStorage.removeItem('google_login_intent'); // إزالة العلامة بعد فتح الملف
                     setTimeout(() => openHealthFile(), 500);
                 }
             }
+        } else {
+            // إذا لم يوجد جلسة، نزيل العلامة لتجنب الأخطاء
+            sessionStorage.removeItem('google_login_intent');
         }
     });
 
@@ -1751,6 +1764,9 @@ window.openHealthFile = async () => {
     `, '#EC4899');
 }
 window.signInWithGoogle = async () => {
+    // وضع علامة تفيد بأن المستخدم بدأ عملية تسجيل الدخول
+    sessionStorage.setItem('google_login_intent', 'true');
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -1758,6 +1774,7 @@ window.signInWithGoogle = async () => {
         }
     });
     if (error) {
+        sessionStorage.removeItem('google_login_intent'); // إزالة العلامة في حال الخطأ
         showToast('حدث خطأ أثناء الاتصال بـ Google');
         console.error(error);
     }
