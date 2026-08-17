@@ -919,26 +919,18 @@ window.renderDoctorDashboard = async (doc) => {
                 </div>
             </div>
 
-            <!-- 4. قارئ الملف الصحي QR (مجاني) -->
+                        <!-- 4. قارئ الملف الصحي QR -->
             <button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2" style="background: #0D9488">
                 <i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض
             </button>
 
-                    <button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-2" style="background: #2563EB;">
-                        <i class="fas fa-comments"></i> فتح قسم اسأل طبيب
-                    </button>
-                    <p class="text-xs text-center text-gray-500">يمكنك إنشاء روشتة طبية من داخل ملف المريض بعد مسح QR.</p>
-                ` : `
-                    <button disabled class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-2 bg-gray-300 cursor-not-allowed line-through opacity-60">
-                        <i class="fas fa-comments"></i> فتح قسم اسأل طبيب
-                    </button>
-                    <button disabled class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 bg-gray-300 cursor-not-allowed line-through opacity-60">
-                        <i class="fas fa-file-prescription"></i> إنشاء روشتة طبية
-                    </button>
-                    <button onclick="openPaymentModal('طبيب', '${doc.name}')" class="w-full mt-2 py-2.5 rounded-xl bg-yellow-400 text-yellow-900 font-bold text-sm hover:bg-yellow-500 transition-all">
-                        <i class="fas fa-arrow-up-circle"></i> اشترك لتفعيل هذه الميزات
-                    </button>
-                `}
+            <!-- 5. أدوات الطبيب (متاحة للجميع) -->
+            <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-toolbox" style="color: var(--doctor)"></i> أدوات الطبيب</h4>
+                <button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-2" style="background: #2563EB;">
+                    <i class="fas fa-comments"></i> فتح قسم اسأل طبيب
+                </button>
+                <p class="text-xs text-center text-gray-500">يمكنك إنشاء روشتة طبية إلكترونية من داخل ملف المريض بعد مسح QR.</p>
             </div>
 
             <!-- 6. أيام العمل -->
