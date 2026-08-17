@@ -158,30 +158,33 @@ window.setupOneSignal = async () => {
 
 window.addEventListener('DOMContentLoaded', () => {
         
-        supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-            // تنظيف الرابط من رمز جوجل إذا وجد
-            if (window.location.hash.includes('access_token')) {
-                window.history.replaceState(null, '', window.location.pathname);
-            }
-            
-            // التحقق إذا كان المستخدم قادماً للتو من تسجيل الدخول بجوجل
-            const isGoogleLoginIntent = sessionStorage.getItem('google_login_intent') === 'true';
-            
-            // التأكد أن المستخدم مريض وليس طبيباً/صيدلية
-            if (session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
-                // نفتح الملف إذا كان الرابط يحتوي رمز الدخول، أو إذا كان ينتظر الدخول بجوجل
-                if (window.location.hash.includes('access_token') || isGoogleLoginIntent) {
-                    sessionStorage.removeItem('google_login_intent'); // إزالة العلامة بعد فتح الملف
-                    setTimeout(() => openHealthFile(), 500);
-                }
-            }
-        } else {
-            // إذا لم يوجد جلسة، نزيل العلامة لتجنب الأخطاء
+            const isOAuthRedirect = window.location.hash.includes('access_token') || window.location.search.includes('code');
+    if (isOAuthRedirect) {
+        window.history.replaceState(null, '', window.location.pathname);
+    }
+
+    const openFileIfPatient = (session) => {
+        if (session && session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
             sessionStorage.removeItem('google_login_intent');
+            setTimeout(() => openHealthFile(), 500);
+            return true;
+        }
+        return false;
+    };
+
+    // التحقق الفوري أولاً
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!openFileIfPatient(session)) {
+            // إذا لم يفتح فوراً، نستمع لتغير حالة الدخول (هذا يضمن فتحه في المرة الثانية والثالثة دائماً)
+            const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                    if (openFileIfPatient(session)) {
+                        authListener.subscription.unsubscribe(); // إيقاف المستمع بعد فتح الملف
+                    }
+                }
+            });
         }
     });
-
     // شاشة التحميل تظهر مرة واحدة فقط في كل جلسة (Session)
     const splash = document.getElementById('appSplashScreen');
     if (splash) {
@@ -1764,13 +1767,13 @@ window.openHealthFile = async () => {
     `, '#EC4899');
 }
 window.signInWithGoogle = async () => {
-    // وضع علامة تفيد بأن المستخدم بدأ عملية تسجيل الدخول
+    // وضع علامة تفيد بأن المستخدم بدأ عملية تسجيل الدخول بجوجل
     sessionStorage.setItem('google_login_intent', 'true');
     
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.href // العودة لنفس الصفحة بعد تسجيل الدخول
+            redirectTo: window.location.href
         }
     });
     if (error) {
@@ -1779,11 +1782,7 @@ window.signInWithGoogle = async () => {
         console.error(error);
     }
 };
-window.switchHealthTab = (tab) => {
-    const loginForm = document.getElementById('loginForm'); const regForm = document.getElementById('registerForm'); const loginBtn = document.getElementById('tabLoginBtn'); const regBtn = document.getElementById('tabRegBtn');
-    if (tab === 'login') { loginForm.classList.remove('hidden'); loginForm.classList.add('flex'); regForm.classList.add('hidden'); regForm.classList.remove('flex'); loginBtn.classList.add('bg-white', 'shadow'); loginBtn.classList.remove('text-gray-500'); regBtn.classList.remove('bg-white', 'shadow'); regBtn.classList.add('text-gray-500'); } 
-    else { regForm.classList.remove('hidden'); regForm.classList.add('flex'); loginForm.classList.add('hidden'); loginForm.classList.remove('flex'); regBtn.classList.add('bg-white', 'shadow'); regBtn.classList.remove('text-gray-500'); loginBtn.classList.remove('bg-white', 'shadow'); loginBtn.classList.add('text-gray-500'); }
-}
+
 window.handleHealthRegister = async (e) => {
     e.preventDefault();
     const email = document.getElementById('regEmail').value.trim();
