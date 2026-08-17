@@ -157,39 +157,43 @@ window.setupOneSignal = async () => {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-        
-    // تحقق إذا كان المستخدم عاد للتو من تسجيل الدخول بجوجل
+    // تحقق إذا كان المستخدم عاد للتو من جوجل (عبر الرابط أو عبر العلامة)
     const isOAuthRedirect = window.location.href.includes('code=') || window.location.href.includes('access_token=');
+    const isGoogleIntent = sessionStorage.getItem('google_login_intent') === 'true';
     
     if (isOAuthRedirect) {
-        // تنظيف الرابط من أكواد جوجل
         window.history.replaceState(null, '', window.location.pathname);
-        
+    }
+
+    // إذا كان المستخدم قادماً من جوجل (برمز أو بدون رمز)
+    if (isOAuthRedirect || isGoogleIntent) {
         let isOpening = false;
         const openFileIfPatient = (session) => {
             if (!isOpening && session && session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
                 isOpening = true; // منع التكرار
+                sessionStorage.removeItem('google_login_intent'); // إزالة العلامة بعد الفتح
                 setTimeout(() => openHealthFile(), 500);
                 return true;
             }
             return false;
         };
 
-        // محاولة فتح الملف فوراً إذا كانت الجلسة جاهزة
+        // محاولة فتح الملف فوراً
         supabase.auth.getSession().then(({ data: { session } }) => {
             openFileIfPatient(session);
         });
 
-        // الاستماع لتأكيد تسجيل الدخول (يضمن فتحه في المرة الثانية والثالثة دائماً)
+        // الاستماع لتأكيد تسجيل الدخول
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (openFileIfPatient(session)) {
-                authListener.subscription.unsubscribe(); // إيقاف المستمع بعد الفتح لمنع التكرار
+                authListener.subscription.unsubscribe();
             }
         });
     }
 
     // شاشة التحميل تظهر مرة واحدة فقط في كل جلسة (Session)
     const splash = document.getElementById('appSplashScreen');
+
     if (splash) {
         if (sessionStorage.getItem('splashShown')) {
             
@@ -1770,7 +1774,7 @@ window.openHealthFile = async () => {
     `, '#EC4899');
 }
 window.signInWithGoogle = async () => {
-    // وضع علامة تفيد بأن المستخدم بدأ عملية تسجيل الدخول بجوجل
+    // وضع علامة تفيد بأن المستخدم بدأ عملية تسجيل الدخول
     sessionStorage.setItem('google_login_intent', 'true');
     
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -1780,7 +1784,7 @@ window.signInWithGoogle = async () => {
         }
     });
     if (error) {
-        sessionStorage.removeItem('google_login_intent'); // إزالة العلامة في حال الخطأ
+        sessionStorage.removeItem('google_login_intent');
         showToast('حدث خطأ أثناء الاتصال بـ Google');
         console.error(error);
     }
