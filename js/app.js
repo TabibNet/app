@@ -158,33 +158,36 @@ window.setupOneSignal = async () => {
 
 window.addEventListener('DOMContentLoaded', () => {
         
-            const isOAuthRedirect = window.location.hash.includes('access_token') || window.location.search.includes('code');
+    // تحقق إذا كان المستخدم عاد للتو من تسجيل الدخول بجوجل
+    const isOAuthRedirect = window.location.href.includes('code=') || window.location.href.includes('access_token=');
+    
     if (isOAuthRedirect) {
+        // تنظيف الرابط من أكواد جوجل
         window.history.replaceState(null, '', window.location.pathname);
+        
+        let isOpening = false;
+        const openFileIfPatient = (session) => {
+            if (!isOpening && session && session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
+                isOpening = true; // منع التكرار
+                setTimeout(() => openHealthFile(), 500);
+                return true;
+            }
+            return false;
+        };
+
+        // محاولة فتح الملف فوراً إذا كانت الجلسة جاهزة
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            openFileIfPatient(session);
+        });
+
+        // الاستماع لتأكيد تسجيل الدخول (يضمن فتحه في المرة الثانية والثالثة دائماً)
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (openFileIfPatient(session)) {
+                authListener.subscription.unsubscribe(); // إيقاف المستمع بعد الفتح لمنع التكرار
+            }
+        });
     }
 
-    const openFileIfPatient = (session) => {
-        if (session && session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
-            sessionStorage.removeItem('google_login_intent');
-            setTimeout(() => openHealthFile(), 500);
-            return true;
-        }
-        return false;
-    };
-
-    // التحقق الفوري أولاً
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!openFileIfPatient(session)) {
-            // إذا لم يفتح فوراً، نستمع لتغير حالة الدخول (هذا يضمن فتحه في المرة الثانية والثالثة دائماً)
-            const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-                    if (openFileIfPatient(session)) {
-                        authListener.subscription.unsubscribe(); // إيقاف المستمع بعد فتح الملف
-                    }
-                }
-            });
-        }
-    });
     // شاشة التحميل تظهر مرة واحدة فقط في كل جلسة (Session)
     const splash = document.getElementById('appSplashScreen');
     if (splash) {
