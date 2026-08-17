@@ -924,10 +924,6 @@ window.renderDoctorDashboard = async (doc) => {
                 <i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض
             </button>
 
-            <!-- 5. الميزات المدفوعة -->
-            <div class="bg-gray-50 p-4 rounded-xl border ${doc.is_subscribed ? 'border-blue-200' : 'border-dashed border-gray-300'}">
-                <h4 class="font-bold text-sm mb-3 text-gray-700 flex items-center gap-2"><i class="fas fa-crown text-yellow-500"></i> الميزات الاحترافية</h4>
-                ${doc.is_subscribed ? `
                     <button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-2" style="background: #2563EB;">
                         <i class="fas fa-comments"></i> فتح قسم اسأل طبيب
                     </button>
@@ -3047,6 +3043,10 @@ window.openPaymentModal = (type, name) => {
     let featuresHtml = '';
     if (type === 'طبيب') {
         featuresHtml = `
+        <div class="flex items-center gap-3">
+                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
+                    <span class="text-sm font-semibold text-gray-700">إحصائيات متقدمة (عدد زيارات ملفك وعدد الحجوزات).</span>
+                </div>
             <div class="flex items-center gap-3">
                 <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
                 <span class="text-sm font-semibold text-gray-700">إدارة الحجوزات والمواعيد واستقبال الطلبات مباشرة.</span>
