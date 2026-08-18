@@ -307,7 +307,7 @@
                         </div>
                         <div>
                             <h3 class="font-bold text-sm text-white mb-1" style="font-family: 'Noto Kufi Arabic'">أدوات ومبادرات تكافلية</h3>
-                            <p class="text-[10px] leading-relaxed text-white/50">حاسبات طبية، إسعافات أولية، إرشادات التحاليل، بالإضافة لبنك الدم والأدوية الفائضة.</p>
+                            <p class="text-[10px] leading-relaxed text-white/50">حاسبات طبية، إسعافات أولية، إرشادات التحاليل، بالإضافة لبنك الدم والمستلزمات الطبية.</p>
                         </div>
                     </div>
                 </div>
@@ -413,7 +413,7 @@
                 <!-- Quick Lookup Box -->
                 <div class="mt-4 max-w-2xl mx-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 flex items-center gap-2">
                     <i class="fas fa-ticket-alt text-yellow-400 text-lg pr-2"></i>
-                    <input type="text" id="quickLookupInput" class="search-input flex-1 py-2 text-sm" placeholder="استعلم عن حالة حجزك أو طلب دوائك (مثال: #R-842 أو #MED-509)">
+                    <input type="text" id="quickLookupInput" class="search-input flex-1 py-2 text-sm" placeholder="...استعلم عن حالة حجزك أو طلب دوائك">
                     <button onclick="quickLookup()" class="px-5 py-2 rounded-xl text-white font-semibold text-sm" style="background: var(--gold)">استعلام</button>
                 </div>
 
@@ -463,19 +463,18 @@
                 </div>
                 
                 <!-- صندوق الأدوية -->
-                <div id="homeMedicinesSection" class="hidden flex-1 rounded-3xl p-5 border border-green-100 bg-gradient-to-br from-green-50/80 to-white shadow-lg hover:shadow-xl transition-shadow duration-300">
-                    <div class="flex items-center gap-4 mb-5">
-                        <div class="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center text-white text-xl shadow-md">
-                            <i class="fas fa-hand-holding-medical"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-black text-green-800" style="font-family: 'Noto Kufi Arabic'">أدوية متوفرة</h3>
-                            <p class="text-xs text-green-500/80 font-semibold">تكافل طبي مجاني</p>
-                        </div>
-                    </div>
-                    <div id="homeMedicinesList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-                </div>
-            </div>
+                <div id="homeMedicinesSection" class="hidden flex-1 rounded-3xl p-5 border border-teal-100 bg-gradient-to-br from-teal-50/80 to-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <div class="flex items-center gap-4 mb-5">
+        <div class="w-12 h-12 rounded-2xl bg-teal-500 flex items-center justify-center text-white text-xl shadow-md">
+            <i class="fas fa-laptop-medical"></i>
+        </div>
+        <div>
+            <h3 class="text-base font-black text-teal-800" style="font-family: 'Noto Kufi Arabic'">أجهزة ومستلزمات طبية</h3>
+            <p class="text-xs text-teal-500/80 font-semibold">عرض وطلب مجاني</p>
+        </div>
+    </div>
+    <div id="homeMedicinesList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+</div>
 
                         <!-- 2. مربعات التصفية (بالمنتصف بشكل احترافي وأنيق) -->
             <div class="max-w-5xl mx-auto bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-6 rounded-3xl border shadow-sm" style="border-color: var(--border)">
