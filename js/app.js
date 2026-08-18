@@ -595,8 +595,17 @@ window.openModal = (id) => {
         `;
     }
 
-    const canBook = item.type === 'doctor' && item.is_subscribed;
-    const bookingBtnModal = canBook ? `<button onclick="openBookingModal('${item.id}')" class="flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-calendar-check"></i> طلب موعد</button>` : ''; 
+    const canBook = item.type === 'doctor'; 
+let bookingBtnModal = ''; 
+if (canBook) {
+    if (item.is_subscribed) {
+        // زر أخضر مفعّل للمشتركين
+        bookingBtnModal = `<button onclick="openBookingModal('${item.id}')" class="flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-calendar-check"></i> طلب موعد</button>`; 
+    } else {
+        // زر مشطوب ومعطّل لغير المشتركين
+        bookingBtnModal = `<button onclick="showToast('الحجز الإلكتروني متاح فقط للأطباء المشتركين. يرجى الاتصال هاتفياً.')" class="w-full py-3.5 rounded-xl text-gray-500 text-sm font-bold text-center flex items-center justify-center gap-2 bg-gray-200 cursor-not-allowed line-through"><i class="fas fa-calendar-xmark"></i> طلب موعد (متاح للمشتركين)</button>`;
+    }
+}
     const mapQuery = item.latlng || ((item.address || item.clinic) + ' الرحيبة سوريا');
     const mapEmbed = (mapQuery) ? `
     <div class="mt-5 rounded-2xl overflow-hidden border-2" style="border-color: var(--border)">
