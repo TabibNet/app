@@ -711,6 +711,7 @@ window.closeCtrlPanel = (event) => {
         clearInterval(unsubscribeMedRequests); 
         unsubscribeMedRequests = null; 
     } 
+    
     if (activeFollowupUnsub) { 
         clearInterval(activeFollowupUnsub); 
         activeFollowupUnsub = null; 
@@ -1981,7 +1982,7 @@ window.handleHealthLogin = async (e) => {
     renderHealthDashboard(fileData);
 };
  window.renderHealthDashboard = (data) => {
-    openCtrlPanel(`الملف الصحي: ${data.full_name || data.fullName}`, `
+    openCtrlPanel(`الملف الصحي: ${data.full_name || 'مريض'}`,  `
         <div class="flex flex-col gap-5">
             <div class="bg-white p-6 rounded-2xl border-2 flex flex-col items-center" style="border-color: #EC4899;">
                 <div class="text-sm font-bold text-pink-500 mb-3">رمز الطوارئ الطبي (QR)</div>
