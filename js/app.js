@@ -298,54 +298,7 @@ async function fetchListings() {
     }
     
     // يجب أن تكون خارج الشرط لتعمل دائماً عند فتح الموقع
-    checkAutoLoginDoctorPharm(); 
-}
-
-// دالة التحقق الآمنة من تسجيل الدخول (مع إصلاح الحسابات القديمة)
-async function checkAutoLoginDoctorPharm() {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // التأكد أن المستخدم مسجل الدخول وحسابه طبيب أو صيدلية
-    if (session && session.user.email && session.user.email.endsWith('@tabibnet.app')) {
-        const userId = session.user.id; 
-        const email = session.user.email;
-        
-        // 1. البحث في قاعدة البيانات عن الطبيب الذي يملك هذا المعرف الآمن
-        let { data: listing } = await supabase
-            .from('listings')
-            .select('*')
-            .eq('user_id', userId)
-            .maybeSingle();
-            
-        // 2. إذا لم يجده (لأنه حساب قديم)، ابحث عنه بالبريد الإلكتروني
-        if (!listing) {
-            const pass = email.split('_')[1].split('@')[0].toUpperCase();
-            listing = allData.find(d => 
-                (d.type === 'doctor' && d.bookingpass === pass) || 
-                (d.type === 'pharmacy' && d.pharmacypass === pass)
-            );
-            
-            // 3. إذا وجدناه بالطريقة القديمة، حدث قاعدة البيانات وأضف له user_id فوراً
-            if (listing) {
-                await supabase.from('listings').update({ user_id: userId }).eq('id', listing.id);
-                showToast('تم ربط حسابك بأمان بنجاح!');
-            }
-        }
-            
-        if (listing) {
-            if (listing.is_subscribed) {
-                // فتح اللوحة تلقائياً
-                if (listing.type === 'doctor') renderDoctorDashboard(listing); 
-                else if (listing.type === 'pharmacy') renderPharmacyDashboard(listing); 
-            } else {
-                openPaymentModal(listing.type === 'doctor' ? 'طبيب' : 'صيدلية', listing.name);
-            }
-        } else {
-            // إذا كان الحساب موجوداً في الأمان ولكنه غير مرتبط بطبيب
-            await supabase.auth.signOut();
-            showToast('لم يتم العثور على بيانات مرتبطة بهذا الحساب');
-        }
-    }
+    //checkAutoLoginDoctorPharm();
 }
 async function fetchBookings() {
     const { data, error } = await supabase.from('bookings').select('*');
@@ -885,7 +838,26 @@ window.sendChatMessage = async (bookingId) => {
     await supabase.from('bookings').update({ chat: currentChat }).eq('id', bookingId);
 }
 
-window.openPharmacyLogin = () => { openCtrlPanel('لوحة الصيدليات', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: var(--accent-light)"><i class="fas fa-prescription-bottle-medical text-2xl" style="color: var(--accent)"></i></div><h3 class="font-bold text-lg">دخول الصيدليات</h3></div><form onsubmit="handlePharmacyLogin(event)" class="flex flex-col gap-4"><input type="text" id="pharmName" class="ctrl-input text-center" placeholder="اسم الصيدلية" required><input type="text" id="pharmPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--accent)">دخول</button></form></div>`, '#0E7C5F'); }
+window.openPharmacyLogin = async () => { 
+    // التحقق إذا كانت الصيدلية مسجلة مسبقاً
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.user.email && session.user.email.endsWith('@tabibnet.app')) {
+        const userId = session.user.id;
+        // البحث عن بيانات الصيدلية
+        const listing = allData.find(d => d.user_id === userId && d.type === 'pharmacy');
+        if (listing) {
+            if (listing.is_subscribed) {
+                renderPharmacyDashboard(listing); // فتح اللوحة فوراً
+            } else {
+                openPaymentModal('صيدلية', listing.name);
+            }
+            return; // الخروج من الدالة
+        }
+    }
+    
+    // إذا لم تكن مسجلة، أظهر شاشة إدخال الاسم وكلمة المرور
+    openCtrlPanel('لوحة الصيدليات', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: var(--accent-light)"><i class="fas fa-prescription-bottle-medical text-2xl" style="color: var(--accent)"></i></div><h3 class="font-bold text-lg">دخول الصيدليات</h3></div><form onsubmit="handlePharmacyLogin(event)" class="flex flex-col gap-4"><input type="text" id="pharmName" class="ctrl-input text-center" placeholder="اسم الصيدلية" required><input type="text" id="pharmPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--accent)">دخول</button></form></div>`, '#0E7C5F'); 
+}
 window.handlePharmacyLogin = async (e) => { 
     e.preventDefault(); 
     const name = document.getElementById('pharmName').value.trim(); 
@@ -999,7 +971,26 @@ window.setMedAvailable = async (id, pharmName) => { try { await supabase.from('m
 window.updateMedStatus = async (id, status) => { try { await supabase.from('medicine_requests').update({ status: status }).eq('id', id); showToast('تم تحديث حالة الدواء'); } catch (e) { showToast('خطأ في التحديث'); } }
 window.updateMedNotes = async (id, notes) => { try { await supabase.from('medicine_requests').update({ notes: notes }).eq('id', id); showToast('تم حفظ الملاحظة'); } catch (e) { showToast('خطأ في الحفظ'); } }
 
-window.openDoctorLogin = () => { openCtrlPanel('لوحة الطبيب', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: #DBEAFE"><i class="fas fa-user-md text-2xl" style="color: var(--doctor)"></i></div><h3 class="font-bold text-lg">دخول الطبيب</h3></div><form onsubmit="handleDoctorLogin(event)" class="flex flex-col gap-4"><input type="text" id="docName" class="ctrl-input text-center" placeholder="الاسم" required><input type="text" id="docPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--doctor)">دخول</button></form></div>`, '#2563EB'); }
+window.openDoctorLogin = async () => { 
+    // التحقق إذا كان الطبيب مسجلاً مسبقاً
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.user.email && session.user.email.endsWith('@tabibnet.app')) {
+        const userId = session.user.id;
+        // البحث عن بيانات الطبيب
+        const listing = allData.find(d => d.user_id === userId && d.type === 'doctor');
+        if (listing) {
+            if (listing.is_subscribed) {
+                renderDoctorDashboard(listing); // فتح اللوحة فوراً
+            } else {
+                openPaymentModal('طبيب', listing.name);
+            }
+            return; // الخروج من الدالة وعدم إظهار شاشة الدخول
+        }
+    }
+    
+    // إذا لم يكن مسجلاً، أظهر شاشة إدخال الاسم وكلمة المرور
+    openCtrlPanel('لوحة الطبيب', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: #DBEAFE"><i class="fas fa-user-md text-2xl" style="color: var(--doctor)"></i></div><h3 class="font-bold text-lg">دخول الطبيب</h3></div><form onsubmit="handleDoctorLogin(event)" class="flex flex-col gap-4"><input type="text" id="docName" class="ctrl-input text-center" placeholder="الاسم" required><input type="text" id="docPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--doctor)">دخول</button></form></div>`, '#2563EB'); 
+}
 window.handleDoctorLogin = async (e) => { 
     e.preventDefault(); 
     const name = document.getElementById('docName').value.trim(); 
