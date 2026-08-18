@@ -1213,45 +1213,47 @@ window.deletePrescription = async (rxDate) => {
 };
             
 window.openMedicineDonation = () => {
-    openCtrlPanel('الأجهزة والمستلزمات الطبية (تكافل مجتمعي)', `
+    openCtrlPanel('مركز الأجهزة والمستلزمات الطبية (عرض وطلب)', `
         <div class="flex flex-col gap-5">
             <div class="bg-teal-50 border border-teal-200 rounded-xl p-4 text-teal-800 text-sm flex items-center gap-3">
                 <i class="fas fa-laptop-medical text-xl"></i>
-                <span>تبادل الأجهزة الطبية (تنفس، ضغط، مسالك) والمستلزمات (كراسي متحركة، سرر، عكازات) بين أبناء المجتمع. تبرع بجهازك أو أعره لمن يحتاجه.</span>
+                <span>تبادل الأجهزة الطبية والمستلزمات. يمكنك <b>عرض جهاز</b> للتبرع أو الإعارة، أو <b>طلب جهاز</b> تحتاجه ولا تتوفر لديك.</span>
             </div>
             
             <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-800 text-xs">
                 <div class="font-bold mb-2 flex items-center gap-2"><i class="fas fa-shield-virus"></i> تنبيه أمان وتعقيم</div>
                 <ul class="list-disc pr-5 space-y-1">
                     <li>يجب تعقيم الأجهزة الطبية وتنظيفها جيداً قبل تسليمها للمريض.</li>
-                    <li>الرجاء التأكد من صلاحية المستلزمات الطبية (الشاش، القطن، الأكسجين) وعدم انتهاء تاريخ صلاحيتها.</li>
+                    <li>الرجاء التأكد من صلاحية المستلزمات الطبية وعدم انتهاء تاريخ صلاحيتها.</li>
                 </ul>
             </div>
             
             <div class="bg-white p-5 rounded-xl border shadow-sm" style="border-color: var(--border)">
-                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-hand-holding-heart text-teal-600"></i> أضف جهازاً أو مستلزماً للتبادل</h4>
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-hand-holding-heart text-teal-600"></i> أضف إعلاناً (عرض أو طلب)</h4>
                 <form onsubmit="submitMedicineDonation(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input type="text" id="medDonorName" class="ctrl-input text-sm" placeholder="اسم المتبرع / المُعير" required>
+                    <input type="text" id="medDonorName" class="ctrl-input text-sm" placeholder="اسم المعلن" required>
                     <input type="text" id="medDonationName" class="ctrl-input text-sm" placeholder="اسم الجهاز (مثال: جهاز ضغط، كرسي متحرك)" required>
                     <select id="medDonationType" class="ctrl-input text-sm">
-                        <option>تبرع نهائي (هدية)</option>
-                        <option>إعارة (يُرجى إرجاعه)</option>
-                        <option>مستلزمات طبية (شاش، قطن، خل)</option>
+                        <option>أعرض جهازاً (تبرع)</option>
+                        <option>أعرض جهازاً (للإعارة)</option>
+                        <option>أطلب جهازاً (أحتاجه للشراء)</option>
+                        <option>أطلب جهازاً (أحتاجه للاستعارة)</option>
+                        <option>مستلزمات طبية للتبادل (شاش، قطن، معقمات)</option>
                     </select>
-                    <input type="text" id="medDonationExpiry" class="ctrl-input text-sm" placeholder="حالة الجهاز (ممتاز / جيد / يحتاج صيانة)" required>
-                    <input type="text" id="medDonationQty" class="ctrl-input text-sm" placeholder="الكمية (مثال: 1 جهاز، علبتين)" required>
+                    <input type="text" id="medDonationExpiry" class="ctrl-input text-sm" placeholder="حالة الجهاز أو المدة المطلوبة (مثال: ممتاز / أسبوعين)" required>
+                    <input type="text" id="medDonationQty" class="ctrl-input text-sm" placeholder="الكمية (مثال: 1 جهاز، 2 كرسي متحرك)" required>
                     <input type="tel" id="medDonationPhone" class="ctrl-input text-sm" placeholder="رقم الهاتف 09XX" required>
                     <textarea id="medDonationNotes" class="ctrl-input text-sm col-span-1 sm:col-span-2" rows="2" placeholder="ملاحظات (مكان التسليم، مواصفات الجهاز، إلخ)"></textarea>
                     <button type="submit" id="medDonationSubmitBtn" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90" style="background: #0D9488;">
-                       <i class="fas fa-plus ml-2"></i> نشر الجهاز للمجتمع
+                       <i class="fas fa-bullhorn ml-2"></i> نشر الإعلان للمجتمع
                     </button>
                 </form>
             </div>
 
             <div class="bg-white p-5 rounded-xl border shadow-sm" style="border-color: var(--border)">
-                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-box-open text-teal-600"></i> الأجهزة والمستلزمات المتوفرة حالياً</h4>
+                <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-box-open text-teal-600"></i> إعلانات الأجهزة والمستلزمات</h4>
                 <div id="medicineDonationsList" class="flex flex-col gap-3">
-                    <p class="text-center py-8 text-gray>جاري تحميل الأجهزة...</p>
+                    <p class="text-center py-8 text-gray-400 text-sm">جاري تحميل الإعلانات...</p>
                 </div>
             </div>
         </div>
@@ -1259,19 +1261,26 @@ window.openMedicineDonation = () => {
     renderMedicineDonationsUI();
 }
 
-function renderMedicineDonationsUI() {
+    function renderMedicineDonationsUI() {
     const list = document.getElementById('medicineDonationsList');
     if (!list) return;
     if (medicineDonations.length === 0) {
-        list.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد أجهزة أو مستلزمات متوفرة حالياً. كن أول من يساهم.</p>';
+        list.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد إعلانات حالياً. كن أول من يعرض أو يطلب جهازاً.</p>';
         return;
     }
     list.innerHTML = medicineDonations.map(m => {
         let typeBadge = '';
-        if (m.medicine_type.includes('إعارة')) {
-            typeBadge = `<span class="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">للاستعارة</span>`;
-        } else if (m.medicine_type.includes('تبرع')) {
-            typeBadge = `<span class="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">تبرع</span>`;
+        let cardIcon = 'fa-laptop-medical';
+        let iconColor = 'text-teal-600';
+        let bgIconColor = 'bg-teal-50';
+
+        if (m.medicine_type.includes('أطلب')) {
+            typeBadge = `<span class="text-[9px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">طلب</span>`;
+            cardIcon = 'fa-bullhorn';
+            iconColor = 'text-orange-600';
+            bgIconColor = 'bg-orange-50';
+        } else if (m.medicine_type.includes('أعرض')) {
+            typeBadge = `<span class="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">عرض ${m.medicine_type.includes('إعارة') ? '(للإعارة)' : '(تبرع)'}</span>`;
         } else {
             typeBadge = `<span class="text-[9px] bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-bold">مستلزمات</span>`;
         }
@@ -1279,8 +1288,8 @@ function renderMedicineDonationsUI() {
         return `
             <div class="border rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all hover:shadow-md" style="border-color: var(--border); background: var(--card);">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <div class="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-laptop-medical text-teal-600 text-xl"></i>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${bgIconColor}">
+                        <i class="fas ${cardIcon} ${iconColor} text-xl"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
@@ -1290,9 +1299,9 @@ function renderMedicineDonationsUI() {
                         <div class="text-[11px] text-gray-500 flex flex-wrap gap-x-3 gap-y-1 mt-1">
                             <span><i class="fas fa-tag ml-1"></i>${m.medicine_type}</span>
                             <span><i class="fas fa-box ml-1"></i>${m.quantity}</span>
-                            <span class="text-orange-500 font-bold"><i class="fas fa-wrench ml-1"></i>${m.expiry_date}</span>
+                            <span class="text-purple-500 font-bold"><i class="fas fa-info-circle ml-1"></i>${m.expiry_date}</span>
                         </div>
-                        ${m.notes ? `<div class="text-[10px] text-gray-400 mt-1 truncate"><i class="fas fa-info-circle"></i> ${m.notes}</div>` : ''}
+                        ${m.notes ? `<div class="text-[10px] text-gray-400 mt-1 truncate"><i class="fas fa-pen"></i> ${m.notes}</div>` : ''}
                     </div>
                 </div>
                 <div class="flex gap-2 w-full sm:w-auto flex-shrink-0">
@@ -1315,7 +1324,7 @@ window.submitMedicineDonation = async (e) => {
         const name = document.getElementById('medDonorName').value.trim();
         const medName = document.getElementById('medDonationName').value.trim();
         const medType = document.getElementById('medDonationType').value;
-        const expiryDate = document.getElementById('medDonationExpiry').value.trim(); // حقل الحالة
+        const expiryDate = document.getElementById('medDonationExpiry').value.trim(); 
         const quantity = document.getElementById('medDonationQty').value.trim();
         const phoneInput = document.getElementById('medDonationPhone');
         const phone = phoneInput.value.trim();
@@ -1341,7 +1350,7 @@ window.submitMedicineDonation = async (e) => {
 
         if (error) throw error;
 
-        showToast('بارك الله فيك! تم نشر الجهاز للمجتمع.');
+        showToast('تم نشر إعلانك بنجاح للمجتمع!');
         document.querySelector('#ctrlContent form').reset();
         await fetchMedicineDonations();
         renderMedicineDonationsUI();
@@ -1351,9 +1360,10 @@ window.submitMedicineDonation = async (e) => {
         console.error("Donation Error:", err);
     } finally {
         btn.disabled = false; 
-        btn.innerHTML = '<i class="fas fa-plus ml-2"></i> نشر الجهاز للمجتمع';
+        btn.innerHTML = '<i class="fas fa-bullhorn ml-2"></i> نشر الإعلان للمجتمع';
     }
 }
+    
     
 window.resolveMedicineDonation = async (id) => { 
     try { 
