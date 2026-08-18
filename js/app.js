@@ -298,31 +298,48 @@ async function fetchListings() {
     }
 }
 
-// دالة التحقق الآمنة من تسجيل الدخول
+
+// دالة التحقق الآمنة من تسجيل الدخول (مع إصلاح الحسابات القديمة)
 async function checkAutoLoginDoctorPharm() {
     const { data: { session } } = await supabase.auth.getSession();
     
     // التأكد أن المستخدم مسجل الدخول وحسابه طبيب أو صيدلية
     if (session && session.user.email && session.user.email.endsWith('@tabibnet.app')) {
-        const userId = session.user.id; // المعرف الآمن من Supabase
+        const userId = session.user.id; 
+        const email = session.user.email;
         
-        // البحث في قاعدة البيانات عن الطبيب الذي يملك هذا المعرف الآمن
-        const { data: listing, error } = await supabase
+        // 1. البحث في قاعدة البيانات عن الطبيب الذي يملك هذا المعرف الآمن
+        let { data: listing } = await supabase
             .from('listings')
             .select('*')
             .eq('user_id', userId)
             .maybeSingle();
             
+        // 2. إذا لم يجده (لأنه حساب قديم)، ابحث عنه بالبريد الإلكتروني
+        if (!listing) {
+            const pass = email.split('_')[1].split('@')[0].toUpperCase();
+            listing = allData.find(d => 
+                (d.type === 'doctor' && d.bookingpass === pass) || 
+                (d.type === 'pharmacy' && d.pharmacypass === pass)
+            );
+            
+            // 3. إذا وجدناه بالطريقة القديمة، حدث قاعدة البيانات وأضف له user_id فوراً
+            if (listing) {
+                await supabase.from('listings').update({ user_id: userId }).eq('id', listing.id);
+                showToast('تم ربط حسابك بأمان بنجاح!');
+            }
+        }
+            
         if (listing) {
             if (listing.is_subscribed) {
-                // فتح اللوحة تلقائياً بناءً على النوع
+                // فتح اللوحة تلقائياً
                 if (listing.type === 'doctor') renderDoctorDashboard(listing); 
                 else if (listing.type === 'pharmacy') renderPharmacyDashboard(listing); 
             } else {
                 openPaymentModal(listing.type === 'doctor' ? 'طبيب' : 'صيدلية', listing.name);
             }
         } else {
-            // إذا كان الحساب موجوداً في Auth ولكنه غير مرتبط بطبيب في القاعدة
+            // إذا كان الحساب موجوداً في الأمان ولكنه غير مرتبط بطبيب
             await supabase.auth.signOut();
             showToast('لم يتم العثور على بيانات مرتبطة بهذا الحساب');
         }
