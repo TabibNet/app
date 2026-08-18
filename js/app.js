@@ -296,8 +296,10 @@ async function fetchListings() {
             localStorage.removeItem('force_listings_update');
         } catch (e) {}
     }
+    
+    // يجب أن تكون خارج الشرط لتعمل دائماً عند فتح الموقع
+    checkAutoLoginDoctorPharm(); 
 }
-
 
 // دالة التحقق الآمنة من تسجيل الدخول (مع إصلاح الحسابات القديمة)
 async function checkAutoLoginDoctorPharm() {
