@@ -476,7 +476,7 @@ if (noResultsDiv) {
         noResultsDiv.classList.add('hidden');
     }
 }
-
+    }
 function matchItem(item) { 
     if (currentFilter !== 'all' && item.type !== currentFilter) return false; 
     
