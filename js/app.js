@@ -429,16 +429,10 @@ function createCard(item) {
     else if (item.type === 'lab') detailsHTML = `<div class="detail-row"><i class="fas fa-vials"></i><span>${item.tests || item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div>${item.homesample && item.homesample !== 'لا' ? '<div class="detail-row"><i class="fas fa-house-user" style="color: var(--accent)"></i><span style="color: var(--accent); font-weight: 600">يتوفر سحب منزلي</span></div>' : ''}`;
     else detailsHTML = `<div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || ''}</span></div>${item.night ? '<div class="detail-row"><i class="fas fa-moon" style="color: var(--gold)"></i><span style="color: var(--gold); font-weight: 600">صيدلية مناوبة</span></div>' : ''}`;
     
-        const canBook = item.type === 'doctor';
+    const canBook = item.type === 'doctor' && item.is_subscribed; // الحجز متاح فقط للأطباء المشتركين
     let bookingBtn = '';
     if (canBook) {
-        if (item.is_subscribed) {
-            // زر الحجز مفعّل للمشتركين
-            bookingBtn = `<button onclick="event.stopPropagation(); openBookingModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--accent);" aria-label="حجز"><i class="fas fa-calendar-plus"></i></button>`;
-        } else {
-            // زر الحجز معطّل لغير المشتركين
-            bookingBtn = `<button onclick="event.stopPropagation(); showToast('الحجز الإلكتروني متاح فقط للأطباء المشتركين. يرجى الاتصال هاتفياً.')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all opacity-40 cursor-not-allowed" style="border-color: var(--border); color: var(--muted);" aria-label="الحجز متوقف"><i class="fas fa-calendar-xmark"></i></button>`;
-        }
+        bookingBtn = `<button onclick="event.stopPropagation(); openBookingModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--accent);" aria-label="حجز"><i class="fas fa-calendar-plus"></i></button>`;
     }
     
     return `<div class="card ${t.cardClass} cursor-pointer" onclick="openModal('${item.id}')" data-type="${item.type}"><div class="relative h-40 overflow-hidden rounded-t-2xl"><img src="${item.image || 'https://picsum.photos/seed/default/400/250'}" alt="${item.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110 cursor-zoom-in" loading="lazy" onclick="event.stopPropagation(); openLightbox(this.src)"><div class="absolute top-3 right-3"><span class="badge ${t.badgeClass}">${t.label}</span></div><div class="absolute top-3 left-3 flex flex-col gap-1 items-start">
@@ -479,6 +473,7 @@ function renderData() {
             noResultsDiv.style.display = 'none';
         }
     }
+    return total; 
 }
 function matchItem(item) { 
     if (currentFilter !== 'all' && item.type !== currentFilter) return false; 
@@ -502,8 +497,18 @@ window.setFilter = (filter, btn) => {
     btn.style.background = colors[filter]; btn.style.color = 'white'; btn.style.borderColor = colors[filter]; 
     renderData(); 
 }
-window.handleSearch = (value) => { searchQuery = value.trim(); const heroSearch = document.getElementById('heroSearch'); if(heroSearch) heroSearch.value = value; renderData(); }
-
+window.handleSearch = (value) => { 
+    searchQuery = value.trim(); 
+    const heroSearch = document.getElementById('heroSearch'); 
+    if(heroSearch) heroSearch.value = value; 
+    
+    const totalResults = renderData(); // نحفظ عدد النتائج
+    
+    // إذا لم نجد نتائج وكان المستخدم يكتب فعلاً كلمة للبحث
+    if (totalResults === 0 && searchQuery !== '') {
+        showToast('لا توجد نتائج مطابقة لبحثك. جرب كلمة أخرى أو عرض كل المدن');
+    }
+}
 window.openCitySelector = () => {
     const overlay = document.getElementById('citySelectorOverlay');
     const listContainer = document.getElementById('cityListContainer');
