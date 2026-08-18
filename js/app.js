@@ -367,19 +367,41 @@ function renderHomeMedicines() {
         container.innerHTML = '';
     } else {
         section.classList.remove('hidden');
-        container.innerHTML = medicineDonations.map(m => `
-            <div class="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border border-green-50 dark:border-green-900/50">
+        container.innerHTML = medicineDonations.map(m => {
+            // تحديد الألوان والأيقونة بناءً على نوع الإعلان (عرض أو طلب)
+            let iconClass = 'fa-laptop-medical';
+            let iconColor = 'text-teal-600';
+            let bgColor = 'bg-teal-50';
+            let borderColor = 'border-teal-100';
+            let badgeText = 'عرض';
+            let badgeColor = 'bg-green-100 text-green-700';
+            
+            if (m.medicine_type.includes('أطلب')) {
+                iconClass = 'fa-bullhorn';
+                iconColor = 'text-orange-600';
+                bgColor = 'bg-orange-50';
+                borderColor = 'border-orange-100';
+                badgeText = 'طلب';
+                badgeColor = 'bg-orange-100 text-orange-700';
+            }
+
+            return `
+            <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border ${borderColor}">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 border border-green-100 dark:border-green-800"><i class="fas fa-pills text-green-600 dark:text-green-400 text-xs"></i></div>
-                    <div class="font-bold text-[11px] text-gray-800 dark:text-white break-words">${m.medicine_name}</div>
+                    <div class="w-8 h-8 rounded-lg ${bgColor} flex items-center justify-center flex-shrink-0 border ${borderColor}">
+                        <i class="fas ${iconClass} ${iconColor} text-xs"></i>
+                    </div>
+                    <div class="font-bold text-[11px] text-gray-800 break-words flex-1 truncate">${m.medicine_name}</div>
+                    <span class="text-[8px] ${badgeColor} px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">${badgeText}</span>
                 </div>
-                <div class="text-[9px] text-gray-500 dark:text-gray-400 flex flex-col gap-0.5">
+                <div class="text-[9px] text-gray-500 flex flex-col gap-0.5">
                     <span><i class="fas fa-box"></i> ${m.quantity}</span>
-                    <span class="text-red-500 dark:text-red-400 font-bold"><i class="fas fa-calendar-times"></i> ${m.expiry_date}</span>
+                    <span class="text-purple-500 font-bold"><i class="fas fa-info-circle"></i> ${m.expiry_date}</span>
                 </div>
-                <a href="tel:${m.phone}" class="mt-0.5 block text-center bg-green-500 text-white py-1 rounded-lg text-[9px] font-bold w-full">تواصل</a>
+                <a href="tel:${m.phone}" class="mt-0.5 block text-center bg-teal-500 text-white py-1 rounded-lg text-[9px] font-bold w-full hover:bg-teal-600 transition-colors">تواصل</a>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
     checkAlertsWrapperVisibility();
 }
