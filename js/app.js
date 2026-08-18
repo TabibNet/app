@@ -595,8 +595,11 @@ window.openModal = (id) => {
         `;
     }
 
-    const canBook = item.type === 'doctor' ; 
-    const bookingBtnModal = canBook ? `<button onclick="openBookingModal('${item.id}')" class="flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-calendar-check"></i> طلب موعد</button>` : ''; 
+    const canBook = item.type === 'doctor' && item.is_subscribed; // الزر يظهر فقط للمشتركين
+let bookingBtnModal = ''; 
+if (canBook) {
+    bookingBtnModal = `<button onclick="openBookingModal('${item.id}')" class="flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-calendar-check"></i> طلب موعد</button>`;
+}
     const mapQuery = item.latlng || ((item.address || item.clinic) + ' الرحيبة سوريا');
     const mapEmbed = (mapQuery) ? `
     <div class="mt-5 rounded-2xl overflow-hidden border-2" style="border-color: var(--border)">
