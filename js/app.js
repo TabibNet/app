@@ -32,6 +32,9 @@ let activeAds = [];
 let currentAdIndex = 0;
 let adInterval = null;
 let allHomeAds = [];
+let currentCity = 'all';
+let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا', 'المعضمية']; // أضف أو عدل المدن كما تريد
+
 
 function generateUniqueId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 function lockScroll() { scrollLockCount++; document.body.style.overflow = 'hidden'; }
@@ -465,14 +468,27 @@ function renderData() {
     g.section.style.display = show ? '' : 'none'; 
     total += filtered.length; 
 }
-    document.getElementById('noResults').style.display = total === 0 ? '' : 'none';
+    const noResultsDiv = document.getElementById('noResults');
+if (noResultsDiv) {
+    if (total === 0) {
+        noResultsDiv.classList.remove('hidden');
+    } else {
+        noResultsDiv.classList.add('hidden');
+    }
 }
 
 function matchItem(item) { 
     if (currentFilter !== 'all' && item.type !== currentFilter) return false; 
+    
+    // فلترة المدينة باستخدام حقل العنوان الموجود مسبقاً
+    if (currentCity !== 'all') {
+        const itemAddress = (item.address || item.clinic || '').toLowerCase();
+        if (!itemAddress.includes(currentCity.toLowerCase())) return false;
+    }
+    
     if (!searchQuery) return true; 
     const q = searchQuery.toLowerCase(); 
-    return ['name', 'specialty', 'address',  'description', 'services', 'tests', 'departments', 'floors', 'homesample', 'nightdetails', 'consulthours', 'bookingnotes'].some(key => (item[key] || '').toLowerCase().includes(q)); 
+    return ['name', 'specialty', 'address', 'description', 'services', 'tests', 'departments', 'floors', 'homesample', 'nightdetails', 'consulthours', 'bookingnotes'].some(key => (item[key] || '').toLowerCase().includes(q)); 
 }
 
 window.setFilter = (filter, btn) => { 
@@ -484,6 +500,32 @@ window.setFilter = (filter, btn) => {
     renderData(); 
 }
 window.handleSearch = (value) => { searchQuery = value.trim(); const heroSearch = document.getElementById('heroSearch'); if(heroSearch) heroSearch.value = value; renderData(); }
+
+window.openCitySelector = () => {
+    const overlay = document.getElementById('citySelectorOverlay');
+    const listContainer = document.getElementById('cityListContainer');
+    listContainer.innerHTML = allCities.map(city => `
+        <div class="city-option ${currentCity === city ? 'selected' : ''}" onclick="selectCity('${city}')">
+            <div class="flex items-center gap-3">
+                <i class="fas ${city === 'كل المدن' ? 'fa-globe' : 'fa-city'}" style="color: var(--accent)"></i>
+                <span class="font-bold text-sm">${city}</span>
+            </div>
+            ${currentCity === city ? '<i class="fas fa-check-circle text-white"></i>' : ''}
+        </div>
+    `).join('');
+    overlay.classList.add('active');
+};
+
+window.closeCitySelector = () => {
+    document.getElementById('citySelectorOverlay').classList.remove('active');
+};
+
+window.selectCity = (city) => {
+    currentCity = city;
+    document.getElementById('currentCityText').innerText = city;
+    closeCitySelector();
+    renderData();
+};  
 window.resetSearch = () => { searchQuery = ''; currentFilter = 'all'; const heroSearch = document.getElementById('heroSearch'); if(heroSearch) heroSearch.value = ''; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }); const allBtn = document.querySelector('[data-filter="all"]'); allBtn.classList.add('active'); allBtn.style.background = 'var(--accent)'; allBtn.style.color = 'white'; allBtn.style.borderColor = 'var(--accent)'; renderData(); }
 
 window.openModal = (id) => { 
