@@ -570,10 +570,9 @@ window.openModal = (id) => {
     const item = allData.find(d => d.id === id);
     if (!item) return;
     
-    if (['doctor', 'pharmacy'].includes(item.type)) {
-        const newCount = (item.view_count || 0) + 1;
-        supabase.from('listings').update({ view_count: newCount }).eq('id', id).then();
-        item.view_count = newCount;
+        if (['doctor', 'pharmacy'].includes(item.type)) {
+        item.view_count = (item.view_count || 0) + 1; // تحديث المحلي فوراً ليراه المستخدم
+        supabase.rpc('increment_view_count', { listing_id: id }).then(); // حفظ في القاعدة بأمان
     }
     
     const typeMap = { 
@@ -649,11 +648,16 @@ window.copyNumber = (phone) => { navigator.clipboard.writeText(phone).then(() =>
 window.trackPhoneClick = async (id) => {
     const item = allData.find(d => d.id === id);
     if (!item) return;
-    const newCount = (item.phone_clicks || 0) + 1;
+    
+    // 1. تحديث العداد محلياً ليراه الطبيب فوراً في لوحته
+    item.phone_clicks = (item.phone_clicks || 0) + 1;
+    
     try {
-        await supabase.from('listings').update({ phone_clicks: newCount }).eq('id', id);
-        item.phone_clicks = newCount; // تحديث العداد محلياً ليظهر فوراً للطبيب
-    } catch (e) { console.error(e); }
+        // 2. إرسال التحديث لقاعدة البيانات عبر الدالة الآمنة
+        await supabase.rpc('increment_phone_click', { listing_id: id });
+    } catch (e) { 
+        console.error("Phone Click Error:", e); 
+    }
 };
 window.copyText = (text) => { navigator.clipboard.writeText(text).then(() => showToast('تم نسخ الكود بنجاح')).catch(() => showToast('تعذر النسخ')); }
 
