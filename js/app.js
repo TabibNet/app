@@ -645,19 +645,24 @@ if (canBook) {
 window.openLightbox = (src) => { const lightbox = document.getElementById('lightbox'); lightbox.querySelector('img').src = src.includes('picsum.photos') ? src.replace('/400/250', '/1200/800') : src; lightbox.classList.add('active'); lockScroll(); }
 window.closeModal = (event) => { if (event && event.target !== document.getElementById('modalOverlay')) return; document.getElementById('modalOverlay').classList.remove('active'); unlockScroll(); }
 window.copyNumber = (phone) => { navigator.clipboard.writeText(phone).then(() => showToast('تم نسخ رقم الهاتف بنجاح')).catch(() => showToast('تعذر النسخ')); }
-window.trackPhoneClick = async (id) => {
+window.trackPhoneClick = (id) => {
     const item = allData.find(d => d.id === id);
     if (!item) return;
     
-    // 1. تحديث العداد محلياً ليراه الطبيب فوراً في لوحته
+    // 1. تحديث العداد محلياً ليراه الطبيب فوراً
     item.phone_clicks = (item.phone_clicks || 0) + 1;
-    
-    try {
-        // 2. إرسال التحديث لقاعدة البيانات عبر الدالة الآمنة
-        await supabase.rpc('increment_phone_click', { listing_id: id });
-    } catch (e) { 
-        console.error("Phone Click Error:", e); 
-    }
+
+    // 2. إرسال الطلب لقاعدة البيانات مع keepalive لمنع المتصفح من قطعه عند فتح تطبيق الهاتف
+    fetch('https://pzwhyoattlravuadbfvk.supabase.co/rest/v1/rpc/increment_phone_click', {
+        method: 'POST',
+        headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6d2h5b2F0dGxyYXZ1YWRiZnZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzMyNDIsImV4cCI6MjEwMTkwOTI0Mn0.zBPnp7rVpR5ojidhuUCSQyUhA5VTFSCQosG_XtFXBWo',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6d2h5b2F0dGxyYXZ1YWRiZnZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzMyNDIsImV4cCI6MjEwMTkwOTI0Mn0.zBPnp7rVpR5ojidhuUCSQyUhA5VTFSCQosG_XtFXBWo',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ listing_id: id }),
+        keepalive: true // <--- السر هنا لمنع انقطاع الطلب!
+    }).catch(e => console.error('Phone Click Error:', e));
 };
 window.copyText = (text) => { navigator.clipboard.writeText(text).then(() => showToast('تم نسخ الكود بنجاح')).catch(() => showToast('تعذر النسخ')); }
 
