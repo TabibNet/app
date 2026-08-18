@@ -1,12 +1,12 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-const CACHE_NAME = 'raheba-med-v21'; // تم تغيير الرقم إلى v7 لإجبار الهاتف على مسح كل الصفحات القديمة
+const CACHE_NAME = 'raheba-med-v22'; // تم تغيير الرقم لإجبار الهاتف على التحديث
 const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/css/style.css',   // أضفنا ملف الاستايل
-  '/js/app.js',       // أضفنا ملف الجافاسكريبت
-  '/js/supabase.js',  // أضفنا ملف الاتصال
-  '/manifest.json'
+  './',
+  './index.html',
+  './css/style.css',
+  './js/app.js',
+  './js/supabase.js',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
