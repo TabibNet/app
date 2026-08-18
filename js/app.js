@@ -448,7 +448,7 @@ function createCard(item) {
 </div></div><div class="p-5"><div class="flex items-start gap-3 mb-3"><div class="cat-icon ${t.iconClass}"><i class="fas ${t.icon}"></i></div><div class="flex-1 min-w-0"><h3 class="font-bold text-sm mb-1 leading-tight" style="font-family: 'Noto Kufi Arabic'; color: var(--fg);">
     ${item.name}
     ${(['doctor', 'pharmacy'].includes(item.type) && item.is_subscribed) ? '<span class="verified-badge verified-gold"><i class="fas fa-circle-check"></i> موثق</span>' : ''}
-</h3><div class="flex items-center gap-1 text-[11px]" style="color: ${t.color};">${starsHTML}<span class="mr-1 font-semibold">${item.rating || 0}</span></div></div></div><div class="flex flex-col gap-1.5 mb-4">${detailsHTML}</div><div class="flex items-center gap-2"> ${item.phone ? `<a href="tel:${item.phone}" onclick="event.stopPropagation()" class="call-btn flex-1 py-2.5 rounded-xl text-white text-xs font-semibold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i><span dir="ltr">${item.phone}</span></a>` : `<div class="flex-1 py-2.5 rounded-xl text-gray-400 text-xs font-semibold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i><span>لا يوجد رقم</span></div>`}${bookingBtn}<button onclick="event.stopPropagation(); openModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--muted);" aria-label="تفاصيل"><i class="fas fa-info-circle"></i></button></div></div></div>`;
+</h3><div class="flex items-center gap-1 text-[11px]" style="color: ${t.color};">${starsHTML}<span class="mr-1 font-semibold">${item.rating || 0}</span></div></div></div><div class="flex flex-col gap-1.5 mb-4">${detailsHTML}</div><div class="flex items-center gap-2"> ${item.phone ? `<a href="tel:${item.phone}" onclick="event.stopPropagation(); trackPhoneClick('${item.id}')" class="call-btn flex-1 py-2.5 rounded-xl text-white text-xs font-semibold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i><span dir="ltr">${item.phone}</span></a>` : `<div class="flex-1 py-2.5 rounded-xl text-gray-400 text-xs font-semibold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i><span>لا يوجد رقم</span></div>`}${bookingBtn}<button onclick="event.stopPropagation(); openModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--muted);" aria-label="تفاصيل"><i class="fas fa-info-circle"></i></button></div></div></div>`;
 }
 
 function renderData() {
@@ -461,22 +461,25 @@ function renderData() {
     };
     let total = 0;
     for (const [type, g] of Object.entries(grids)) { 
-    let filtered = g.data.filter(matchItem); 
-    filtered.sort((a, b) => (b.is_subscribed === true) - (a.is_subscribed === true));
-    const show = filtered.length > 0 && (currentFilter === 'all' || currentFilter === type); 
-    g.el.innerHTML = filtered.map(createCard).join(''); 
-    g.section.style.display = show ? '' : 'none'; 
-    total += filtered.length; 
-}
+        let filtered = g.data.filter(matchItem); 
+        filtered.sort((a, b) => (b.is_subscribed === true) - (a.is_subscribed === true));
+        const show = filtered.length > 0 && (currentFilter === 'all' || currentFilter === type); 
+        g.el.innerHTML = filtered.map(createCard).join(''); 
+        g.section.style.display = show ? '' : 'none'; 
+        total += filtered.length; 
+    }
+    
     const noResultsDiv = document.getElementById('noResults');
-if (noResultsDiv) {
-    if (total === 0) {
-        noResultsDiv.classList.remove('hidden');
-    } else {
-        noResultsDiv.classList.add('hidden');
+    if (noResultsDiv) {
+        if (total === 0) {
+            noResultsDiv.classList.remove('hidden');
+            noResultsDiv.style.display = 'block'; // إجبار المتصفح على الإظهار
+        } else {
+            noResultsDiv.classList.add('hidden');
+            noResultsDiv.style.display = 'none';
+        }
     }
 }
-    }
 function matchItem(item) { 
     if (currentFilter !== 'all' && item.type !== currentFilter) return false; 
     
@@ -597,7 +600,7 @@ window.openModal = (id) => {
         </div>
         <iframe width="100%" height="220" frameborder="0" style="border:0; display: block;" src="https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=16&output=embed" allowfullscreen loading="lazy"></iframe>
     </div>` : '';
-    document.getElementById('modalContent').innerHTML = `<div class="relative h-48 overflow-hidden rounded-t-2xl"><img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover cursor-zoom-in" onclick="openLightbox(this.src)"><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent)"></div><button onclick="closeModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-all"><i class="fas fa-times text-sm"></i></button><div class="absolute bottom-4 right-5 left-5"><span class="badge ${t.badgeClass} mb-2 inline-block">${t.label}</span><h3 class="text-white font-bold text-lg" style="font-family: 'Noto Kufi Arabic'">${item.name}</h3></div></div><div class="p-6"><div class="flex items-center gap-2 mb-4"><div class="flex items-center gap-0.5 text-sm" style="color: ${t.color}">${starsHTML}</div><span class="text-sm font-bold">${item.rating || 0}</span><span class="text-xs" style="color: var(--muted)">/ 5</span></div><p class="text-sm leading-relaxed mb-5" style="color: var(--fg-light)">${item.description || ''}</p><div class="flex flex-col gap-2 mb-5"><div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas ${t.icon}" style="color: ${t.color}"></i><div><div class="text-xs" style="color: var(--muted)">${item.type === 'doctor' ? 'التخصص' : (item.type === 'clinic' || item.type === 'center' ? 'التخصص الأساسي' : 'النوع')}</div><div class="text-sm font-bold">${item.specialty || 'غير محدد'}</div></div></div> ${(item.address || item.clinic) ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-map-marker-alt" style="color: ${t.color}"></i><div><div class="text-xs" style="color: var(--muted)">العنوان / الموقع</div><div class="text-sm font-bold">${item.address || item.clinic}</div></div></div>` : ''}<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-clock" style="color: ${t.color}"></i><div class="flex-1"><div class="text-xs" style="color: var(--muted)">${item.type === 'doctor' ? 'أوقات المعاينة' : 'أوقات العمل'}</div><div class="text-sm font-bold">${item.consulthours || item.hours || ''}</div></div>${['doctor', 'clinic', 'pharmacy'].includes(item.type) && item.isopen === true ? '<span class="text-xs px-2 py-1 rounded bg-green-100 text-green-700 font-bold">مفتوح الآن</span>' : ''}${['doctor', 'clinic', 'pharmacy'].includes(item.type) && item.isopen === false ? '<span class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 font-bold">مغلق حالياً</span>' : ''}</div>${extraHTML}</div>${mapEmbed}<div class="flex items-center gap-3 mt-4"> ${item.phone ? `<a href="tel:${item.phone}" class="call-btn flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i> اتصال ${item.phone}</a>` : `<div class="flex-1 py-3.5 rounded-xl text-gray-400 text-sm font-bold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i> لا يوجد رقم هاتف</div>`}<button onclick="copyNumber('${item.phone}')" class="w-12 h-12 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50 flex-shrink-0" style="border-color: var(--border)"><i class="fas fa-copy" style="color: var(--muted)"></i></button></div>${canBook ? `<div class="mt-3">${bookingBtnModal}</div>` : ''}</div>`;  
+    document.getElementById('modalContent').innerHTML = `<div class="relative h-48 overflow-hidden rounded-t-2xl"><img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover cursor-zoom-in" onclick="openLightbox(this.src)"><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent)"></div><button onclick="closeModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-all"><i class="fas fa-times text-sm"></i></button><div class="absolute bottom-4 right-5 left-5"><span class="badge ${t.badgeClass} mb-2 inline-block">${t.label}</span><h3 class="text-white font-bold text-lg" style="font-family: 'Noto Kufi Arabic'">${item.name}</h3></div></div><div class="p-6"><div class="flex items-center gap-2 mb-4"><div class="flex items-center gap-0.5 text-sm" style="color: ${t.color}">${starsHTML}</div><span class="text-sm font-bold">${item.rating || 0}</span><span class="text-xs" style="color: var(--muted)">/ 5</span></div><p class="text-sm leading-relaxed mb-5" style="color: var(--fg-light)">${item.description || ''}</p><div class="flex flex-col gap-2 mb-5"><div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas ${t.icon}" style="color: ${t.color}"></i><div><div class="text-xs" style="color: var(--muted)">${item.type === 'doctor' ? 'التخصص' : (item.type === 'clinic' || item.type === 'center' ? 'التخصص الأساسي' : 'النوع')}</div><div class="text-sm font-bold">${item.specialty || 'غير محدد'}</div></div></div> ${(item.address || item.clinic) ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-map-marker-alt" style="color: ${t.color}"></i><div><div class="text-xs" style="color: var(--muted)">العنوان / الموقع</div><div class="text-sm font-bold">${item.address || item.clinic}</div></div></div>` : ''}<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-clock" style="color: ${t.color}"></i><div class="flex-1"><div class="text-xs" style="color: var(--muted)">${item.type === 'doctor' ? 'أوقات المعاينة' : 'أوقات العمل'}</div><div class="text-sm font-bold">${item.consulthours || item.hours || ''}</div></div>${['doctor', 'clinic', 'pharmacy'].includes(item.type) && item.isopen === true ? '<span class="text-xs px-2 py-1 rounded bg-green-100 text-green-700 font-bold">مفتوح الآن</span>' : ''}${['doctor', 'clinic', 'pharmacy'].includes(item.type) && item.isopen === false ? '<span class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 font-bold">مغلق حالياً</span>' : ''}</div>${extraHTML}</div>${mapEmbed}<div class="flex items-center gap-3 mt-4"> ${item.phone ? `<a href="tel:${item.phone}" onclick="trackPhoneClick('${item.id}')" class="call-btn flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i> اتصال ${item.phone}</a>` : `<div class="flex-1 py-3.5 rounded-xl text-gray-400 text-sm font-bold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i> لا يوجد رقم هاتف</div>`}<button onclick="copyNumber('${item.phone}')" class="w-12 h-12 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50 flex-shrink-0" style="border-color: var(--border)"><i class="fas fa-copy" style="color: var(--muted)"></i></button></div>${canBook ? `<div class="mt-3">${bookingBtnModal}</div>` : ''}</div>`;  
     document.getElementById('modalOverlay').classList.add('active'); 
     lockScroll(); 
 }
@@ -605,6 +608,15 @@ window.openModal = (id) => {
 window.openLightbox = (src) => { const lightbox = document.getElementById('lightbox'); lightbox.querySelector('img').src = src.includes('picsum.photos') ? src.replace('/400/250', '/1200/800') : src; lightbox.classList.add('active'); lockScroll(); }
 window.closeModal = (event) => { if (event && event.target !== document.getElementById('modalOverlay')) return; document.getElementById('modalOverlay').classList.remove('active'); unlockScroll(); }
 window.copyNumber = (phone) => { navigator.clipboard.writeText(phone).then(() => showToast('تم نسخ رقم الهاتف بنجاح')).catch(() => showToast('تعذر النسخ')); }
+window.trackPhoneClick = async (id) => {
+    const item = allData.find(d => d.id === id);
+    if (!item) return;
+    const newCount = (item.phone_clicks || 0) + 1;
+    try {
+        await supabase.from('listings').update({ phone_clicks: newCount }).eq('id', id);
+        item.phone_clicks = newCount; // تحديث العداد محلياً ليظهر فوراً للطبيب
+    } catch (e) { console.error(e); }
+};
 window.copyText = (text) => { navigator.clipboard.writeText(text).then(() => showToast('تم نسخ الكود بنجاح')).catch(() => showToast('تعذر النسخ')); }
 
 function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 4000); }
