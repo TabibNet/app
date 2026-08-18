@@ -396,9 +396,19 @@
                     </div>
                 </div>
                 <div class="search-container rounded-2xl p-2 max-w-2xl mx-auto flex items-center gap-2">
-                    <div class="flex-1 flex items-center gap-3 px-4"><i class="fas fa-search text-white/40"></i><input type="text" id="heroSearch" class="search-input w-full py-3 text-sm sm:text-base" placeholder="ابحث عن أي خدمة طبية..." oninput="handleSearch(this.value)"></div>
-                    <button onclick="handleSearch(document.getElementById('heroSearch').value)" class="px-6 sm:px-8 py-3 rounded-xl text-white font-semibold text-sm sm:text-base transition-all hover:opacity-90 flex-shrink-0" style="background: var(--gold)">بحث</button>
-                </div>
+    <!-- زر المدينة الأنيق -->
+    <button onclick="openCitySelector()" class="city-pill-btn flex items-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-all whitespace-nowrap">
+        <i class="fas fa-location-dot text-[var(--gold)]"></i>
+        <span id="currentCityText">كل المدن</span>
+        <i class="fas fa-chevron-down text-xs opacity-70"></i>
+    </button>
+
+    <div class="flex-1 flex items-center gap-3 px-4">
+        <i class="fas fa-search text-white/40"></i>
+        <input type="text" id="heroSearch" class="search-input w-full py-3 text-sm sm:text-base" placeholder="ابحث عن أي خدمة طبية..." oninput="handleSearch(this.value)">
+    </div>
+    <button onclick="handleSearch(document.getElementById('heroSearch').value)" class="px-6 sm:px-8 py-3 rounded-xl text-white font-semibold text-sm sm:text-base transition-all hover:opacity-90 flex-shrink-0" style="background: var(--gold)">بحث</button>
+</div>
                 
                 <!-- Quick Lookup Box -->
                 <div class="mt-4 max-w-2xl mx-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 flex items-center gap-2">
@@ -750,5 +760,16 @@
 
 <!-- ربط ملف الجافاسكريبت المنفصل -->
 <script type="module" src="js/app.js"></script>
+
+    <!-- لوحة اختيار المدينة المنزلقة -->
+<div id="citySelectorOverlay" class="city-selector-overlay" onclick="closeCitySelector()">
+    <div class="city-selector-panel" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-lg" style="font-family: 'Noto Kufi Arabic';">اختر مدينتك</h3>
+            <button onclick="closeCitySelector()" class="text-2xl hover:text-gray-400">&times;</button>
+        </div>
+        <div id="cityListContainer"></div>
+    </div>
+</div>
 </body>
 </html>
