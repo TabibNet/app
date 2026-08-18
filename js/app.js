@@ -1258,11 +1258,10 @@ window.openMedicineDonation = () => {
                     <select id="medDonationType" class="ctrl-input text-sm">
                         <option>أعرض جهازاً (تبرع)</option>
                         <option>أعرض جهازاً (للإعارة)</option>
-                        <option>أطلب جهازاً (أحتاجه للشراء)</option>
                         <option>أطلب جهازاً (أحتاجه للاستعارة)</option>
                         <option>مستلزمات طبية للتبادل (شاش، قطن، معقمات)</option>
                     </select>
-                    <input type="text" id="medDonationExpiry" class="ctrl-input text-sm" placeholder="حالة الجهاز أو المدة المطلوبة (مثال: ممتاز / أسبوعين)" required>
+                    <input type="text" id="medDonationExpiry" class="ctrl-input text-sm" placeholder="حالة الجهاز أو المدة المطلوبة )" required>
                     <input type="text" id="medDonationQty" class="ctrl-input text-sm" placeholder="الكمية (مثال: 1 جهاز، 2 كرسي متحرك)" required>
                     <input type="tel" id="medDonationPhone" class="ctrl-input text-sm" placeholder="رقم الهاتف 09XX" required>
                     <textarea id="medDonationNotes" class="ctrl-input text-sm col-span-1 sm:col-span-2" rows="2" placeholder="ملاحظات (مكان التسليم، مواصفات الجهاز، إلخ)"></textarea>
@@ -1372,7 +1371,7 @@ window.submitMedicineDonation = async (e) => {
 
         if (error) throw error;
 
-        showToast('تم نشر إعلانك بنجاح للمجتمع!');
+        showToast('تم نشر إعلانك بنجاح !');
         document.querySelector('#ctrlContent form').reset();
         await fetchMedicineDonations();
         renderMedicineDonationsUI();
