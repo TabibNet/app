@@ -298,6 +298,36 @@ async function fetchListings() {
     }
 }
 
+// دالة التحقق الآمنة من تسجيل الدخول
+async function checkAutoLoginDoctorPharm() {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // التأكد أن المستخدم مسجل الدخول وحسابه طبيب أو صيدلية
+    if (session && session.user.email && session.user.email.endsWith('@tabibnet.app')) {
+        const userId = session.user.id; // المعرف الآمن من Supabase
+        
+        // البحث في قاعدة البيانات عن الطبيب الذي يملك هذا المعرف الآمن
+        const { data: listing, error } = await supabase
+            .from('listings')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+            
+        if (listing) {
+            if (listing.is_subscribed) {
+                // فتح اللوحة تلقائياً بناءً على النوع
+                if (listing.type === 'doctor') renderDoctorDashboard(listing); 
+                else if (listing.type === 'pharmacy') renderPharmacyDashboard(listing); 
+            } else {
+                openPaymentModal(listing.type === 'doctor' ? 'طبيب' : 'صيدلية', listing.name);
+            }
+        } else {
+            // إذا كان الحساب موجوداً في Auth ولكنه غير مرتبط بطبيب في القاعدة
+            await supabase.auth.signOut();
+            showToast('لم يتم العثور على بيانات مرتبطة بهذا الحساب');
+        }
+    }
+}
 async function fetchBookings() {
     const { data, error } = await supabase.from('bookings').select('*');
     if (error) { console.error("Error fetching bookings:", error); return; }
@@ -1782,13 +1812,15 @@ window.saveFacility = async (e) => {
     if (!id && (type === 'doctor' || type === 'clinic')) { 
         data.bookingpass = generateUniqueId(); 
         const docEmail = `doc_${data.bookingpass.toLowerCase()}@tabibnet.app`;
-        const { error: authError } = await supabase.auth.signUp({ email: docEmail, password: data.bookingpass });
+        const { data: authData, error: authError } = await supabase.auth.signUp({ email: docEmail, password: data.bookingpass });
+        if (authData && authData.user) { data.user_id = authData.user.id; } // حفظ المعرف الآمن
         if (authError) { showToast('خطأ في إنشاء حساب الطبيب: ' + authError.message); return; }
     } 
     if (!id && type === 'pharmacy') { 
         data.pharmacypass = generateUniqueId(); 
         const pharmEmail = `pharm_${data.pharmacypass.toLowerCase()}@tabibnet.app`;
-        const { error: authError } = await supabase.auth.signUp({ email: pharmEmail, password: data.pharmacypass });
+        const { data: authData, error: authError } = await supabase.auth.signUp({ email: pharmEmail, password: data.pharmacypass });
+        if (authData && authData.user) { data.user_id = authData.user.id; } // حفظ المعرف الآمن
         if (authError) { showToast('خطأ في إنشاء حساب الصيدلية: ' + authError.message); return; }
     } 
     
