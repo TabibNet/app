@@ -686,7 +686,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (docu
 const allBtn = document.querySelector('[data-filter="all"]'); 
 if(allBtn) { allBtn.style.background = 'var(--accent)'; allBtn.style.color = 'white'; allBtn.style.borderColor = 'var(--accent)'; }
 
-window.openCtrlPanel = (title, contentHtml, headerColor = '#073D2E') => { 
+window.openCtrlPanel = (title, contentHtml, headerColor = '#073D2E', preventClose = false) => { 
     document.getElementById('ctrlTitle').textContent = title; 
     document.getElementById('ctrlContent').innerHTML = contentHtml; 
     const overlay = document.getElementById('ctrlOverlay');
@@ -695,27 +695,18 @@ window.openCtrlPanel = (title, contentHtml, headerColor = '#073D2E') => {
         document.querySelector('#ctrlOverlay .p-5').style.background = headerColor; 
         lockScroll(); 
     }
+    overlay.dataset.preventClose = preventClose ? 'true' : 'false';
 }
 window.closeCtrlPanel = (event) => { 
-    if (event && event.target.id !== 'ctrlOverlay') return; 
-    document.getElementById('ctrlOverlay').classList.remove('active'); 
+    const overlay = document.getElementById('ctrlOverlay');
+    if (event && event.target.id === 'ctrlOverlay' && overlay.dataset.preventClose === 'true') return; 
+    
+    overlay.classList.remove('active'); 
     unlockScroll(); 
     
-    // إيقاف التحديث الدوري للوحة الطبيب
-    if (doctorDashboardInterval) { 
-        clearInterval(doctorDashboardInterval); 
-        doctorDashboardInterval = null; 
-    } 
-    
-    if (unsubscribeMedRequests) { 
-        clearInterval(unsubscribeMedRequests); 
-        unsubscribeMedRequests = null; 
-    } 
-    
-    if (activeFollowupUnsub) { 
-        clearInterval(activeFollowupUnsub); 
-        activeFollowupUnsub = null; 
-    } 
+    if (doctorDashboardInterval) { clearInterval(doctorDashboardInterval); doctorDashboardInterval = null; } 
+    if (unsubscribeMedRequests) { clearInterval(unsubscribeMedRequests); unsubscribeMedRequests = null; } 
+    if (activeFollowupUnsub) { clearInterval(activeFollowupUnsub); activeFollowupUnsub = null; } 
     currentFollowupBookingId = null;
 }
 // تنتهي هنا الجزء الثاني...
@@ -909,7 +900,7 @@ window.renderPharmacyDashboard = async (pharm) => {
         <div class="text-2xl font-black text-gray-800">${pharm.phone_clicks || 0}</div>
         <div class="text-xs text-gray-500">نقرات الهاتف</div>
     </div>
-</div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm">طلبات الأدوية الواردة</h4><div id="requestsContainer" class="flex flex-col gap-3"><p class="text-center py-10" style="color: var(--muted)">جاري تحميل الطلبات...</p></div></div> <button onclick="logoutPharmacy()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button></div>`, '#0E7C5F'); 
+</div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm">طلبات الأدوية الواردة</h4><div id="requestsContainer" class="flex flex-col gap-3"><p class="text-center py-10" style="color: var(--muted)">جاري تحميل الطلبات...</p></div></div> <button onclick="logoutPharmacy()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button></div>`, '#0E7C5F', true); 
     
     if (unsubscribeMedRequests) clearInterval(unsubscribeMedRequests); 
     fetchMedRequests(pharm.name);
@@ -1068,7 +1059,7 @@ window.renderDoctorDashboard = async (doc) => {
             <button onclick="logoutHealthFile()" class="w-full py-3 rounded-xl border font-bold text-sm mt-4" style="border-color: #EF4444; color: #EF4444;">
                 <i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج
             </button>
-        </div>`, '#2563EB'); 
+        </div>`, '#2563EB', true); 
     });
 }
 
