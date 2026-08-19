@@ -1,3 +1,6 @@
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+self.addEventListener('install', e => self.skipWaiting());
+self.addEventListener('activate', e => self.clients.claim());
 const CACHE_NAME = 'raheba-med-v27'; // تم تغيير الرقم لإجبار الهاتف على التحديث
 const CORE_ASSETS = [
   './',
