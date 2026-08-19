@@ -1,4 +1,4 @@
-const CACHE_NAME = 'raheba-med-v23'; // تم تغيير الرقم لإجبار الهاتف على التحديث
+const CACHE_NAME = 'raheba-med-v24'; // تم تغيير الرقم لإجبار الهاتف على التحديث
 const CORE_ASSETS = [
   './',
   './index.html',
