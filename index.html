@@ -39,7 +39,9 @@
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: "2e008b4d-0516-4b06-96b1-8a522e0c1587",
+      allowLocalhostAsSecureOrigin: true,
     });
+    console.log("OneSignal Initialized Successfully"); // هذه الرسالة ستظهر في الـ Console إذا تم التحميل بشكل صحيح
   });
 </script>
     <script src="https://cdn.tailwindcss.com"></script>
