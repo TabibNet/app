@@ -3158,7 +3158,7 @@ window.togglePaymentMethod = (method) => {
 };
 
 window.toggleSubscription = async (id, currentStatus) => {
-    try 
+    try {
         await supabase.from('listings').update({ is_subscribed: currentStatus }).eq('id', id);
         showToast(currentStatus ? 'تم تفعيل الاشتراك بنجاح!' : 'تم إلغاء الاشتراك.');
         await fetchListings();
