@@ -122,54 +122,7 @@ function updateTipDisplay() {
     }, 300);
 }
 
-window.setupOneSignal = async () => {
-    if (!window.OneSignalDeferred) { 
-        showToast("نظام الإشعارات لم يكتمل تحميله بعد، يرجى المحاولة بعد ثوانٍ"); 
-        return; 
-    }
-    OneSignalDeferred.push(async function(OneSignal) {
-        try {
-            if (OneSignal.Notifications.permission === 'denied') {
-                showToast("الإشعارات محظورة من إعدادات المتصفح! يرجى السماح لها يدوياً.");
-                return;
-            }
-            if (OneSignal.Notifications.permission !== 'granted') {
-                const granted = await OneSignal.Notifications.requestPermission();
-                if (!granted) { showToast("تم رفض الإشعارات."); return; }
-            }
-            if (!OneSignal.User.PushSubscription.optedIn) {
-                await OneSignal.User.PushSubscription.optIn();
-            }
-            OneSignal.User.PushSubscription.addEventListener('change', async (event) => {
-                const playerId = event.current.id;
-                if (playerId) {
-                    try {
-                        await supabase.from('onesignal_users').upsert({ id: playerId, created_at: new Date().toISOString() });
-                        localStorage.setItem('onesignal_player_id', playerId);
-                        showToast('تم تفعيل إشعارات الخلفية بنجاح! 🔔');
-                    } catch (e) { 
-                        console.error("DB Save Error:", e);
-                        showToast('تم التفعيل ولكن حدث خطأ في حفظ الجهاز'); 
-                    }
-                }
-            });
-            if (OneSignal.User.PushSubscription.optedIn) {
-                const id = OneSignal.User.PushSubscription.id;
-                if (id) {
-                   await supabase.from('onesignal_users').upsert({ id: id, created_at: new Date().toISOString() });
-                   localStorage.setItem('onesignal_player_id', id);
-                   showToast('الإشعارات مفعلة مسبقاً ✅');
-                }
-            }
-        } catch (err) {
-            console.error("OneSignal Error:", err);
-            showToast("حدث خطأ غير متوقع في تفعيل الإشعارات");
-        }
-    });
-};
-
 window.addEventListener('DOMContentLoaded', () => {
-    // تحقق إذا كان المستخدم عاد للتو من جوجل (عبر الرابط أو عبر العلامة)
     const isOAuthRedirect = window.location.href.includes('code=') || window.location.href.includes('access_token=');
     const isGoogleIntent = sessionStorage.getItem('google_login_intent') === 'true';
     
@@ -177,25 +130,22 @@ window.addEventListener('DOMContentLoaded', () => {
         window.history.replaceState(null, '', window.location.pathname);
     }
 
-    // إذا كان المستخدم قادماً من جوجل (برمز أو بدون رمز)
     if (isOAuthRedirect || isGoogleIntent) {
         let isOpening = false;
         const openFileIfPatient = (session) => {
             if (!isOpening && session && session.user.email && !session.user.email.endsWith('@tabibnet.app')) {
-                isOpening = true; // منع التكرار
-                sessionStorage.removeItem('google_login_intent'); // إزالة العلامة بعد الفتح
+                isOpening = true; 
+                sessionStorage.removeItem('google_login_intent'); 
                 setTimeout(() => openHealthFile(), 500);
                 return true;
             }
             return false;
         };
 
-        // محاولة فتح الملف فوراً
         supabase.auth.getSession().then(({ data: { session } }) => {
             openFileIfPatient(session);
         });
 
-        // الاستماع لتأكيد تسجيل الدخول
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (openFileIfPatient(session)) {
                 authListener.subscription.unsubscribe();
@@ -203,19 +153,15 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // شاشة التحميل تظهر مرة واحدة فقط في كل جلسة (Session)
     const splash = document.getElementById('appSplashScreen');
-
     if (splash) {
         if (sessionStorage.getItem('splashShown')) {
-            
             splash.style.display = 'none';
         } else {
-            
             setTimeout(() => {
                 splash.classList.add('hidden');
                 setTimeout(() => { splash.style.display = 'none'; }, 1000);
-                sessionStorage.setItem('splashShown', 'true'); // تسجيل أنها أُظهرت
+                sessionStorage.setItem('splashShown', 'true'); 
             }, 1200);
         }
     }
@@ -260,16 +206,9 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!forceUpdate) { renderData(); updateStats(); }
     }
 
-    // جلب المنشآت من Supabase
     fetchListings();
-
-    // جلب الحجوزات من Supabase (محاكاة لـ onSnapshot عبر جلب دوري أو لايف)
     fetchBookings();
-
-    // جلب استغاثات الدم
     fetchBloodRequests();
-
-    // جلب الأدوية الفائضة
     fetchMedicineDonations();
 
     document.getElementById('lightbox').addEventListener('click', () => { document.getElementById('lightbox').classList.remove('active'); unlockScroll(); });
@@ -290,9 +229,9 @@ window.addEventListener('DOMContentLoaded', () => {
     trackAndDisplayVisitors();
 });
 
-// === دوال جلب البيانات الأساسية من Supabase ===
 async function fetchListings() {
-    const { data: freshData, error } = await supabase.from('listings').select('*');
+    // حماية: جلب أعمدة محددة فقط لمنع تسريب كلمات المرور
+    const { data: freshData, error } = await supabase.from('listings').select('id, name, type, specialty, address, clinic, hours, consulthours, emergencyphone, departments, floors, services, tests, homesample, night, nightdetails, bookingnotes, rating, image, view_count, phone_clicks, phone, is_subscribed, isopen, workingdays, latlng, user_id');
     if (error) { console.error("Error fetching listings:", error); return; }
     
     const forceUpdate = localStorage.getItem('force_listings_update') === 'true';
@@ -305,9 +244,6 @@ async function fetchListings() {
             localStorage.removeItem('force_listings_update');
         } catch (e) {}
     }
-    
-    // يجب أن تكون خارج الشرط لتعمل دائماً عند فتح الموقع
-    //checkAutoLoginDoctorPharm();
 }
 async function fetchBookings() {
     const { data, error } = await supabase.from('bookings').select('*');
@@ -345,23 +281,23 @@ function renderHomeBloodAlerts() {
             let cardBorder = 'border-red-50';
             if (req.responses_count > 0) {
                 cardBorder = 'border-green-200 bg-green-50/30';
-                statusBox = `<div class="bg-green-100 text-green-800 text-[10px] font-bold p-1.5 rounded-lg flex items-center justify-center gap-1 mb-1.5"><i class="fas fa-heart"></i> المبادرون (${req.responses_count})</div>`;
+                statusBox = `<div class="bg-green-100 text-green-800 text-[10px] font-bold p-1.5 rounded-lg flex items-center justify-center gap-1 mb-1.5"><i class="fas fa-heart"></i> المبادرون (${escapeHtml(req.responses_count)})</div>`;
             }
             return `<div class="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm flex flex-col gap-1.5 border ${cardBorder} dark:border-red-900/50">
                 ${statusBox}
                 <div class="flex items-center gap-2">
                     <div class="w-9 h-9 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 border border-red-100 dark:border-red-800">
-                        <span class="text-sm font-black text-red-600 dark:text-red-400">${req.blood_type}</span>
+                        <span class="text-sm font-black text-red-600 dark:text-red-400">${escapeHtml(req.blood_type)}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="font-bold text-gray-800 dark:text-white text-[11px] break-words">${req.patient_name}</div>
-                        <div class="text-[9px] text-gray-500 dark:text-gray-400 break-words"><i class="fas fa-hospital text-red-400"></i> ${req.hospital}</div>
+                        <div class="font-bold text-gray-800 dark:text-white text-[11px] break-words">${escapeHtml(req.patient_name)}</div>
+                        <div class="text-[9px] text-gray-500 dark:text-gray-400 break-words"><i class="fas fa-hospital text-red-400"></i> ${escapeHtml(req.hospital)}</div>
                     </div>
                 </div>
-                ${req.notes ? `<div class="text-[9px] text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 p-1 rounded break-words text-center"><i class="fas fa-notes-medical"></i> ${req.notes}</div>` : ''}
+                ${req.notes ? `<div class="text-[9px] text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 p-1 rounded break-words text-center"><i class="fas fa-notes-medical"></i> ${escapeHtml(req.notes)}</div>` : ''}
                 <div class="flex gap-1.5 mt-1">
-                    <a href="tel:${req.phone}" class="flex-1 h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-blue-600 transition-colors">اتصال</a>
-                    <button onclick="respondToBloodRequest(this, '${req.id}', '${req.patient_name}', '${req.phone}')" class="flex-1 h-7 rounded-lg bg-green-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-green-600 transition-colors">قادم للتبرع</button>
+                    <a href="tel:${escapeHtml(req.phone)}" class="flex-1 h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-blue-600 transition-colors">اتصال</a>
+                    <button onclick="respondToBloodRequest(this, '${escapeHtml(req.id)}', '${escapeHtml(req.patient_name)}', '${escapeHtml(req.phone)}')" class="flex-1 h-7 rounded-lg bg-green-500 text-white flex items-center justify-center text-[10px] font-bold hover:bg-green-600 transition-colors">قادم للتبرع</button>
                 </div>
             </div>`;
         }).join('');
@@ -379,7 +315,6 @@ function renderHomeMedicines() {
     } else {
         section.classList.remove('hidden');
         container.innerHTML = medicineDonations.map(m => {
-            // تحديد الألوان والأيقونة بناءً على نوع الإعلان (عرض أو طلب)
             let iconClass = 'fa-laptop-medical';
             let iconColor = 'text-teal-600';
             let bgColor = 'bg-teal-50';
@@ -402,14 +337,14 @@ function renderHomeMedicines() {
                     <div class="w-8 h-8 rounded-lg ${bgColor} flex items-center justify-center flex-shrink-0 border ${borderColor}">
                         <i class="fas ${iconClass} ${iconColor} text-xs"></i>
                     </div>
-                    <div class="font-bold text-[11px] text-gray-800 break-words flex-1 truncate">${m.medicine_name}</div>
-                    <span class="text-[8px] ${badgeColor} px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">${badgeText}</span>
+                    <div class="font-bold text-[11px] text-gray-800 break-words flex-1 truncate">${escapeHtml(m.medicine_name)}</div>
+                    <span class="text-[8px] ${badgeColor} px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">${escapeHtml(badgeText)}</span>
                 </div>
                 <div class="text-[9px] text-gray-500 flex flex-col gap-0.5">
-                    <span><i class="fas fa-box"></i> ${m.quantity}</span>
-                    <span class="text-purple-500 font-bold"><i class="fas fa-info-circle"></i> ${m.expiry_date}</span>
+                    <span><i class="fas fa-box"></i> ${escapeHtml(m.quantity)}</span>
+                    <span class="text-purple-500 font-bold"><i class="fas fa-info-circle"></i> ${escapeHtml(m.expiry_date)}</span>
                 </div>
-                <a href="tel:${m.phone}" class="mt-0.5 block text-center bg-teal-500 text-white py-1 rounded-lg text-[9px] font-bold w-full hover:bg-teal-600 transition-colors">تواصل</a>
+                <a href="tel:${escapeHtml(m.phone)}" class="mt-0.5 block text-center bg-teal-500 text-white py-1 rounded-lg text-[9px] font-bold w-full hover:bg-teal-600 transition-colors">تواصل</a>
             </div>
             `;
         }).join('');
@@ -439,8 +374,6 @@ function updateStats() {
     document.getElementById('stat-pharmacy').textContent = allData.filter(d => d.type === 'pharmacy').length;
 }
 
-// تنتهي هنا الجزء الأول...
-// === الجزء الثاني: دوال العرض والبحث والنوافذ ===
 function createCard(item) {
     const typeMap = { 
         hospital: { cardClass: 'hospital-card', badgeClass: 'badge-hospital', iconClass: 'cat-icon-hospital', icon: 'fa-hospital-symbol', label: 'مشفى', color: 'var(--hospital)' }, 
@@ -456,32 +389,30 @@ function createCard(item) {
     const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
     for (let i = 0; i < emptyStars; i++) starsHTML += '<i class="far fa-star"></i>';
     let detailsHTML = '';
-    if (item.type === 'hospital') detailsHTML = `<div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || '24/7 طوارئ'}</span></div>${item.emergencyphone ? '<div class="detail-row"><i class="fas fa-ambulance" style="color: var(--danger)"></i><span style="color: var(--danger); font-weight: 700">طوارئ: ' + item.emergencyphone + '</span></div>' : ''}`;
-    else if (item.type === 'doctor') detailsHTML = `<div class="detail-row"><i class="fas fa-graduation-cap"></i><span>${item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.clinic || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.consulthours || item.hours || ''}</span></div>`;
-    else if (item.type === 'center') detailsHTML = `<div class="detail-row"><i class="fas fa-star-of-life"></i><span>${item.services || item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || ''}</span></div>`;
-    else if (item.type === 'lab') detailsHTML = `<div class="detail-row"><i class="fas fa-vials"></i><span>${item.tests || item.specialty || ''}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div>${item.homesample && item.homesample !== 'لا' ? '<div class="detail-row"><i class="fas fa-house-user" style="color: var(--accent)"></i><span style="color: var(--accent); font-weight: 600">يتوفر سحب منزلي</span></div>' : ''}`;
-    else detailsHTML = `<div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${item.address || ''}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${item.hours || ''}</span></div>${item.night ? '<div class="detail-row"><i class="fas fa-moon" style="color: var(--gold)"></i><span style="color: var(--gold); font-weight: 600">صيدلية مناوبة</span></div>' : ''}`;
+    if (item.type === 'hospital') detailsHTML = `<div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${escapeHtml(item.address || '')}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${escapeHtml(item.hours || '24/7 طوارئ')}</span></div>${item.emergencyphone ? '<div class="detail-row"><i class="fas fa-ambulance" style="color: var(--danger)"></i><span style="color: var(--danger); font-weight: 700">طوارئ: ' + escapeHtml(item.emergencyphone) + '</span></div>' : ''}`;
+    else if (item.type === 'doctor') detailsHTML = `<div class="detail-row"><i class="fas fa-graduation-cap"></i><span>${escapeHtml(item.specialty || '')}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${escapeHtml(item.clinic || '')}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${escapeHtml(item.consulthours || item.hours || '')}</span></div>`;
+    else if (item.type === 'center') detailsHTML = `<div class="detail-row"><i class="fas fa-star-of-life"></i><span>${escapeHtml(item.services || item.specialty || '')}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${escapeHtml(item.address || '')}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${escapeHtml(item.hours || '')}</span></div>`;
+    else if (item.type === 'lab') detailsHTML = `<div class="detail-row"><i class="fas fa-vials"></i><span>${escapeHtml(item.tests || item.specialty || '')}</span></div><div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${escapeHtml(item.address || '')}</span></div>${item.homesample && item.homesample !== 'لا' ? '<div class="detail-row"><i class="fas fa-house-user" style="color: var(--accent)"></i><span style="color: var(--accent); font-weight: 600">يتوفر سحب منزلي</span></div>' : ''}`;
+    else detailsHTML = `<div class="detail-row"><i class="fas fa-map-marker-alt"></i><span>${escapeHtml(item.address || '')}</span></div><div class="detail-row"><i class="fas fa-clock"></i><span>${escapeHtml(item.hours || '')}</span></div>${item.night ? '<div class="detail-row"><i class="fas fa-moon" style="color: var(--gold)"></i><span style="color: var(--gold); font-weight: 600">صيدلية مناوبة</span></div>' : ''}`;
     
-        const canBook = item.type === 'doctor';
+    const canBook = item.type === 'doctor';
     let bookingBtn = '';
     if (canBook) {
         if (item.is_subscribed) {
-            // زر الحجز مفعّل للمشتركين
-            bookingBtn = `<button onclick="event.stopPropagation(); openBookingModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--accent);" aria-label="حجز"><i class="fas fa-calendar-plus"></i></button>`;
+            bookingBtn = `<button onclick="event.stopPropagation(); openBookingModal('${escapeHtml(item.id)}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--accent);" aria-label="حجز"><i class="fas fa-calendar-plus"></i></button>`;
         } else {
-            // زر الحجز معطّل لغير المشتركين
             bookingBtn = `<button onclick="event.stopPropagation(); showToast('الحجز الإلكتروني متاح فقط للأطباء المشتركين. يرجى الاتصال هاتفياً.')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all opacity-40 cursor-not-allowed" style="border-color: var(--border); color: var(--muted);" aria-label="الحجز متوقف"><i class="fas fa-calendar-xmark"></i></button>`;
         }
     }
     
-    return `<div class="card ${t.cardClass} cursor-pointer" onclick="openModal('${item.id}')" data-type="${item.type}"><div class="relative h-40 overflow-hidden rounded-t-2xl"><img src="${item.image || 'https://picsum.photos/seed/default/400/250'}" alt="${item.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110 cursor-zoom-in" loading="lazy" onclick="event.stopPropagation(); openLightbox(this.src)"><div class="absolute top-3 right-3"><span class="badge ${t.badgeClass}">${t.label}</span></div><div class="absolute top-3 left-3 flex flex-col gap-1 items-start">
+    return `<div class="card ${t.cardClass} cursor-pointer" onclick="openModal('${escapeHtml(item.id)}')" data-type="${escapeHtml(item.type)}"><div class="relative h-40 overflow-hidden rounded-t-2xl"><img src="${escapeHtml(item.image || 'https://picsum.photos/seed/default/400/250')}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110 cursor-zoom-in" loading="lazy" onclick="event.stopPropagation(); openLightbox(this.src)"><div class="absolute top-3 right-3"><span class="badge ${t.badgeClass}">${t.label}</span></div><div class="absolute top-3 left-3 flex flex-col gap-1 items-start">
     ${['doctor', 'pharmacy'].includes(item.type) && item.isopen === true ? '<span class="badge" style="background:#10B981;color:white"><i class="fas fa-door-open ml-1"></i>مفتوح</span>' : ''}
     ${['doctor', 'pharmacy'].includes(item.type) && item.isopen === false ? '<span class="badge" style="background:#EF4444;color:white"><i class="fas fa-door-closed ml-1"></i>مغلق</span>' : ''}
     ${item.night ? '<span class="badge" style="background:rgba(196,150,44,0.9);color:white"><i class="fas fa-moon ml-1"></i>ليلي</span>' : ''}
 </div></div><div class="p-5"><div class="flex items-start gap-3 mb-3"><div class="cat-icon ${t.iconClass}"><i class="fas ${t.icon}"></i></div><div class="flex-1 min-w-0"><h3 class="font-bold text-sm mb-1 leading-tight" style="font-family: 'Noto Kufi Arabic'; color: var(--fg);">
-    ${item.name}
+    ${escapeHtml(item.name)}
     ${(['doctor', 'pharmacy'].includes(item.type) && item.is_subscribed) ? '<span class="verified-badge verified-gold"><i class="fas fa-circle-check"></i> موثق</span>' : ''}
-</h3><div class="flex items-center gap-1 text-[11px]" style="color: ${t.color};">${starsHTML}<span class="mr-1 font-semibold">${item.rating || 0}</span></div></div></div><div class="flex flex-col gap-1.5 mb-4">${detailsHTML}</div><div class="flex items-center gap-2"> ${item.phone ? `<a href="tel:${item.phone}" onclick="event.stopPropagation(); trackPhoneClick('${item.id}')" class="call-btn flex-1 py-2.5 rounded-xl text-white text-xs font-semibold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i><span dir="ltr">${item.phone}</span></a>` : `<div class="flex-1 py-2.5 rounded-xl text-gray-400 text-xs font-semibold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i><span>لا يوجد رقم</span></div>`}${bookingBtn}<button onclick="event.stopPropagation(); openModal('${item.id}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--muted);" aria-label="تفاصيل"><i class="fas fa-info-circle"></i></button></div></div></div>`;
+</h3><div class="flex items-center gap-1 text-[11px]" style="color: ${t.color};">${starsHTML}<span class="mr-1 font-semibold">${escapeHtml(item.rating || 0)}</span></div></div></div><div class="flex flex-col gap-1.5 mb-4">${detailsHTML}</div><div class="flex items-center gap-2"> ${item.phone ? `<a href="tel:${escapeHtml(item.phone)}" onclick="event.stopPropagation(); trackPhoneClick('${escapeHtml(item.id)}')" class="call-btn flex-1 py-2.5 rounded-xl text-white text-xs font-semibold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i><span dir="ltr">${escapeHtml(item.phone)}</span></a>` : `<div class="flex-1 py-2.5 rounded-xl text-gray-400 text-xs font-semibold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i><span>لا يوجد رقم</span></div>`}${bookingBtn}<button onclick="event.stopPropagation(); openModal('${escapeHtml(item.id)}')" class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50" style="border-color: var(--border); color: var(--muted);" aria-label="تفاصيل"><i class="fas fa-info-circle"></i></button></div></div></div>`;
 }
 
 function renderData() {
@@ -506,7 +437,7 @@ function renderData() {
     if (noResultsDiv) {
         if (total === 0) {
             noResultsDiv.classList.remove('hidden');
-            noResultsDiv.style.display = 'block'; // إجبار المتصفح على الإظهار
+            noResultsDiv.style.display = 'block'; 
         } else {
             noResultsDiv.classList.add('hidden');
             noResultsDiv.style.display = 'none';
@@ -517,7 +448,6 @@ function renderData() {
 function matchItem(item) { 
     if (currentFilter !== 'all' && item.type !== currentFilter) return false; 
     
-    // فلترة المدينة باستخدام حقل العنوان الموجود مسبقاً
     if (currentCity !== 'all') {
         const itemAddress = (item.address || item.clinic || '').toLowerCase();
         if (!itemAddress.includes(currentCity.toLowerCase())) return false;
@@ -525,7 +455,7 @@ function matchItem(item) {
     
     if (!searchQuery) return true; 
     const q = searchQuery.toLowerCase(); 
-    return ['name', 'specialty', 'address', 'description', 'services', 'tests', 'departments', 'floors', 'homesample', 'nightdetails', 'consulthours', 'bookingnotes'].some(key => (item[key] || '').toLowerCase().includes(q)); 
+    return ['name', 'specialty', 'address', 'description', 'services', 'tests', 'departments', 'floors', 'homesample', 'nightdetails', 'consulthours', 'bookingnotes'].some(key => (escapeHtml(item[key]) || '').toLowerCase().includes(q)); 
 }
 
 window.setFilter = (filter, btn) => { 
@@ -541,9 +471,8 @@ window.handleSearch = (value) => {
     const heroSearch = document.getElementById('heroSearch'); 
     if(heroSearch) heroSearch.value = value; 
     
-    const totalResults = renderData(); // نحفظ عدد النتائج
+    const totalResults = renderData(); 
     
-    // إذا لم نجد نتائج وكان المستخدم يكتب فعلاً كلمة للبحث
     if (totalResults === 0 && searchQuery !== '') {
         showToast('لا توجد نتائج مطابقة لبحثك. جرب كلمة أخرى أو عرض كل المدن');
     }
@@ -552,10 +481,10 @@ window.openCitySelector = () => {
     const overlay = document.getElementById('citySelectorOverlay');
     const listContainer = document.getElementById('cityListContainer');
     listContainer.innerHTML = allCities.map(city => `
-        <div class="city-option ${currentCity === city ? 'selected' : ''}" onclick="selectCity('${city}')">
+        <div class="city-option ${currentCity === city ? 'selected' : ''}" onclick="selectCity('${escapeHtml(city)}')">
             <div class="flex items-center gap-3">
                 <i class="fas ${city === 'كل المدن' ? 'fa-globe' : 'fa-city'}" style="color: var(--accent)"></i>
-                <span class="font-bold text-sm">${city}</span>
+                <span class="font-bold text-sm">${escapeHtml(city)}</span>
             </div>
             ${currentCity === city ? '<i class="fas fa-check-circle text-white"></i>' : ''}
         </div>
@@ -579,9 +508,9 @@ window.openModal = (id) => {
     const item = allData.find(d => d.id === id);
     if (!item) return;
     
-        if (['doctor', 'pharmacy'].includes(item.type)) {
-        item.view_count = (item.view_count || 0) + 1; // تحديث المحلي فوراً ليراه المستخدم
-        supabase.rpc('increment_view_count', { listing_id: id }).then(); // حفظ في القاعدة بأمان
+    if (['doctor', 'pharmacy'].includes(item.type)) {
+        item.view_count = (item.view_count || 0) + 1; 
+        supabase.rpc('increment_view_count', { listing_id: id }).then(); 
     }
     
     const typeMap = { 
@@ -603,34 +532,34 @@ window.openModal = (id) => {
     
     if (item.type === 'hospital') {
         extraHTML = `
-            ${item.departments ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #CCFBF1"><i class="fas fa-list-check" style="color: var(--hospital)"></i><div><div class="text-xs" style="color: var(--muted)">الأقسام والعيادات</div><div class="text-sm font-bold" style="color: var(--hospital)">${item.departments}</div></div></div>` : ''}
-            ${item.floors ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-building" style="color: var(--hospital)"></i><div><div class="text-xs" style="color: var(--muted)">الطوابق</div><div class="text-sm font-bold">${item.floors}</div></div></div>` : ''}
-            ${item.emergencyphone ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #FEE2E2"><i class="fas fa-ambulance" style="color: var(--danger)"></i><div><div class="text-xs" style="color: var(--muted)">رقم الطوارئ (مهم جداً)</div><div class="text-lg font-bold" style="color: var(--danger)" dir="ltr">${item.emergencyphone}</div></div></div>` : ''}
+            ${item.departments ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #CCFBF1"><i class="fas fa-list-check" style="color: var(--hospital)"></i><div><div class="text-xs" style="color: var(--muted)">الأقسام والعيادات</div><div class="text-sm font-bold" style="color: var(--hospital)">${escapeHtml(item.departments)}</div></div></div>` : ''}
+            ${item.floors ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-building" style="color: var(--hospital)"></i><div><div class="text-xs" style="color: var(--muted)">الطوابق</div><div class="text-sm font-bold">${escapeHtml(item.floors)}</div></div></div>` : ''}
+            ${item.emergencyphone ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #FEE2E2"><i class="fas fa-ambulance" style="color: var(--danger)"></i><div><div class="text-xs" style="color: var(--muted)">رقم الطوارئ (مهم جداً)</div><div class="text-lg font-bold" style="color: var(--danger)" dir="ltr">${escapeHtml(item.emergencyphone)}</div></div></div>` : ''}
         `;
     } else if (item.type === 'doctor') { 
         extraHTML = `
-            ${item.bookingnotes ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-info-circle" style="color: var(--doctor)"></i><div><div class="text-xs" style="color: var(--muted)">تفاصيل إضافية</div><div class="text-sm font-bold">${item.bookingnotes}</div></div></div>` : ''}
+            ${item.bookingnotes ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-info-circle" style="color: var(--doctor)"></i><div><div class="text-xs" style="color: var(--muted)">تفاصيل إضافية</div><div class="text-sm font-bold">${escapeHtml(item.bookingnotes)}</div></div></div>` : ''}
         `;
     } else if (item.type === 'center') {
         extraHTML = `
-            ${item.services ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #F3E8FF"><i class="fas fa-list-check" style="color: var(--center)"></i><div><div class="text-xs" style="color: var(--muted)">التخصصات والخدمات</div><div class="text-sm font-bold" style="color: var(--center)">${item.services}</div></div></div>` : ''}
-            ${item.floors ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-building" style="color: var(--center)"></i><div><div class="text-xs" style="color: var(--muted)">الطوابق</div><div class="text-sm font-bold">${item.floors}</div></div></div>` : ''}
+            ${item.services ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #F3E8FF"><i class="fas fa-list-check" style="color: var(--center)"></i><div><div class="text-xs" style="color: var(--muted)">التخصصات والخدمات</div><div class="text-sm font-bold" style="color: var(--center)">${escapeHtml(item.services)}</div></div></div>` : ''}
+            ${item.floors ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-building" style="color: var(--center)"></i><div><div class="text-xs" style="color: var(--muted)">الطوابق</div><div class="text-sm font-bold">${escapeHtml(item.floors)}</div></div></div>` : ''}
         `;
     } else if (item.type === 'lab') {
         extraHTML = `
-            ${item.tests ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #FEE2E2"><i class="fas fa-vials" style="color: var(--lab)"></i><div><div class="text-xs" style="color: var(--muted)">نوع التحاليل والخدمات</div><div class="text-sm font-bold" style="color: var(--lab)">${item.tests}</div></div></div>` : ''}
+            ${item.tests ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #FEE2E2"><i class="fas fa-vials" style="color: var(--lab)"></i><div><div class="text-xs" style="color: var(--muted)">نوع التحاليل والخدمات</div><div class="text-sm font-bold" style="color: var(--lab)">${escapeHtml(item.tests)}</div></div></div>` : ''}
             ${item.homesample && item.homesample !== 'لا' ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: #D1FAE5"><i class="fas fa-house-user" style="color: #059669"></i><div><div class="text-xs" style="color: var(--muted)">خدمة سحب العينات من المنزل</div><div class="text-sm font-bold" style="color: #059669">متوفرة</div></div></div>` : ''}
         `;
     } else if (item.type === 'pharmacy') {
         extraHTML = `
-            ${item.night ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--gold-light)"><i class="fas fa-moon" style="color: var(--gold)"></i><div><div class="text-xs" style="color: var(--muted)">المناوبة</div><div class="text-sm font-bold" style="color: var(--gold)">${item.nightdetails || 'صيدلية مناوبة ليلية'}</div></div></div>` : ''}
+            ${item.night ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--gold-light)"><i class="fas fa-moon" style="color: var(--gold)"></i><div><div class="text-xs" style="color: var(--muted)">المناوبة</div><div class="text-sm font-bold" style="color: var(--gold)">${escapeHtml(item.nightdetails || 'صيدلية مناوبة ليلية')}</div></div></div>` : ''}
         `;
     }
 
-    const canBook = item.type === 'doctor' && item.is_subscribed; // الزر يظهر فقط للمشتركين
+    const canBook = item.type === 'doctor' && item.is_subscribed; 
 let bookingBtnModal = ''; 
 if (canBook) {
-    bookingBtnModal = `<button onclick="openBookingModal('${item.id}')" class="flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-calendar-check"></i> طلب موعد</button>`;
+    bookingBtnModal = `<button onclick="openBookingModal('${escapeHtml(item.id)}')" class="flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: var(--accent)"><i class="fas fa-calendar-check"></i> طلب موعد</button>`;
 }
     const mapQuery = item.latlng || ((item.address || item.clinic) + ' الرحيبة سوريا');
     const mapEmbed = (mapQuery) ? `
@@ -646,7 +575,7 @@ if (canBook) {
         </div>
         <iframe width="100%" height="220" frameborder="0" style="border:0; display: block;" src="https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=16&output=embed" allowfullscreen loading="lazy"></iframe>
     </div>` : '';
-    document.getElementById('modalContent').innerHTML = `<div class="relative h-48 overflow-hidden rounded-t-2xl"><img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover cursor-zoom-in" onclick="openLightbox(this.src)"><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent)"></div><button onclick="closeModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-all"><i class="fas fa-times text-sm"></i></button><div class="absolute bottom-4 right-5 left-5"><span class="badge ${t.badgeClass} mb-2 inline-block">${t.label}</span><h3 class="text-white font-bold text-lg" style="font-family: 'Noto Kufi Arabic'">${item.name}</h3></div></div><div class="p-6"><div class="flex items-center gap-2 mb-4"><div class="flex items-center gap-0.5 text-sm" style="color: ${t.color}">${starsHTML}</div><span class="text-sm font-bold">${item.rating || 0}</span><span class="text-xs" style="color: var(--muted)">/ 5</span></div><p class="text-sm leading-relaxed mb-5" style="color: var(--fg-light)">${item.description || ''}</p><div class="flex flex-col gap-2 mb-5"><div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas ${t.icon}" style="color: ${t.color}"></i><div><div class="text-xs" style="color: var(--muted)">${item.type === 'doctor' ? 'التخصص' : (item.type === 'clinic' || item.type === 'center' ? 'التخصص الأساسي' : 'النوع')}</div><div class="text-sm font-bold">${item.specialty || 'غير محدد'}</div></div></div> ${(item.address || item.clinic) ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-map-marker-alt" style="color: ${t.color}"></i><div><div class="text-xs" style="color: var(--muted)">العنوان / الموقع</div><div class="text-sm font-bold">${item.address || item.clinic}</div></div></div>` : ''}<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-clock" style="color: ${t.color}"></i><div class="flex-1"><div class="text-xs" style="color: var(--muted)">${item.type === 'doctor' ? 'أوقات المعاينة' : 'أوقات العمل'}</div><div class="text-sm font-bold">${item.consulthours || item.hours || ''}</div></div>${['doctor', 'clinic', 'pharmacy'].includes(item.type) && item.isopen === true ? '<span class="text-xs px-2 py-1 rounded bg-green-100 text-green-700 font-bold">مفتوح الآن</span>' : ''}${['doctor', 'clinic', 'pharmacy'].includes(item.type) && item.isopen === false ? '<span class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 font-bold">مغلق حالياً</span>' : ''}</div>${extraHTML}</div>${mapEmbed}<div class="flex items-center gap-3 mt-4"> ${item.phone ? `<a href="tel:${item.phone}" onclick="trackPhoneClick('${item.id}')" class="call-btn flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i> اتصال ${item.phone}</a>` : `<div class="flex-1 py-3.5 rounded-xl text-gray-400 text-sm font-bold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i> لا يوجد رقم هاتف</div>`}<button onclick="copyNumber('${item.phone}')" class="w-12 h-12 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50 flex-shrink-0" style="border-color: var(--border)"><i class="fas fa-copy" style="color: var(--muted)"></i></button></div>${canBook ? `<div class="mt-3">${bookingBtnModal}</div>` : ''}</div>`;  
+    document.getElementById('modalContent').innerHTML = `<div class="relative h-48 overflow-hidden rounded-t-2xl"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover cursor-zoom-in" onclick="openLightbox(this.src)"><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent)"></div><button onclick="closeModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-all"><i class="fas fa-times text-sm"></i></button><div class="absolute bottom-4 right-5 left-5"><span class="badge ${t.badgeClass} mb-2 inline-block">${t.label}</span><h3 class="text-white font-bold text-lg" style="font-family: 'Noto Kufi Arabic'">${escapeHtml(item.name)}</h3></div></div><div class="p-6"><div class="flex items-center gap-2 mb-4"><div class="flex items-center gap-0.5 text-sm" style="color: ${t.color}">${starsHTML}</div><span class="text-sm font-bold">${escapeHtml(item.rating || 0)}</span><span class="text-xs" style="color: var(--muted)">/ 5</span></div><p class="text-sm leading-relaxed mb-5" style="color: var(--fg-light)">${escapeHtml(item.description || '')}</p><div class="flex flex-col gap-2 mb-5"><div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas ${t.icon}" style="color: ${t.color}"></i><div><div class="text-xs" style="color: var(--muted)">${item.type === 'doctor' ? 'التخصص' : (item.type === 'clinic' || item.type === 'center' ? 'التخصص الأساسي' : 'النوع')}</div><div class="text-sm font-bold">${escapeHtml(item.specialty || 'غير محدد')}</div></div></div> ${(item.address || item.clinic) ? `<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-map-marker-alt" style="color: ${t.color}"></i><div><div class="text-xs" style="color: var(--muted)">العنوان / الموقع</div><div class="text-sm font-bold">${escapeHtml(item.address || item.clinic)}</div></div></div>` : ''}<div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--bg)"><i class="fas fa-clock" style="color: ${t.color}"></i><div class="flex-1"><div class="text-xs" style="color: var(--muted)">${item.type === 'doctor' ? 'أوقات المعاينة' : 'أوقات العمل'}</div><div class="text-sm font-bold">${escapeHtml(item.consulthours || item.hours || '')}</div></div>${['doctor', 'clinic', 'pharmacy'].includes(item.type) && item.isopen === true ? '<span class="text-xs px-2 py-1 rounded bg-green-100 text-green-700 font-bold">مفتوح الآن</span>' : ''}${['doctor', 'clinic', 'pharmacy'].includes(item.type) && item.isopen === false ? '<span class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 font-bold">مغلق حالياً</span>' : ''}</div>${extraHTML}</div>${mapEmbed}<div class="flex items-center gap-3 mt-4"> ${item.phone ? `<a href="tel:${escapeHtml(item.phone)}" onclick="trackPhoneClick('${escapeHtml(item.id)}')" class="call-btn flex-1 py-3.5 rounded-xl text-white text-sm font-bold text-center flex items-center justify-center gap-2" style="background: ${t.color}"><i class="fas fa-phone-alt"></i> اتصال ${escapeHtml(item.phone)}</a>` : `<div class="flex-1 py-3.5 rounded-xl text-gray-400 text-sm font-bold text-center flex items-center justify-center gap-2 bg-gray-100 cursor-not-allowed"><i class="fas fa-phone-slash"></i> لا يوجد رقم هاتف</div>`}<button onclick="copyNumber('${escapeHtml(item.phone)}')" class="w-12 h-12 rounded-xl border flex items-center justify-center transition-all hover:bg-gray-50 flex-shrink-0" style="border-color: var(--border)"><i class="fas fa-copy" style="color: var(--muted)"></i></button></div>${canBook ? `<div class="mt-3">${bookingBtnModal}</div>` : ''}</div>`;  
     document.getElementById('modalOverlay').classList.add('active'); 
     lockScroll(); 
 }
@@ -657,21 +586,8 @@ window.copyNumber = (phone) => { navigator.clipboard.writeText(phone).then(() =>
 window.trackPhoneClick = (id) => {
     const item = allData.find(d => d.id === id);
     if (!item) return;
-    
-    // 1. تحديث العداد محلياً ليراه الطبيب فوراً
     item.phone_clicks = (item.phone_clicks || 0) + 1;
-
-    // 2. إرسال الطلب لقاعدة البيانات مع keepalive لمنع المتصفح من قطعه عند فتح تطبيق الهاتف
-    fetch('https://pzwhyoattlravuadbfvk.supabase.co/rest/v1/rpc/increment_phone_click', {
-        method: 'POST',
-        headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6d2h5b2F0dGxyYXZ1YWRiZnZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzMyNDIsImV4cCI6MjEwMTkwOTI0Mn0.zBPnp7rVpR5ojidhuUCSQyUhA5VTFSCQosG_XtFXBWo',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6d2h5b2F0dGxyYXZ1YWRiZnZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzMyNDIsImV4cCI6MjEwMTkwOTI0Mn0.zBPnp7rVpR5ojidhuUCSQyUhA5VTFSCQosG_XtFXBWo',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ listing_id: id }),
-        keepalive: true // <--- السر هنا لمنع انقطاع الطلب!
-    }).catch(e => console.error('Phone Click Error:', e));
+    supabase.rpc('increment_phone_click', { listing_id: id }).catch(e => console.error('Phone Click Error:', e));
 };
 window.copyText = (text) => { navigator.clipboard.writeText(text).then(() => showToast('تم نسخ الكود بنجاح')).catch(() => showToast('تعذر النسخ')); }
 
@@ -729,8 +645,6 @@ window.closeCtrlPanel = (event) => {
     if (activeFollowupUnsub) { clearInterval(activeFollowupUnsub); activeFollowupUnsub = null; } 
     currentFollowupBookingId = null;
 }
-// تنتهي هنا الجزء الثاني...
-// === الجزء الثالث: الحجوزات، الصيدلية، الطبيب، الدم، الأدوية ===
 
 window.openBookingModal = (id) => { 
     closeModal(); 
@@ -750,7 +664,7 @@ window.openBookingModal = (id) => {
         } 
     } 
     if (validDaysCount === 0) { daysHTML = '<p class="text-sm text-center w-full" style="color: var(--muted)">لا توجد أيام متاحة للحجز.</p>'; } 
-    document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-calendar-plus ml-2" style="color: var(--accent)"></i> طلب موعد</h3><button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button></div><div class="mb-4 p-3 rounded-xl flex items-center gap-3" style="background: var(--accent-light)"><i class="fas fa-hospital text-xl" style="color: var(--accent)"></i><div><div class="text-xs" style="color: var(--accent-dark)">سيتم طلب الموعد في:</div><div class="font-bold text-sm" style="color: var(--accent-dark)">${item.name}</div></div></div><div id="step1" class="booking-step active"><h4 class="text-sm font-bold mb-3">1. اختر اليوم المناسب:</h4><div class="flex gap-2 overflow-x-auto pb-2 mb-6">${daysHTML}</div><button onclick="goToStep(2)" id="step1Next" disabled class="w-full py-3 rounded-xl text-white font-bold text-sm transition-all opacity-50 cursor-not-allowed" style="background: var(--accent)">التالي</button></div><div id="step2" class="booking-step"><h4 class="text-sm font-bold mb-3">2. أدخل بياناتك:</h4><div class="flex flex-col gap-3 mb-6"><input type="text" id="patientName" class="ctrl-input" placeholder="الاسم الكامل" required><input type="tel" id="patientPhone" class="ctrl-input" placeholder="09XXXXXXXX" required><textarea id="patientNotes" class="ctrl-input" rows="2" placeholder="ملاحظات (اختياري)"></textarea></div><div class="flex gap-2"><button onclick="goToStep(1)" class="w-1/3 py-3 rounded-xl border font-bold text-sm" style="border-color: var(--border)"><i class="fas fa-arrow-right ml-2"></i> رجوع</button><button onclick="confirmBooking()" class="w-2/3 py-3 rounded-xl text-white font-bold text-sm" style="background: var(--accent)">تأكيد</button></div></div></div>`; 
+    document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-calendar-plus ml-2" style="color: var(--accent)"></i> طلب موعد</h3><button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button></div><div class="mb-4 p-3 rounded-xl flex items-center gap-3" style="background: var(--accent-light)"><i class="fas fa-hospital text-xl" style="color: var(--accent)"></i><div><div class="text-xs" style="color: var(--accent-dark)">سيتم طلب الموعد في:</div><div class="font-bold text-sm" style="color: var(--accent-dark)">${escapeHtml(item.name)}</div></div></div><div id="step1" class="booking-step active"><h4 class="text-sm font-bold mb-3">1. اختر اليوم المناسب:</h4><div class="flex gap-2 overflow-x-auto pb-2 mb-6">${daysHTML}</div><button onclick="goToStep(2)" id="step1Next" disabled class="w-full py-3 rounded-xl text-white font-bold text-sm transition-all opacity-50 cursor-not-allowed" style="background: var(--accent)">التالي</button></div><div id="step2" class="booking-step"><h4 class="text-sm font-bold mb-3">2. أدخل بياناتك:</h4><div class="flex flex-col gap-3 mb-6"><input type="text" id="patientName" class="ctrl-input" placeholder="الاسم الكامل" required><input type="tel" id="patientPhone" class="ctrl-input" placeholder="09XXXXXXXX" required><textarea id="patientNotes" class="ctrl-input" rows="2" placeholder="ملاحظات (اختياري)"></textarea></div><div class="flex gap-2"><button onclick="goToStep(1)" class="w-1/3 py-3 rounded-xl border font-bold text-sm" style="border-color: var(--border)"><i class="fas fa-arrow-right ml-2"></i> رجوع</button><button onclick="confirmBooking()" class="w-2/3 py-3 rounded-xl text-white font-bold text-sm" style="background: var(--accent)">تأكيد</button></div></div></div>`; 
     document.getElementById('modalOverlay').classList.add('active'); lockScroll(); 
 }
 
@@ -774,7 +688,6 @@ window.confirmBooking = async () => {
     phoneInput.classList.remove('input-invalid'); 
     const ref = `R-${Math.floor(Math.random() * 900) + 100}`; 
     tempBooking.ref = ref; 
-    tempBooking.player_id = localStorage.getItem('onesignal_player_id') || null;
     tempBooking.name = name; 
     tempBooking.phone = phone; 
     tempBooking.notes = notes; 
@@ -802,7 +715,6 @@ window.openBookingFollowup = (bookingId) => {
     currentFollowupBookingId = bookingId;
     openCtrlPanel('متابعة الحجز والدردشة', `<div id="followupContent" class="flex flex-col gap-4"><p class="text-center py-8 text-gray-400">جاري تحميل بيانات الحجز...</p></div>`, '#0E7C5F');
     
-    // محاكاة الاستماع الحي (تحديث كل 5 ثوانٍ)
     if (activeFollowupUnsub) clearInterval(activeFollowupUnsub);
     fetchFollowupChat(bookingId);
     activeFollowupUnsub = setInterval(() => fetchFollowupChat(bookingId), 3000);
@@ -825,20 +737,17 @@ window.renderFollowupChat = (bookingId) => {
     if (!booking) { contentEl.innerHTML = '<p class="text-center py-8 text-red-500">لم يتم العثور على الحجز.</p>'; return; }
     const b = booking;
     let statusBadge = '';
-    if (b.status === 'accepted') statusBadge = `<span class="px-3 py-1 rounded text-sm" style="background: #D1FAE5; color: #065F46">🟢 تم التأكيد - ${b.time}</span>`;
+    if (b.status === 'accepted') statusBadge = `<span class="px-3 py-1 rounded text-sm" style="background: #D1FAE5; color: #065F46">🟢 تم التأكيد - ${escapeHtml(b.time)}</span>`;
     else if (b.status === 'canceled') statusBadge = `<span class="px-3 py-1 rounded text-sm" style="background: #FEE2E2; color: #991B1B">تم الإلغاء</span>`;
     else statusBadge = `<span class="px-3 py-1 rounded text-sm" style="background: #FEF3C7; color: #92400E">🟡 الحجز قيد المراجعة من العيادة</span>`;
     let chatHtml = '';
     if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="flex ${msg.sender === 'patient' ? 'justify-start' : 'justify-end'}"><div class="max-w-[75%] p-3 rounded-xl text-sm ${msg.sender === 'patient' ? 'bg-gray-100 text-gray-800' : 'bg-blue-500 text-white'}">${escapeHtml(msg.text)}</div></div>`).join(''); } 
     else { chatHtml = '<p class="text-center text-xs text-gray-400 my-4">لا توجد رسائل بعد. انتظر رد العيادة.</p>'; }
     
-    // === التحديث الذكي ===
     const existingInput = document.getElementById('chatInput');
     if (!existingInput) {
-        // إذا كانت أول مرة يفتح فيها الدردشة، نبني الواجهة كاملة
-        contentEl.innerHTML = `<div class="bg-white p-4 rounded-xl border" style="border-color: var(--border)"><div class="flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${b.itemname}</div><div class="text-xs text-gray-500">${b.daystr}</div></div><div id="statusBadgeContainer">${statusBadge}</div></div><div class="text-xs text-yellow-600 font-bold mt-2">رقم المرجع: #${b.ref}</div></div><div class="bg-white p-4 rounded-xl border flex flex-col h-96" style="border-color: var(--border)"><div class="flex-1 overflow-y-auto flex flex-col gap-2 mb-3 pr-1" id="chatBox">${chatHtml}</div><div class="flex gap-2 border-t pt-3" style="border-color: var(--border)"><input type="text" id="chatInput" class="ctrl-input text-sm" placeholder="اكتب رسالتك للطبيب..." onkeydown="if(event.key==='Enter') sendChatMessage('${bookingId}')"><button onclick="sendChatMessage('${bookingId}')" class="px-4 rounded-xl text-white" style="background: var(--accent)"><i class="fas fa-paper-plane"></i></button></div></div>`;
+        contentEl.innerHTML = `<div class="bg-white p-4 rounded-xl border" style="border-color: var(--border)"><div class="flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${escapeHtml(b.itemname)}</div><div class="text-xs text-gray-500">${escapeHtml(b.daystr)}</div></div><div id="statusBadgeContainer">${statusBadge}</div></div><div class="text-xs text-yellow-600 font-bold mt-2">رقم المرجع: #${escapeHtml(b.ref)}</div></div><div class="bg-white p-4 rounded-xl border flex flex-col h-96" style="border-color: var(--border)"><div class="flex-1 overflow-y-auto flex flex-col gap-2 mb-3 pr-1" id="chatBox">${chatHtml}</div><div class="flex gap-2 border-t pt-3" style="border-color: var(--border)"><input type="text" id="chatInput" class="ctrl-input text-sm" placeholder="اكتب رسالتك للطبيب..." onkeydown="if(event.key==='Enter') sendChatMessage('${bookingId}')"><button onclick="sendChatMessage('${bookingId}')" class="px-4 rounded-xl text-white" style="background: var(--accent)"><i class="fas fa-paper-plane"></i></button></div></div>`;
     } else {
-        // إذا كان المريض موجوداً بالفعل في الدردشة، نحدث الرسائل وحالة الحجز فقط (دون لمس حقل الكتابة)
         const chatBox = document.getElementById('chatBox');
         const statusContainer = document.getElementById('statusBadgeContainer');
         if (chatBox) chatBox.innerHTML = chatHtml;
@@ -857,23 +766,20 @@ window.sendChatMessage = async (bookingId) => {
 }
 
 window.openPharmacyLogin = async () => { 
-    // التحقق إذا كانت الصيدلية مسجلة مسبقاً
     const { data: { session } } = await supabase.auth.getSession();
     if (session && session.user.email && session.user.email.endsWith('@tabibnet.app')) {
         const userId = session.user.id;
-        // البحث عن بيانات الصيدلية
         const listing = allData.find(d => d.user_id === userId && d.type === 'pharmacy');
         if (listing) {
             if (listing.is_subscribed) {
-                renderPharmacyDashboard(listing); // فتح اللوحة فوراً
+                renderPharmacyDashboard(listing); 
             } else {
                 openPaymentModal('صيدلية', listing.name);
             }
-            return; // الخروج من الدالة
+            return; 
         }
     }
     
-    // إذا لم تكن مسجلة، أظهر شاشة إدخال الاسم وكلمة المرور
     openCtrlPanel('لوحة الصيدليات', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: var(--accent-light)"><i class="fas fa-prescription-bottle-medical text-2xl" style="color: var(--accent)"></i></div><h3 class="font-bold text-lg">دخول الصيدليات</h3></div><form onsubmit="handlePharmacyLogin(event)" class="flex flex-col gap-4"><input type="text" id="pharmName" class="ctrl-input text-center" placeholder="اسم الصيدلية" required><input type="text" id="pharmPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--accent)">دخول</button></form></div>`, '#0E7C5F'); 
 }
 window.handlePharmacyLogin = async (e) => { 
@@ -887,7 +793,6 @@ window.handlePharmacyLogin = async (e) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
     if (error) { showToast('خطأ: ' + error.message); return; }
 
-    // نبحث عن الصيدلية عبر user_id الآمن
     const pharmData = allData.find(d => d.user_id === data.user.id && d.type === 'pharmacy'); 
     if (pharmData) { 
         if (!pharmData.is_subscribed) {
@@ -908,13 +813,12 @@ window.logoutPharmacy = async () => {
     showToast('تم تسجيل الخروج بنجاح');
 }
 window.renderPharmacyDashboard = async (pharm) => { 
-        const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         openPharmacyLogin();
         showToast('يجب تسجيل الدخول أولاً');
         return;
     }
-        // جلب عدد الأدوية التي وفرتها هذه الصيدلية
     const { count: providedCount } = await supabase
         .from('medicine_requests')
         .select('*', { count: 'exact', head: true })
@@ -923,24 +827,7 @@ window.renderPharmacyDashboard = async (pharm) => {
     
     const providedMeds = providedCount || 0;
     
-    openCtrlPanel(`لوحة تحكم: ${pharm.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center justify-between flex-col sm:flex-row gap-4" style="border-color: var(--border)"><div class="flex items-center gap-4"><img src="${pharm.image}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${pharm.name}</h3><p class="text-sm" style="color: var(--pharmacy)">صيدلية</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${pharm.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button><button onclick="setStatus('${pharm.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مغلق</button><button onclick="setStatus('${pharm.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button></div></div><button onclick="toggleNightShift('${pharm.id}', ${!pharm.night})" class="w-full px-4 py-2 rounded-xl font-bold text-sm ${pharm.night ? 'bg-yellow-500 text-white' : 'bg-gray-200'}">${pharm.night ? 'إيقاف المناوبة الليلية' : 'تفعيل المناوبة الليلية'}</button></div> <!-- الإحصائيات -->
-<div class="grid grid-cols-3 gap-3">
-    <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
-        <i class="fas fa-eye text-blue-500 text-xl mb-1"></i>
-        <div class="text-2xl font-black text-gray-800">${pharm.view_count || 0}</div>
-        <div class="text-xs text-gray-500">زيارة الملف</div>
-    </div>
-    <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
-        <i class="fas fa-hand-holding-medical text-green-500 text-xl mb-1"></i>
-        <div class="text-2xl font-black text-gray-800">${providedMeds}</div>
-        <div class="text-xs text-gray-500">أدوية موفرة</div>
-    </div>
-    <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
-        <i class="fas fa-phone-alt text-purple-500 text-xl mb-1"></i>
-        <div class="text-2xl font-black text-gray-800">${pharm.phone_clicks || 0}</div>
-        <div class="text-xs text-gray-500">نقرات الهاتف</div>
-    </div>
-</div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm">طلبات الأدوية الواردة</h4><div id="requestsContainer" class="flex flex-col gap-3"><p class="text-center py-10" style="color: var(--muted)">جاري تحميل الطلبات...</p></div></div> <button onclick="logoutPharmacy()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button></div>`, '#0E7C5F', true); 
+    openCtrlPanel(`لوحة تحكم: ${pharm.name}`, `<div class="flex flex-col gap-5"><div class="bg-white p-5 rounded-xl border flex items-center justify-between flex-col sm:flex-row gap-4" style="border-color: var(--border)"><div class="flex items-center gap-4"><img src="${escapeHtml(pharm.image)}" class="w-20 h-20 rounded-2xl object-cover"><div><h3 class="font-bold text-lg">${escapeHtml(pharm.name)}</h3><p class="text-sm" style="color: var(--pharmacy)">صيدلية</p></div></div><div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);"><span class="text-sm font-bold text-gray-700">حالة العمل:</span><div class="flex gap-1 bg-gray-50 p-1 rounded-lg"><button onclick="setStatus('${pharm.id}', true)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen === true ? 'bg-green-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button><button onclick="setStatus('${pharm.id}', false)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen === false ? 'bg-red-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">مغلق</button><button onclick="setStatus('${pharm.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold transition-all ${pharm.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500 hover:bg-gray-100'}">لا شيء</button></div></div><button onclick="toggleNightShift('${pharm.id}', ${!pharm.night})" class="w-full px-4 py-2 rounded-xl font-bold text-sm ${pharm.night ? 'bg-yellow-500 text-white' : 'bg-gray-200'}">${pharm.night ? 'إيقاف المناوبة الليلية' : 'تفعيل المناوبة الليلية'}</button></div> <div class="grid grid-cols-3 gap-3"><div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);"><i class="fas fa-eye text-blue-500 text-xl mb-1"></i><div class="text-2xl font-black text-gray-800">${pharm.view_count || 0}</div><div class="text-xs text-gray-500">زيارة الملف</div></div><div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);"><i class="fas fa-hand-holding-medical text-green-500 text-xl mb-1"></i><div class="text-2xl font-black text-gray-800">${providedMeds}</div><div class="text-xs text-gray-500">أدوية موفرة</div></div><div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);"><i class="fas fa-phone-alt text-purple-500 text-xl mb-1"></i><div class="text-2xl font-black text-gray-800">${pharm.phone_clicks || 0}</div><div class="text-xs text-gray-500">نقرات الهاتف</div></div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm">طلبات الأدوية الواردة</h4><div id="requestsContainer" class="flex flex-col gap-3"><p class="text-center py-10" style="color: var(--muted)">جاري تحميل الطلبات...</p></div></div> <button onclick="logoutPharmacy()" class="w-full py-3 rounded-xl border font-bold text-sm mt-3" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button></div>`, '#0E7C5F', true); 
     
     if (unsubscribeMedRequests) clearInterval(unsubscribeMedRequests); 
     fetchMedRequests(pharm.name);
@@ -969,17 +856,17 @@ async function fetchMedRequests(pharmName) {
         let interactionArea = '';
         if (req.status === 'available') {
             if (req.available_pharmacy === pharmName) {
-                interactionArea = `<div class="bg-green-50 text-green-700 text-sm font-bold p-3 rounded-lg text-center mb-2">أنت من وفر هذا الدواء للمريض</div><a href="tel:${phone}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"><i class="fas fa-phone"></i> اتصال للمريض</a><button onclick="updateMedStatus('${req.id}', 'searching')" class="w-full mt-2 bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-xs">تراجع عن التوفير</button>`;
+                interactionArea = `<div class="bg-green-50 text-green-700 text-sm font-bold p-3 rounded-lg text-center mb-2">أنت من وفر هذا الدواء للمريض</div><a href="tel:${escapeHtml(phone)}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"><i class="fas fa-phone"></i> اتصال للمريض</a><button onclick="updateMedStatus('${req.id}', 'searching')" class="w-full mt-2 bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-xs">تراجع عن التوفير</button>`;
             } else {
                 interactionArea = `<div class="bg-gray-100 text-gray-500 text-sm font-bold p-3 rounded-lg text-center">تم إغلاق هذا الطلب (تم التوفير من صيدلية أخرى)</div>`;
             }
         } else if (req.status === 'unavailable') {
             interactionArea = `<div class="bg-gray-100 text-gray-400 text-sm font-bold p-3 rounded-lg text-center">قمت بإغلاق هذا الطلب</div><button onclick="updateMedStatus('${req.id}', 'searching')" class="w-full mt-2 bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-xs">إعادة فتح الطلب</button>`;
         } else {
-            interactionArea = `<input type="text" id="medNotes_${req.id}" placeholder="ملاحظة للمواطن" value="${req.notes || ''}" onblur="updateMedNotes('${req.id}', this.value)" class="ctrl-input text-sm py-1"><div class="flex gap-2 mt-2"><button onclick="setMedAvailable('${req.id}', '${pharmName}')" class="flex-1 bg-green-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">توفّر الدواء</button><button onclick="updateMedStatus('${req.id}', 'unavailable')" class="flex-1 bg-gray-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">غير متوفر</button></div><div class="flex gap-2 mt-2"><a href="tel:${phone}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"><i class="fas fa-phone"></i> اتصال</a></div>`;
+            interactionArea = `<input type="text" id="medNotes_${req.id}" placeholder="ملاحظة للمواطن" value="${escapeHtml(req.notes || '')}" onblur="updateMedNotes('${req.id}', this.value)" class="ctrl-input text-sm py-1"><div class="flex gap-2 mt-2"><button onclick="setMedAvailable('${req.id}', '${escapeHtml(pharmName)}')" class="flex-1 bg-green-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">توفّر الدواء</button><button onclick="updateMedStatus('${req.id}', 'unavailable')" class="flex-1 bg-gray-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">غير متوفر</button></div><div class="flex gap-2 mt-2"><a href="tel:${escapeHtml(phone)}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"><i class="fas fa-phone"></i> اتصال</a></div>`;
         }
 
-        html += `<div class="bg-white border rounded-xl p-4 flex flex-col gap-3" style="border-color: var(--border)"><div class="flex flex-col sm:flex-row gap-3 items-center">${req.image_url ? `<img src="${req.image_url}" class="w-full sm:w-24 h-24 object-cover rounded-lg cursor-zoom-in" onclick="openLightbox('${req.image_url}')">` : ''}<div class="flex-1 text-center sm:text-right"><h4 class="font-bold">${req.patient_name} <span class="text-xs text-yellow-600 font-mono">#${req.med_ref || ''}</span></h4><p class="text-sm text-gray-700 font-semibold">${req.med_list || ''}</p><p class="text-xs mt-1 text-red-500">الإلحاح: ${req.urgency || 'عادي'}</p><p class="text-xs" style="color: var(--muted)"><i class="fas fa-clock"></i> ${date}</p>${requestStatus}</div></div><div class="flex flex-col gap-2 mt-2 border-t pt-3" style="border-color: var(--border)">${interactionArea}</div></div>`; 
+        html += `<div class="bg-white border rounded-xl p-4 flex flex-col gap-3" style="border-color: var(--border)"><div class="flex flex-col sm:flex-row gap-3 items-center">${req.image_url ? `<img src="${escapeHtml(req.image_url)}" class="w-full sm:w-24 h-24 object-cover rounded-lg cursor-zoom-in" onclick="openLightbox('${escapeHtml(req.image_url)}')">` : ''}<div class="flex-1 text-center sm:text-right"><h4 class="font-bold">${escapeHtml(req.patient_name)} <span class="text-xs text-yellow-600 font-mono">#${escapeHtml(req.med_ref || '')}</span></h4><p class="text-sm text-gray-700 font-semibold">${escapeHtml(req.med_list || '')}</p><p class="text-xs mt-1 text-red-500">الإلحاح: ${escapeHtml(req.urgency || 'عادي')}</p><p class="text-xs" style="color: var(--muted)"><i class="fas fa-clock"></i> ${escapeHtml(date)}</p>${requestStatus}</div></div><div class="flex flex-col gap-2 mt-2 border-t pt-3" style="border-color: var(--border)">${interactionArea}</div></div>`; 
      
     }); 
     container.innerHTML = html; 
@@ -991,23 +878,20 @@ window.updateMedStatus = async (id, status) => { try { await supabase.from('medi
 window.updateMedNotes = async (id, notes) => { try { await supabase.from('medicine_requests').update({ notes: notes }).eq('id', id); showToast('تم حفظ الملاحظة'); } catch (e) { showToast('خطأ في الحفظ'); } }
 
 window.openDoctorLogin = async () => { 
-    // التحقق إذا كان الطبيب مسجلاً مسبقاً
     const { data: { session } } = await supabase.auth.getSession();
     if (session && session.user.email && session.user.email.endsWith('@tabibnet.app')) {
         const userId = session.user.id;
-        // البحث عن بيانات الطبيب
         const listing = allData.find(d => d.user_id === userId && d.type === 'doctor');
         if (listing) {
             if (listing.is_subscribed) {
-                renderDoctorDashboard(listing); // فتح اللوحة فوراً
+                renderDoctorDashboard(listing); 
             } else {
                 openPaymentModal('طبيب', listing.name);
             }
-            return; // الخروج من الدالة وعدم إظهار شاشة الدخول
+            return; 
         }
     }
     
-    // إذا لم يكن مسجلاً، أظهر شاشة إدخال الاسم وكلمة المرور
     openCtrlPanel('لوحة الطبيب', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: #DBEAFE"><i class="fas fa-user-md text-2xl" style="color: var(--doctor)"></i></div><h3 class="font-bold text-lg">دخول الطبيب</h3></div><form onsubmit="handleDoctorLogin(event)" class="flex flex-col gap-4"><input type="text" id="docName" class="ctrl-input text-center" placeholder="الاسم" required><input type="text" id="docPass" class="ctrl-input text-center font-mono" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--doctor)">دخول</button></form></div>`, '#2563EB'); 
 }
 window.handleDoctorLogin = async (e) => { 
@@ -1020,7 +904,6 @@ window.handleDoctorLogin = async (e) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
     if (error) { showToast('خطأ: ' + error.message); return; }
 
-    // نبحث عن الطبيب عبر user_id الآمن بدلاً من كلمة المرور
     const docData = allData.find(d => d.user_id === data.user.id && d.type === 'doctor'); 
     if (docData) { 
         if (!docData.is_subscribed) {
@@ -1049,22 +932,19 @@ window.renderDoctorDashboard = async (doc) => {
         
         const bookingsListHtml = docBookings.length === 0 ? '<p class="text-sm text-center py-4" style="color: var(--muted)">لا توجد طلبات.</p>' : docBookings.map(b => { 
             let statusBadge = ''; let actionButtons = ''; 
-            if (b.status === 'accepted') { statusBadge = `<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #D1FAE5; color: #065F46">مقبول - ${b.time}</span>`; actionButtons = `<button onclick="updateBookingStatus('${b.id}', 'canceled')" class="text-xs text-white px-2 py-1 rounded bg-red-500">إلغاء</button><button onclick="updateBookingStatus('${b.id}', 'deleted')" class="text-xs text-white px-2 py-1 rounded bg-gray-800">حذف</button>`; } 
+            if (b.status === 'accepted') { statusBadge = `<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #D1FAE5; color: #065F46">مقبول - ${escapeHtml(b.time)}</span>`; actionButtons = `<button onclick="updateBookingStatus('${b.id}', 'canceled')" class="text-xs text-white px-2 py-1 rounded bg-red-500">إلغاء</button><button onclick="updateBookingStatus('${b.id}', 'deleted')" class="text-xs text-white px-2 py-1 rounded bg-gray-800">حذف</button>`; } 
             else if (b.status === 'canceled') { statusBadge = '<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #F3F4F6; color: #4B5563">ملغي</span>'; actionButtons = `<button onclick="updateBookingStatus('${b.id}', 'pending')" class="text-xs text-white px-2 py-1 rounded bg-gray-500">استعادة</button><button onclick="updateBookingStatus('${b.id}', 'deleted')" class="text-xs text-white px-2 py-1 rounded bg-gray-800">حذف</button>`; } 
             else { statusBadge = '<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #FEF3C7; color: #92400E">طلب جديد</span>'; actionButtons = `<div class="flex flex-col gap-1 w-full"><input type="text" id="time_${b.id}" placeholder="حدد الموعد" class="ctrl-input text-sm py-1"><div class="flex gap-1"><button onclick="acceptBooking('${b.id}')" class="text-xs text-white px-2 py-1 rounded bg-green-600 flex-1">قبول</button><button onclick="updateBookingStatus('${b.id}', 'canceled')" class="text-xs text-white px-2 py-1 rounded bg-red-500">رفض</button></div></div>`; }
             let chatHtml = '';
             if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="text-xs p-2 rounded-lg mb-1 ${msg.sender === 'doctor' ? 'bg-blue-100 text-left' : 'bg-gray-100 text-right'}">${escapeHtml(msg.text)}</div>`).join(''); }
-            return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${b.name}</span><br><span class="text-xs" style="color: var(--muted)">${b.daystr}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${b.ref}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${b.phone}" class="text-xs text-blue-600">${b.phone}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
+            return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${escapeHtml(b.name)}</span><br><span class="text-xs" style="color: var(--muted)">${escapeHtml(b.daystr)}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${escapeHtml(b.ref)}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${escapeHtml(b.phone)}" class="text-xs text-blue-600">${escapeHtml(b.phone)}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
         }).join('');
 
         openCtrlPanel(`لوحة: ${doc.name}`, `<div class="flex flex-col gap-5">
-            <!-- 1. بطاقة الطبيب -->
             <div class="bg-white p-5 rounded-xl border flex items-center gap-4" style="border-color: var(--border)">
-                <img src="${doc.image}" class="w-20 h-20 rounded-2xl object-cover">
-                <div><h3 class="font-bold text-lg">${doc.name}</h3><p class="text-sm" style="color: var(--doctor)">${doc.specialty}</p></div>
+                <img src="${escapeHtml(doc.image)}" class="w-20 h-20 rounded-2xl object-cover">
+                <div><h3 class="font-bold text-lg">${escapeHtml(doc.name)}</h3><p class="text-sm" style="color: var(--doctor)">${escapeHtml(doc.specialty)}</p></div>
             </div>
-
-            <!-- 2. الإحصائيات (مجاني) -->
             <div class="grid grid-cols-3 gap-3">
                 <div class="bg-white p-4 rounded-xl border text-center" style="border-color: var(--border);">
                     <i class="fas fa-eye text-blue-500 text-xl mb-1"></i><div class="text-2xl font-black text-gray-800">${doc.view_count || 0}</div><div class="text-xs text-gray-500">زيارة الملف</div>
@@ -1076,8 +956,6 @@ window.renderDoctorDashboard = async (doc) => {
                     <i class="fas fa-phone-alt text-purple-500 text-xl mb-1"></i><div class="text-2xl font-black text-gray-800">${doc.phone_clicks || 0}</div><div class="text-xs text-gray-500">نقرات الهاتف</div>
                 </div>
             </div>
-
-            <!-- 3. حالة العمل (مجاني) -->
             <div class="bg-white p-3 rounded-xl border flex items-center justify-between gap-2 mb-3" style="border-color: var(--border);">
                 <span class="text-sm font-bold text-gray-700">حالة العمل:</span>
                 <div class="flex gap-1 bg-gray-50 p-1 rounded-lg">
@@ -1086,13 +964,9 @@ window.renderDoctorDashboard = async (doc) => {
                     <button onclick="setStatus('${doc.id}', null)" class="px-4 py-1.5 rounded-md text-xs font-bold ${doc.isopen == null ? 'bg-gray-700 text-white shadow' : 'text-gray-500'}">لا شيء</button>
                 </div>
             </div>
-
-                        <!-- 4. قارئ الملف الصحي QR -->
             <button onclick="openDoctorScanner('${doc.id}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2" style="background: #0D9488">
                 <i class="fas fa-qrcode"></i> قراءة الملف الصحي للمريض
             </button>
-
-            <!-- 5. أدوات الطبيب (متاحة للجميع) -->
             <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
                 <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-toolbox" style="color: var(--doctor)"></i> أدوات الطبيب</h4>
                 <button onclick="openAskDoctor('${doc.name}')" class="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 mb-2" style="background: #2563EB;">
@@ -1100,8 +974,6 @@ window.renderDoctorDashboard = async (doc) => {
                 </button>
                 <p class="text-xs text-center text-gray-500">يمكنك إنشاء روشتة طبية إلكترونية من داخل ملف المريض بعد مسح QR.</p>
             </div>
-
-            <!-- 6. أيام العمل -->
             <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
                 <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-calendar-week" style="color: var(--doctor)"></i> أيام العمل</h4>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">${daysCheckboxes}</div>
@@ -1109,8 +981,6 @@ window.renderDoctorDashboard = async (doc) => {
                     <i class="fas fa-save ml-2"></i> حفظ أيام العمل
                 </button>
             </div>
-
-            <!-- 7. قائمة الحجوزات -->
             <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
                 <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-calendar-check" style="color: var(--doctor)"></i> طلبات الحجز الواردة</h4>
                 <div>${bookingsListHtml}</div>
@@ -1130,10 +1000,7 @@ window.acceptBooking = async (bookingId) => {
         const currentChat = booking.chat || []; 
         currentChat.push({ sender: 'doctor', text: `تم تثبيت موعدك اليوم الساعة ${time}. نرحب بك في العيادة.`, timestamp: new Date().toISOString() }); 
         await supabase.from('bookings').update({ status: 'accepted', time: time, chat: currentChat }).eq('id', bookingId); 
-        if (booking.player_id) {
-            fetch('https://script.google.com/macros/s/AKfycbwuYCdljTk-nX_bSXEBC5ku_nHKH_RUC3fETlIsunWjGmzVv98KRsbSiJyVyiLynhDhAQ/exec', { method: 'POST', body: JSON.stringify({ playerId: booking.player_id, title: "تم تأكيد موعدك! 🗓️", message: `تم قبول حجزك في ${booking.itemname}. الموعد: ${time}` }) }).catch(err => console.log(err));
-        }
-        showToast('تم قبول الموعد وإرسال إشعار للمريض'); 
+        showToast('تم قبول الموعد'); 
     } catch (e) { showToast('خطأ'); } 
 }
 window.updateBookingStatus = async (bookingId, newStatus) => { 
@@ -1171,9 +1038,9 @@ window.fetchPatientHealthFile = async (userId, doctorData) => {
         let specializedRecordHtml = '';
         if (doctorData && doctorData.specialty) {
             if (doctorData.specialty.includes('أسنان')) {
-                specializedRecordHtml = `<div class="p-3 rounded-xl border" style="border-color: #FED7AA; background: #FFF7ED;"><div class="text-xs text-orange-700 mb-1 font-bold"><i class="fas fa-tooth"></i> سجل الأسنان</div><div class="font-semibold text-sm text-gray-700 whitespace-pre-line">${p.dental || 'لا يوجد.'}</div></div>`;
+                specializedRecordHtml = `<div class="p-3 rounded-xl border" style="border-color: #FED7AA; background: #FFF7ED;"><div class="text-xs text-orange-700 mb-1 font-bold"><i class="fas fa-tooth"></i> سجل الأسنان</div><div class="font-semibold text-sm text-gray-700 whitespace-pre-line">${escapeHtml(p.dental || 'لا يوجد.')}</div></div>`;
             } else if (doctorData.specialty.includes('عين') || doctorData.specialty.includes('عيون')) {
-                specializedRecordHtml = `<div class="p-3 rounded-xl border" style="border-color: #BFDBFE; background: #EFF6FF;"><div class="text-xs text-blue-700 mb-1 font-bold"><i class="fas fa-eye"></i> سجل العيون</div><div class="font-semibold text-sm text-gray-700 whitespace-pre-line">${p.eye || 'لا يوجد.'}</div></div>`;
+                specializedRecordHtml = `<div class="p-3 rounded-xl border" style="border-color: #BFDBFE; background: #EFF6FF;"><div class="text-xs text-blue-700 mb-1 font-bold"><i class="fas fa-eye"></i> سجل العيون</div><div class="font-semibold text-sm text-gray-700 whitespace-pre-line">${escapeHtml(p.eye || 'لا يوجد.')}</div></div>`;
             }
         }
 
@@ -1187,7 +1054,7 @@ window.fetchPatientHealthFile = async (userId, doctorData) => {
             ? `<button onclick='openPrescriptionModal("${userId}", "${p.full_name}", ${JSON.stringify(docInfo)})' class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg"><i class="fas fa-file-prescription"></i> إنشاء روشتة</button>` 
             : `<button onclick="openPaymentModal('طبيب', '${doctorData?.name || 'طبيب'}')" class="text-xs bg-gray-300 text-gray-600 px-3 py-1.5 rounded-lg line-through cursor-not-allowed"><i class="fas fa-lock"></i> إنشاء روشتة</button>`;
 
-        document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-file-medical ml-2" style="color: var(--doctor)"></i> الملف الصحي للمريض</h3><button onclick="closeModal()" class="text-2xl">&times;</button>${prescriptionBtn}</div><div class="flex flex-col gap-3"><div class="flex items-center gap-4 p-3 rounded-xl" style="background: #DBEAFE"><i class="fas fa-user-circle text-3xl" style="color: var(--doctor)"></i><div><h4 class="font-bold text-lg">${p.full_name}</h4><p class="text-sm text-gray-600">${p.age || '-'} سنة | ${p.gender || '-'}</p></div></div><div class="grid grid-cols-2 gap-3 text-sm"><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">فصيلة الدم</div><div class="font-bold text-red-600">${p.blood_type || 'غير محدد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">الوزن</div><div class="font-bold">${p.weight || '-'} كغ</div></div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأمراض المزمنة</div><div class="font-semibold">${p.diseases || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الحساسية</div><div class="font-semibold text-red-600">${p.allergies || 'لا يوجد'}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأدوية الحالية</div><div class="font-semibold">${p.medications || 'لا يوجد'}</div></div>${specializedRecordHtml}<div class="p-3 rounded-xl bg-green-50 border border-green-200"><div class="text-xs text-green-700 mb-1">جهة طوارئ</div><div class="font-semibold">${p.emergency_name || ''} - <span dir="ltr">${p.emergency_phone || ''}</span></div></div></div></div>`;
+        document.getElementById('modalContent').innerHTML = `<div class="p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-file-medical ml-2" style="color: var(--doctor)"></i> الملف الصحي للمريض</h3><button onclick="closeModal()" class="text-2xl">&times;</button>${prescriptionBtn}</div><div class="flex flex-col gap-3"><div class="flex items-center gap-4 p-3 rounded-xl" style="background: #DBEAFE"><i class="fas fa-user-circle text-3xl" style="color: var(--doctor)"></i><div><h4 class="font-bold text-lg">${escapeHtml(p.full_name)}</h4><p class="text-sm text-gray-600">${escapeHtml(p.age || '-')} سنة | ${escapeHtml(p.gender || '-')}</p></div></div><div class="grid grid-cols-2 gap-3 text-sm"><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">فصيلة الدم</div><div class="font-bold text-red-600">${escapeHtml(p.blood_type || 'غير محدد')}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500">الوزن</div><div class="font-bold">${escapeHtml(p.weight || '-')} كغ</div></div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأمراض المزمنة</div><div class="font-semibold">${escapeHtml(p.diseases || 'لا يوجد')}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الحساسية</div><div class="font-semibold text-red-600">${escapeHtml(p.allergies || 'لا يوجد')}</div></div><div class="p-3 rounded-xl border"><div class="text-xs text-gray-500 mb-1">الأدوية الحالية</div><div class="font-semibold">${escapeHtml(p.medications || 'لا يوجد')}</div></div>${specializedRecordHtml}<div class="p-3 rounded-xl bg-green-50 border border-green-200"><div class="text-xs text-green-700 mb-1">جهة طوارئ</div><div class="font-semibold">${escapeHtml(p.emergency_name || '')} - <span dir="ltr">${escapeHtml(p.emergency_phone || '')}</span></div></div></div></div>`;
         document.getElementById('modalOverlay').classList.add('active');
         lockScroll();
     } catch (e) { showToast("خطأ في قراءة الملف."); }
@@ -1203,7 +1070,7 @@ window.openPrescriptionModal = (patientId, patientName, doctorInfo) => {
                 <button onclick="closeModal()" class="text-2xl hover:text-gray-400 leading-none">&times;</button>
             </div>
             <div class="bg-blue-50 p-3 rounded-xl mb-4 text-sm text-blue-800 flex items-center gap-2">
-                <i class="fas fa-user"></i> المريض: <b>${patientName}</b>
+                <i class="fas fa-user"></i> المريض: <b>${escapeHtml(patientName)}</b>
             </div>
             <form onsubmit="generatePrescription(event, '${patientId}', '${patientName}')">
                 <div id="medListContainer" class="flex flex-col gap-3 mb-4">
@@ -1353,7 +1220,7 @@ window.openMedicineDonation = () => {
             iconColor = 'text-orange-600';
             bgIconColor = 'bg-orange-50';
         } else if (m.medicine_type.includes('أعرض')) {
-            typeBadge = `<span class="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">عرض ${m.medicine_type.includes('إعارة') ? '(للإعارة)' : '(تبرع)'}</span>`;
+            typeBadge = `<span class="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">عرض ${escapeHtml(m.medicine_type.includes('إعارة') ? '(للإعارة)' : '(تبرع)')}</span>`;
         } else {
             typeBadge = `<span class="text-[9px] bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-bold">مستلزمات</span>`;
         }
@@ -1366,19 +1233,19 @@ window.openMedicineDonation = () => {
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
-                            <div class="font-bold text-gray-800 text-sm truncate">${m.medicine_name}</div>
+                            <div class="font-bold text-gray-800 text-sm truncate">${escapeHtml(m.medicine_name)}</div>
                             ${typeBadge}
                         </div>
                         <div class="text-[11px] text-gray-500 flex flex-wrap gap-x-3 gap-y-1 mt-1">
-                            <span><i class="fas fa-tag ml-1"></i>${m.medicine_type}</span>
-                            <span><i class="fas fa-box ml-1"></i>${m.quantity}</span>
-                            <span class="text-purple-500 font-bold"><i class="fas fa-info-circle ml-1"></i>${m.expiry_date}</span>
+                            <span><i class="fas fa-tag ml-1"></i>${escapeHtml(m.medicine_type)}</span>
+                            <span><i class="fas fa-box ml-1"></i>${escapeHtml(m.quantity)}</span>
+                            <span class="text-purple-500 font-bold"><i class="fas fa-info-circle ml-1"></i>${escapeHtml(m.expiry_date)}</span>
                         </div>
-                        ${m.notes ? `<div class="text-[10px] text-gray-400 mt-1 truncate"><i class="fas fa-pen"></i> ${m.notes}</div>` : ''}
+                        ${m.notes ? `<div class="text-[10px] text-gray-400 mt-1 truncate"><i class="fas fa-pen"></i> ${escapeHtml(m.notes)}</div>` : ''}
                     </div>
                 </div>
                 <div class="flex gap-2 w-full sm:w-auto flex-shrink-0">
-                    <a href="tel:${m.phone}" class="flex-1 sm:flex-none bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-teal-700 transition-colors"><i class="fas fa-phone"></i> تواصل</a>
+                    <a href="tel:${escapeHtml(m.phone)}" class="flex-1 sm:flex-none bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-teal-700 transition-colors"><i class="fas fa-phone"></i> تواصل</a>
                 </div>
             </div>
         `;
@@ -1436,14 +1303,12 @@ window.submitMedicineDonation = async (e) => {
         btn.innerHTML = '<i class="fas fa-bullhorn ml-2"></i> نشر الإعلان للمجتمع';
     }
 }
-    
-    
 window.resolveMedicineDonation = async (id) => { 
     try { 
         await supabase.from('medicine_donations').update({ status: 'resolved' }).eq('id', id); 
         showToast('تمت الإزالة.'); 
-        await fetchMedicineDonations(); // جلب قائمة الأدوية المحدثة
-        renderAdminDashboard(); // إعادة بناء اللوحة
+        await fetchMedicineDonations(); 
+        renderAdminDashboard(); 
     } catch (err) { showToast('خطأ'); } 
 }
 window.openBloodBank = () => {
@@ -1492,13 +1357,13 @@ function renderBloodBankUI() {
     list.innerHTML = bloodRequests.map(req => {
         return `
             <div class="border rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4" style="border-color: var(--border)">
-                <div class="blood-type-badge">${req.blood_type}</div>
+                <div class="blood-type-badge">${escapeHtml(req.blood_type)}</div>
                 <div class="flex-1 text-center sm:text-right">
                     <div class="font-bold text-gray-800">${escapeHtml(req.patient_name)}</div>
                     <div class="text-xs text-gray-500 mt-1"><i class="fas fa-hospital ml-1"></i> ${escapeHtml(req.hospital)} ${req.notes ? `| <i class="fas fa-notes-medical ml-1"></i> ${escapeHtml(req.notes)}` : ''}</div>
                 </div>
                 <div class="flex gap-2">
-                    <a href="tel:${req.phone}" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال</a>
+                    <a href="tel:${escapeHtml(req.phone)}" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال</a>
                 </div>
             </div>
         `;
@@ -1550,7 +1415,7 @@ window.respondToBloodRequest = (btnElement, reqId, patientName, phone) => {
             const req = bloodRequests.find(r => r.id === reqId);
             const newCount = (req?.responses_count || 0) + 1;
             await supabase.from('blood_requests').update({ responses_count: newCount }).eq('id', reqId);
-            toast.innerHTML = `<div class="flex flex-col items-center gap-3"><div class="text-sm font-bold">بارك الله فيك! 🌹<br>تم تسجيل استجابتك.</div><a href="tel:${phone}" onclick="hideToast()" style="background:#2563EB; color:white; padding:8px 20px; border-radius:8px; font-size:14px; text-decoration:none; font-weight:bold; display:flex; align-items:center; gap:8px;"><i class="fas fa-phone-volume"></i> اتصال بالمريض</a></div>`;
+            toast.innerHTML = `<div class="flex flex-col items-center gap-3"><div class="text-sm font-bold">بارك الله فيك! 🌹<br>تم تسجيل استجابتك.</div><a href="tel:${escapeHtml(phone)}" onclick="hideToast()" style="background:#2563EB; color:white; padding:8px 20px; border-radius:8px; font-size:14px; text-decoration:none; font-weight:bold; display:flex; align-items:center; gap:8px;"><i class="fas fa-phone-volume"></i> اتصال بالمريض</a></div>`;
             toast.classList.add('show');
             setTimeout(() => { toast.classList.remove('show'); }, 10000);
         } catch (err) { showToast('حدث خطأ أثناء التسجيل'); btnElement.disabled = false; btnElement.innerText = 'استجبت'; btnElement.classList.remove('opacity-50', 'cursor-not-allowed'); }
@@ -1565,7 +1430,6 @@ window.setStatus = async (id, status) => {
         localStorage.setItem('force_listings_update', 'true');
         let msg = status === true ? 'تم تغيير الحالة إلى: مفتوح' : status === false ? 'تم تغيير الحالة إلى: مغلق' : 'تم تعيين الحالة إلى: لا شيء';
         showToast(msg);
-        // 1. تحديث البيانات في الذاكرة محلياً
         const item = allData.find(d => d.id === id);
         if (item) item.isopen = status;
         const buttons = document.querySelectorAll(`button[onclick*="setStatus('${id}',"]`);
@@ -1684,14 +1548,11 @@ window.quickLookup = async () => {
             else if (m.status === 'available') { statusText = 'تم التوفير - جاهز للاستلام'; statusColor = '#10B981'; statusIcon = 'fa-check-circle'; }
             else if (m.status === 'unavailable') { statusText = 'غير متوفر حالياً'; statusColor = '#6B7280'; statusIcon = 'fa-times-circle'; }
             else { statusText = 'تم إنهاء الطلب'; statusColor = '#6B7280'; statusIcon = 'fa-archive'; }
-            document.getElementById('modalContent').innerHTML = `<div class="p-6 text-center"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-pills ml-2" style="color: var(--gold)"></i> حالة طلب الدواء</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div><div class="text-sm text-gray-500 mb-1">رقم الطلب</div><div class="text-xl font-black text-yellow-600 mb-6">#${m.med_ref}</div><div class="p-4 rounded-xl mb-4" style="background: ${statusColor}20; color: ${statusColor};"><i class="fas ${statusIcon} text-3xl mb-2"></i><div class="font-bold text-lg">${statusText}</div></div>${m.notes ? `<div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 text-right"><b>ملاحظة الصيدلية:</b><br>${m.notes}</div>` : '<div class="text-xs text-gray-400">لا توجد ملاحظات.</div>'}</div>`;
+            document.getElementById('modalContent').innerHTML = `<div class="p-6 text-center"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg"><i class="fas fa-pills ml-2" style="color: var(--gold)"></i> حالة طلب الدواء</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div><div class="text-sm text-gray-500 mb-1">رقم الطلب</div><div class="text-xl font-black text-yellow-600 mb-6">#${escapeHtml(m.med_ref)}</div><div class="p-4 rounded-xl mb-4" style="background: ${statusColor}20; color: ${statusColor};"><i class="fas ${statusIcon} text-3xl mb-2"></i><div class="font-bold text-lg">${statusText}</div></div>${m.notes ? `<div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 text-right"><b>ملاحظة الصيدلية:</b><br>${escapeHtml(m.notes)}</div>` : '<div class="text-xs text-gray-400">لا توجد ملاحظات.</div>'}</div>`;
             document.getElementById('modalOverlay').classList.add('active'); lockScroll();
         } else { showToast('لم يتم العثور على طلب دواء'); }
     } else { showToast('صيغة غير صحيحة. استخدم R-XXX أو MED-XXX'); }
 }
-
-// تنتهي هنا الجزء الثالث...
-// === الجزء الرابع: الإدارة، الملف الصحي، الإحصائيات، الإعلانات ===
 
 window.openAdminLogin = () => { 
     openCtrlPanel('لوحة الإدارة', `<div class="max-w-sm mx-auto py-8"><div class="text-center mb-6"><div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: var(--accent-light)"><i class="fas fa-user-shield text-2xl" style="color: var(--accent)"></i></div><h3 class="font-bold text-lg">دخول الإدارة</h3></div><form onsubmit="handleAdminLogin(event)" class="flex flex-col gap-4"><input type="email" id="adminEmail" class="ctrl-input text-center" placeholder="البريد الإلكتروني" required><input type="password" id="adminPass" class="ctrl-input text-center" placeholder="كلمة المرور" required><button type="submit" class="w-full py-3 rounded-xl text-white font-bold text-sm" style="background: var(--accent)">دخول</button></form></div>`, '#073D2E'); 
@@ -1729,7 +1590,6 @@ window.updateAdminFormFields = (type) => {
 }
 
 window.renderAdminDashboard = async () => { 
-    // التحقق من تسجيل الدخول أولاً
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         openAdminLogin();
@@ -1737,11 +1597,10 @@ window.renderAdminDashboard = async () => {
         return;
     }
 
-    // 1. جلب آخر 5 ملفات صحية مسجلة
     const { data: recentPatients } = await supabase.from('health_files').select('full_name, blood_type, created_at').order('created_at', { ascending: false }).limit(5);
     let patientsHtml = '';
     if (recentPatients && recentPatients.length > 0) {
-        patientsHtml = recentPatients.map(p => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-2"><i class="fas fa-user-circle text-gray-400"></i><span class="text-sm font-semibold">${p.full_name}</span></div><span class="text-xs text-red-500 font-bold">${p.blood_type || 'غير محدد'}</span></div>`).join('');
+        patientsHtml = recentPatients.map(p => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-2"><i class="fas fa-user-circle text-gray-400"></i><span class="text-sm font-semibold">${escapeHtml(p.full_name)}</span></div><span class="text-xs text-red-500 font-bold">${escapeHtml(p.blood_type || 'غير محدد')}</span></div>`).join('');
     } else {
         patientsHtml = '<p class="text-center text-gray-400 text-sm py-4">لا يوجد مرضى مسجلين بعد.</p>';
     }
@@ -1751,7 +1610,7 @@ window.renderAdminDashboard = async () => {
     const homeAdsHtml = `<div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-photo-video text-purple-600"></i> إعلانات الصفحة الرئيسية (صور/فيديو)</h4><form onsubmit="saveHomeAd(event)" class="grid grid-cols-1 gap-3 mb-4"><select id="adType" class="ctrl-input text-sm"><option value="image">صورة (رابط مباشر ينتهي بـ .jpg أو .png)</option><option value="video">فيديو (رابط مباشر ينتهي بـ .mp4 فقط)</option></select><input type="text" id="adContent" class="ctrl-input text-sm" placeholder="الصق الرابط هنا..." required><input type="text" id="adLink" class="ctrl-input text-sm" placeholder="رابط التحويل عند الضغط (اختياري للصور)"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="adActiveCheck" class="w-5 h-5 accent-purple-600" checked> تفعيل وعرض الإعلان فوراً</label><button type="submit" class="py-2.5 rounded-xl text-white font-semibold text-sm" style="background: #8B5CF6"><i class="fas fa-plus ml-1"></i> إضافة إعلان</button></form><div id="adminHomeAdsList" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1"><p class="text-center text-gray-400 text-sm py-2">جاري تحميل الإعلانات...</p></div></div>`;
     const announcementsHtml = `<div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-bullhorn text-blue-600"></i> إدارة الشريط الإعلاني العلوي</h4><form onsubmit="saveAnnouncement(event)" class="grid grid-cols-1 gap-3 mb-4"><textarea id="annText" class="ctrl-input text-sm" rows="2" placeholder="نص الإعلان (مثال: افتتاحية قسم الطوارئ الجديد...)" required></textarea><input type="text" id="annLink" class="ctrl-input text-sm" placeholder="رابط التفاصيل (اتركه فارغاً لإخفاء الزر تماماً)"><input type="text" id="annLinkText" class="ctrl-input text-sm" placeholder="نص الزر (اختياري - افتراضي: اضغط هنا)"><button type="submit" class="py-2.5 rounded-xl text-white font-semibold text-sm" style="background: #2563EB"><i class="fas fa-paper-plane ml-1"></i> نشر الإعلان</button></form><div id="adminAnnouncementList" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1"><p class="text-center text-gray-400 text-sm py-2">جاري تحميل الإعلانات...</p></div></div>`;
     
-    let listHtml = allData.map(item => `<div class="flex items-center justify-between p-3 rounded-xl border bg-white" style="border-color: var(--border)"><div class="flex flex-col gap-1"><div class="flex items-center gap-3"><span class="badge badge-${item.type}">${item.type}</span><span class="font-semibold text-sm">${item.name}</span></div>${item.bookingpass ? `<span class="text-[11px] text-gray-500">رمز الطبيب: <span class="font-mono font-bold text-blue-600">${item.bookingpass}</span></span>` : ''}${item.pharmacypass ? `<span class="text-[11px] text-gray-500">رمز الصيدلية: <span class="font-mono font-bold text-green-600">${item.pharmacypass}</span></span>` : ''}</div><div class="flex gap-2 items-center"> ${['doctor', 'pharmacy'].includes(item.type) ? `
+    let listHtml = allData.map(item => `<div class="flex items-center justify-between p-3 rounded-xl border bg-white" style="border-color: var(--border)"><div class="flex flex-col gap-1"><div class="flex items-center gap-3"><span class="badge badge-${item.type}">${item.type}</span><span class="font-semibold text-sm">${escapeHtml(item.name)}</span></div></div><div class="flex gap-2 items-center"> ${['doctor', 'pharmacy'].includes(item.type) ? `
 <div class="flex flex-col gap-1">
     <div class="flex gap-1 bg-gray-50 p-1 rounded-lg border" style="border-color: var(--border)">
         <button onclick="setStatus('${item.id}', true)" class="px-2 py-1 rounded text-[11px] font-bold transition-all ${item.isopen === true ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-100'}">مفتوح</button>
@@ -1766,8 +1625,8 @@ window.renderAdminDashboard = async () => {
 
     const twentyHoursAgo = new Date(Date.now() - (20 * 60 * 60 * 1000)).toISOString();
     const activeBloodRequests = bloodRequests.filter(b => b.created_at > twentyHoursAgo);
-    let bloodHtml = activeBloodRequests.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد استغاثات حالياً.</p>' : activeBloodRequests.map(b => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><span class="blood-type-badge text-sm py-1 px-3">${b.blood_type}</span><div><div class="text-sm font-semibold">${b.patient_name} ${b.responses_count > 0 ? '<span class="text-xs text-green-500">(مستجيب: '+b.responses_count+')</span>' : ''}</div><div class="text-xs text-gray-500">${b.hospital}</div></div></div><button onclick="resolveBloodRequest('${b.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">إنهاء الطلب</button></div>`).join('');
-    let medDonHtml = medicineDonations.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد مستلزمات طبية مُتبرع او طلب حالياً.</p>' : medicineDonations.map(m => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><i class="fas fa-pills text-green-600"></i><div><div class="text-sm font-semibold">${m.medicine_name} (${m.quantity})</div><div class="text-xs text-gray-500">ينتهي: ${m.expiry_date} | المتبرع: ${m.donor_name}</div></div></div><button onclick="resolveMedicineDonation('${m.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">حذف/إنهاء</button></div>`).join('');
+    let bloodHtml = activeBloodRequests.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد استغاثات حالياً.</p>' : activeBloodRequests.map(b => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><span class="blood-type-badge text-sm py-1 px-3">${escapeHtml(b.blood_type)}</span><div><div class="text-sm font-semibold">${escapeHtml(b.patient_name)} ${b.responses_count > 0 ? '<span class="text-xs text-green-500">(مستجيب: '+escapeHtml(b.responses_count)+')</span>' : ''}</div><div class="text-xs text-gray-500">${escapeHtml(b.hospital)}</div></div></div><button onclick="resolveBloodRequest('${b.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">إنهاء الطلب</button></div>`).join('');
+    let medDonHtml = medicineDonations.length === 0 ? '<p class="text-center py-4 text-gray-400 text-sm">لا توجد مستلزمات طبية مُتبرع او طلب حالياً.</p>' : medicineDonations.map(m => `<div class="flex items-center justify-between p-2 rounded-lg border" style="border-color: var(--border)"><div class="flex items-center gap-3"><i class="fas fa-pills text-green-600"></i><div><div class="text-sm font-semibold">${escapeHtml(m.medicine_name)} (${escapeHtml(m.quantity)})</div><div class="text-xs text-gray-500">ينتهي: ${escapeHtml(m.expiry_date)} | المتبرع: ${escapeHtml(m.donor_name)}</div></div></div><button onclick="resolveMedicineDonation('${m.id}')" class="text-xs text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">حذف/إنهاء</button></div>`).join('');
 
     openCtrlPanel('لوحة الإدارة', `<div class="flex flex-col gap-6"> ${announcementsHtml} ${homeAdsHtml} ${radarAdminHtml} ${patientsAdminHtml} <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-tint text-red-600"></i> إدارة استغاثات الدم (${bloodRequests.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${bloodHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm flex items-center gap-2" style="font-family: 'Noto Kufi Arabic'"><i class="fas fa-hand-holding-medical text-green-600"></i>إدارة المستلزمات الطبية (${medicineDonations.length})</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">${medDonHtml}</div></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-plus-circle ml-2" style="color: var(--accent)"></i> <span id="formTitle">إضافة منشأة</span></h4><form onsubmit="saveFacility(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3"><input type="hidden" id="edit_id"><select id="new_type" class="ctrl-input text-sm" required onchange="updateAdminFormFields(this.value)"><option value="hospital">مشفى</option><option value="center">مركز</option><option value="lab">مخبر</option><option value="doctor">طبيب</option><option value="pharmacy">صيدلية</option></select><input type="text" id="new_name" class="ctrl-input text-sm" placeholder="الاسم" required><input type="text" id="new_specialty" class="ctrl-input text-sm" placeholder="التخصص الأساسي" required><input type="text" id="new_address" class="ctrl-input text-sm" placeholder="العنوان / الموقع" required><input type="text" id="new_phone" class="ctrl-input text-sm" placeholder="رقم الهاتف (اختياري)"><input type="text" id="new_hours" class="ctrl-input text-sm" placeholder="أوقات العمل"><input type="text" id="new_image_url" class="ctrl-input text-sm" placeholder="رابط الصورة (URL)"><textarea id="new_desc" class="ctrl-input text-sm col-span-2" placeholder="وصف عام" rows="2" required></textarea><div id="adminExtraFields" class="contents"></div><button type="submit" class="col-span-1 sm:col-span-2 py-2.5 rounded-xl text-white font-semibold text-sm" style="background: var(--accent)"><i class="fas fa-save ml-1"></i> حفظ</button></form></div> <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)"><h4 class="font-bold mb-4 text-sm"><i class="fas fa-list ml-2"></i> المنشآت (${allData.length})</h4><div class="flex flex-col gap-2 max-h-96 overflow-y-auto">${listHtml}</div></div> <button onclick="seedDatabase()" class="py-2.5 rounded-xl border border-dashed font-semibold text-sm" style="border-color: var(--gold); color: var(--gold)"><i class="fas fa-database ml-2"></i> ترحيل البيانات الافتراضية</button> <button onclick="logoutAdmin()" class="w-full py-2.5 rounded-xl border font-semibold text-sm mt-2" style="border-color: #EF4444; color: #EF4444;"><i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج</button> </div>`, '#073D2E'); 
     
@@ -1786,7 +1645,7 @@ async function fetchAnnouncements() {
     const annList = document.getElementById('adminAnnouncementList'); 
     if (annList) {
         if (allAnnouncements.length === 0) { annList.innerHTML = '<p class="text-center text-gray-400 text-sm">لا توجد إعلانات.</p>'; } 
-        else { annList.innerHTML = allAnnouncements.map(ann => `<div class="flex items-center justify-between p-2 rounded-lg border"><div class="text-xs truncate flex-1">${ann.text}</div><div class="flex gap-1 mr-2"><button onclick="toggleAnnouncement('${ann.id}', ${!ann.is_active})" class="px-2 py-1 rounded text-xs ${ann.is_active ? 'bg-green-500 text-white' : 'bg-gray-200'}">${ann.is_active ? 'مفعّل' : 'معطّل'}</button><button onclick="deleteAnnouncement('${ann.id}')" class="px-2 py-1 rounded text-xs bg-red-500 text-white"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
+        else { annList.innerHTML = allAnnouncements.map(ann => `<div class="flex items-center justify-between p-2 rounded-lg border"><div class="text-xs truncate flex-1">${escapeHtml(ann.text)}</div><div class="flex gap-1 mr-2"><button onclick="toggleAnnouncement('${ann.id}', ${!ann.is_active})" class="px-2 py-1 rounded text-xs ${ann.is_active ? 'bg-green-500 text-white' : 'bg-gray-200'}">${ann.is_active ? 'مفعّل' : 'معطّل'}</button><button onclick="deleteAnnouncement('${ann.id}')" class="px-2 py-1 rounded text-xs bg-red-500 text-white"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
     }
     renderTopAnnouncement();
 }
@@ -1843,14 +1702,14 @@ window.saveFacility = async (e) => {
         data.bookingpass = generateUniqueId(); 
         const docEmail = `doc_${data.bookingpass.toLowerCase()}@tabibnet.app`;
         const { data: authData, error: authError } = await supabase.auth.signUp({ email: docEmail, password: data.bookingpass });
-        if (authData && authData.user) { data.user_id = authData.user.id; } // حفظ المعرف الآمن
+        if (authData && authData.user) { data.user_id = authData.user.id; } 
         if (authError) { showToast('خطأ في إنشاء حساب الطبيب: ' + authError.message); return; }
     } 
     if (!id && type === 'pharmacy') { 
         data.pharmacypass = generateUniqueId(); 
         const pharmEmail = `pharm_${data.pharmacypass.toLowerCase()}@tabibnet.app`;
         const { data: authData, error: authError } = await supabase.auth.signUp({ email: pharmEmail, password: data.pharmacypass });
-        if (authData && authData.user) { data.user_id = authData.user.id; } // حفظ المعرف الآمن
+        if (authData && authData.user) { data.user_id = authData.user.id; } 
         if (authError) { showToast('خطأ في إنشاء حساب الصيدلية: ' + authError.message); return; }
     } 
     
@@ -1881,12 +1740,10 @@ window.saveFacility = async (e) => {
 };
 
 window.openHealthFile = async () => {
-    // التحقق إذا كان المريض مسجل دخوله مسبقاً
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
         currentHealthFileId = session.user.id;
         
-        // استخدام maybeSingle لمنع خطأ (Crash) إذا كان الملف غير موجود بعد (خاصة لمستخدمي جوجل)
         const { data: docSnap, error: fetchError } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).maybeSingle();
         
         if (fetchError) { 
@@ -1896,11 +1753,9 @@ window.openHealthFile = async () => {
         }
         
         if (docSnap) { 
-            // إذا كان الملف موجوداً، اعرضه
             renderHealthDashboard(docSnap); 
             return; 
         } else {
-            // إذا دخل عبر جوجل ولم يكن يملك ملفاً، ننشئ له واحداً تلقائياً
             const defaultName = session.user.email ? session.user.email.split('@')[0] : 'مريض';
             const { data: newFile, error: insertError } = await supabase.from('health_files').insert([{ id: currentHealthFileId, full_name: defaultName }]).select().single();
             if (insertError) {
@@ -1915,7 +1770,6 @@ window.openHealthFile = async () => {
         }
     }
 
-    // === كود واجهة تسجيل الدخول (HTML) يبدأ من هنا كما هو بدون تغيير ===
     openCtrlPanel('الملف الصحي الذكي', `
         <div class="flex flex-col gap-4 max-w-md mx-auto w-full">
             <div class="bg-pink-50 border border-pink-200 rounded-xl p-4 text-pink-800 text-sm flex items-center gap-3">
@@ -1923,13 +1777,11 @@ window.openHealthFile = async () => {
                 <span>ملفك الطبي الخاص، محمي بأمان عالي. يمكنك تسجيل الدخول بحساب Google لسرعة الوصول، أو عبر البريد الإلكتروني.</span>
             </div>
         
-            <!-- زر جوجل الاحترافي -->
             <button onclick="signInWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-xl transition-all shadow-sm">
                 <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
                 المتابعة عبر حساب Google
             </button>
 
-            <!-- فاصل أنيق -->
             <div class="relative my-2">
                 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
                 <div class="relative flex justify-center"><span class="bg-transparent px-4 text-xs text-gray-500">أو سجل عبر البريد الإلكتروني</span></div>
@@ -1954,7 +1806,6 @@ window.openHealthFile = async () => {
     `, '#EC4899');
 }
 window.signInWithGoogle = async () => {
-    // وضع علامة تفيد بأن المستخدم بدأ عملية تسجيل الدخول
     sessionStorage.setItem('google_login_intent', 'true');
     
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -1980,7 +1831,6 @@ window.handleHealthRegister = async (e) => {
     }
     const fullName = document.getElementById('regFullName').value.trim();
 
-    // 1. إنشاء حساب مصادقة (Auth) للمريض
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) { 
         showToast('حدث خطأ أثناء التسجيل: ' + error.message); 
@@ -1989,7 +1839,6 @@ window.handleHealthRegister = async (e) => {
     
     const userId = data.user.id;
     
-    // 2. إنشاء صف فارغ في جدول الملف الصحي مرتبط بمعرف الحساب
     const { error: dbError } = await supabase.from('health_files').insert([{ id: userId, full_name: fullName }]);
     if (dbError) { 
         showToast('تم إنشاء الحساب ولكن حدث خطأ في قاعدة البيانات'); 
@@ -1997,7 +1846,7 @@ window.handleHealthRegister = async (e) => {
     }
 
     showToast('تم إنشاء الحساب بنجاح! يرجى تأكيد بريدك الإلكتروني ثم تسجيل الدخول.');
-    switchHealthTab('login'); // العودة لشاشة الدخول
+    switchHealthTab('login'); 
 }
 window.handleHealthLogin = async (e) => {
     e.preventDefault();
@@ -2014,7 +1863,6 @@ window.handleHealthLogin = async (e) => {
     currentHealthFileId = data.user.id;
     localStorage.setItem('healthFileId', currentHealthFileId);
     
-    // استخدام maybeSingle لمنع خطأ إذا كان الملف غير موجود
     let { data: fileData, error: fileError } = await supabase.from('health_files').select('*').eq('id', currentHealthFileId).maybeSingle();
     
     if (fileError) { 
@@ -2023,7 +1871,6 @@ window.handleHealthLogin = async (e) => {
         return; 
     }
     
-    // إذا لم يجد ملفاً للمريض، يقوم بإنشاء واحد جديد فوراً
     if (!fileData) {
         const defaultName = data.user.email ? data.user.email.split('@')[0] : 'مريض';
         const { data: newFile, error: insertError } = await supabase.from('health_files').insert([{ id: currentHealthFileId, full_name: defaultName }]).select().single();
@@ -2035,7 +1882,6 @@ window.handleHealthLogin = async (e) => {
         fileData = newFile;
     }
     
-    // عرض لوحة الملف الصحي
     renderHealthDashboard(fileData);
 };
  window.renderHealthDashboard = (data) => {
@@ -2047,33 +1893,30 @@ window.handleHealthLogin = async (e) => {
                 <p class="text-xs text-gray-500 mt-3 text-center">وجه الطبيب لمسح هذا الرمز للوصول لملفك فوراً دون كلمة مرور</p>
             </div>
             <form onsubmit="saveHealthProfile(event)" class="bg-white p-5 rounded-xl border grid grid-cols-1 sm:grid-cols-2 gap-3" style="border-color: var(--border)">
-                <div class="col-span-1 sm:col-span-2"><label class="text-xs font-bold text-gray-500">الاسم الكامل</label><input type="text" id="hfFullName" class="ctrl-input" value="${data.full_name || data.fullName || ''}" required></div>
-                <div><label class="text-xs font-bold text-gray-500">العمر</label><input type="number" id="hfAge" class="ctrl-input" value="${data.age || ''}"></div>
+                <div class="col-span-1 sm:col-span-2"><label class="text-xs font-bold text-gray-500">الاسم الكامل</label><input type="text" id="hfFullName" class="ctrl-input" value="${escapeHtml(data.full_name || data.fullName || '')}" required></div>
+                <div><label class="text-xs font-bold text-gray-500">العمر</label><input type="number" id="hfAge" class="ctrl-input" value="${escapeHtml(data.age || '')}"></div>
                 <div><label class="text-xs font-bold text-gray-500">الجنس</label><select id="hfGender" class="ctrl-input"><option value="ذكر" ${data.gender === 'ذكر' ? 'selected' : ''}>ذكر</option><option value="أنثى" ${data.gender === 'أنثى' ? 'selected' : ''}>أنثى</option></select></div>
                 <div><label class="text-xs font-bold text-gray-500">فصيلة الدم</label><select id="hfBloodType" class="ctrl-input">${["A+","A-","B+","B-","AB+","AB-","O+","O-","غير معروف"].map(t => `<option value="${t}" ${data.blood_type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-                <div><label class="text-xs font-bold text-gray-500">الوزن (كغ)</label><input type="text" id="hfWeight" class="ctrl-input" value="${data.weight || ''}"></div>
-                <div class="col-span-1 sm:col-span-2"><label class="text-xs font-bold text-gray-500">الأمراض المزمنة</label><input type="text" id="hfDiseases" class="ctrl-input" value="${data.diseases || ''}" placeholder="مثال: سكري، ضغط"></div>
-                <div class="col-span-1 sm:col-span-2"><label class="text-xs font-bold text-gray-500">الحساسية (دوائية/غذائية)</label><input type="text" id="hfAllergies" class="ctrl-input" value="${data.allergies || ''}" placeholder="مثال: بنسلين، مكسرات"></div>
-                <div class="col-span-1 sm:col-span-2"><label class="text-xs font-bold text-gray-500">الأدوية الحالية</label><input type="text" id="hfMedications" class="ctrl-input" value="${data.medications || ''}"></div>
+                <div><label class="text-xs font-bold text-gray-500">الوزن (كغ)</label><input type="text" id="hfWeight" class="ctrl-input" value="${escapeHtml(data.weight || '')}"></div>
+                <div class="col-span-1 sm:col-span-2"><label class="text-xs font-bold text-gray-500">الأمراض المزمنة</label><input type="text" id="hfDiseases" class="ctrl-input" value="${escapeHtml(data.diseases || '')}" placeholder="مثال: سكري، ضغط"></div>
+                <div class="col-span-1 sm:col-span-2"><label class="text-xs font-bold text-gray-500">الحساسية (دوائية/غذائية)</label><input type="text" id="hfAllergies" class="ctrl-input" value="${escapeHtml(data.allergies || '')}" placeholder="مثال: بنسلين، مكسرات"></div>
+                <div class="col-span-1 sm:col-span-2"><label class="text-xs font-bold text-gray-500">الأدوية الحالية</label><input type="text" id="hfMedications" class="ctrl-input" value="${escapeHtml(data.medications || '')}"></div>
                 
-                <!-- سجل الأسنان -->
                 <div class="col-span-1 sm:col-span-2 mt-2 p-3 rounded-xl border" style="border-color: #FED7AA; background: #FFF7ED;">
                     <label class="text-xs font-bold text-orange-700 flex items-center gap-1"><i class="fas fa-tooth"></i> سجل الأسنان (يُقرأ فقط من قبل طبيب الأسنان)</label>
-                    <textarea id="hfDental" class="ctrl-input mt-2" rows="2" placeholder="عمليات سابقة، تقويم، حساسية معينة...">${data.dental || ''}</textarea>
+                    <textarea id="hfDental" class="ctrl-input mt-2" rows="2" placeholder="عمليات سابقة، تقويم، حساسية معينة...">${escapeHtml(data.dental || '')}</textarea>
                 </div>
 
-                <!-- سجل العيون -->
                 <div class="col-span-1 sm:col-span-2 p-3 rounded-xl border" style="border-color: #BFDBFE; background: #EFF6FF;">
                     <label class="text-xs font-bold text-blue-700 flex items-center gap-1"><i class="fas fa-eye"></i> سجل العيون (يُقرأ فقط من قبل طبيب العيون)</label>
-                    <textarea id="hfEye" class="ctrl-input mt-2" rows="2" placeholder="وصفة النظارة، ضغط العين، عمليات ليزك...">${data.eye || ''}</textarea>
+                    <textarea id="hfEye" class="ctrl-input mt-2" rows="2" placeholder="وصفة النظارة، ضغط العين، عمليات ليزك...">${escapeHtml(data.eye || '')}</textarea>
                 </div>
 
-                <div><label class="text-xs font-bold text-gray-500">اسم جهة الطوارئ</label><input type="text" id="hfEmergencyName" class="ctrl-input" value="${data.emergency_name || ''}"></div>
-                <div><label class="text-xs font-bold text-gray-500">هاتف جهة الطوارئ</label><input type="tel" id="hfEmergencyPhone" class="ctrl-input" value="${data.emergency_phone || ''}"></div>
+                <div><label class="text-xs font-bold text-gray-500">اسم جهة الطوارئ</label><input type="text" id="hfEmergencyName" class="ctrl-input" value="${escapeHtml(data.emergency_name || '')}"></div>
+                <div><label class="text-xs font-bold text-gray-500">هاتف جهة الطوارئ</label><input type="tel" id="hfEmergencyPhone" class="ctrl-input" value="${escapeHtml(data.emergency_phone || '')}"></div>
                 <button type="submit" class="col-span-1 sm:col-span-2 py-3 rounded-xl text-white font-bold text-sm" style="background: #EC4899"><i class="fas fa-save ml-2"></i> حفظ التحديثات</button>
             </form>
             
-            <!-- قسم الروشتات الطبية -->
             <div class="bg-white p-5 rounded-xl border" style="border-color: var(--border)">
                 <h4 class="font-bold mb-4 text-sm flex items-center gap-2"><i class="fas fa-file-medical text-blue-600"></i> روشتي الطبية السابقة</h4>
                 <div class="flex flex-col gap-4 mt-2">
@@ -2087,24 +1930,24 @@ window.handleHealthLogin = async (e) => {
                                     <div class="flex items-center gap-2">
                                         <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-user-md"></i></div>
                                         <div>
-                                            <div class="font-bold text-blue-800 text-sm">د. ${rx.doctor || 'طبيب'}</div>
+                                            <div class="font-bold text-blue-800 text-sm">د. ${escapeHtml(rx.doctor || 'طبيب')}</div>
                                             <div class="text-[10px] text-gray-500">${new Date(rx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
                                         </div>
                                     </div>
                                     <i class="fas fa-prescription-bottle-medical text-2xl text-blue-200"></i>
                                 </div>
-                                <div class="whitespace-pre-line font-sans text-gray-800 text-sm leading-loose" style="white-space: pre-wrap;">${rx.text}</div>
+                                <div class="whitespace-pre-line font-sans text-gray-800 text-sm leading-loose" style="white-space: pre-wrap;">${escapeHtml(rx.text)}</div>
                                 <div class="mt-4 pt-4 border-t-2 border-double border-blue-300 flex justify-between items-end">
                                     <div class="flex flex-col gap-0.5">
-                                        <span class="font-bold text-sm text-blue-900" style="font-family: 'Noto Kufi Arabic'">${rx.doctor || 'طبيب'}</span>
-                                        <span class="text-[10px] text-gray-500">${rx.specialty || 'طبيب عام'}</span>
+                                        <span class="font-bold text-sm text-blue-900" style="font-family: 'Noto Kufi Arabic'">${escapeHtml(rx.doctor || 'طبيب')}</span>
+                                        <span class="text-[10px] text-gray-500">${escapeHtml(rx.specialty || 'طبيب عام')}</span>
                                         <span class="text-[10px] text-gray-400">${new Date(rx.date).toLocaleString('ar-EG', { date: 'short', time: 'short' })}</span>
                                     </div>
                                     <div class="flex flex-col items-end gap-1">
                                         <span class="bg-green-100 text-green-700 text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1 border border-green-200">
                                             <i class="fas fa-shield-halved"></i> موثقة إلكترونياً
                                         </span>
-                                        <span class="text-[9px] text-gray-400 font-mono" dir="ltr">VRX: ${rx.verCode || 'N/A'}</span>
+                                        <span class="text-[9px] text-gray-400 font-mono" dir="ltr">VRX: ${escapeHtml(rx.verCode || 'N/A')}</span>
                                     </div>
                                 </div>
                             </div> 
@@ -2145,7 +1988,6 @@ window.logoutHealthFile = async () => {
     closeCtrlPanel(); 
     showToast('تم تسجيل الخروج بنجاح'); 
 }
-// === الإحصائيات ===
 async function trackAndDisplayVisitors() {
     const cachedVisitors = localStorage.getItem('cached_visitors') || '0';
     const cachedViews = localStorage.getItem('cached_views') || '0';
@@ -2155,12 +1997,10 @@ async function trackAndDisplayVisitors() {
     animateCounter(parseInt(cachedViews), 'viewsCount');
 
     try {
-        // Increment views
         const { data: vData } = await supabase.from('site_stats').select('count').eq('id', 'views_metrics').single();
         const newViews = (vData?.count || 0) + 1;
         await supabase.from('site_stats').upsert({ id: 'views_metrics', count: newViews });
 
-        // Increment visitors if new session
         const isNewSession = !sessionStorage.getItem('hasVisitedRaheba');
         if (isNewSession) {
             const { data: visData } = await supabase.from('site_stats').select('count').eq('id', 'visitor_metrics').single();
@@ -2188,7 +2028,6 @@ function animateCounter(target, elementId) {
     const timer = setInterval(() => { current += inc; if (current >= target) { current = target; clearInterval(timer); } el.innerText = current.toLocaleString('ar-EG'); }, stepTime);
 }
 
-// === الإعلانات (Slider) ===
 window.renderAdSlide = (index) => {
     const container = document.getElementById('homeAdContainer'); const dotsContainer = document.getElementById('adDots');
     if (!container || activeAds.length === 0) return;
@@ -2196,8 +2035,7 @@ window.renderAdSlide = (index) => {
     if (adInterval) { clearTimeout(adInterval); clearInterval(adInterval); adInterval = null; }
     const isSingleAd = activeAds.length === 1;
     if (ad.type === 'image') {
-        mediaHTML = `<a href="${ad.link || '#'}" target="_blank" class="block w-full h-full"><img src="${ad.content}" alt="إعلان" class="w-full h-full object-cover"></a>`;
-        // الصور تقلب كل 6 ثواني
+        mediaHTML = `<a href="${escapeHtml(ad.link || '#')}" target="_blank" class="block w-full h-full"><img src="${escapeHtml(ad.content)}" alt="إعلان" class="w-full h-full object-cover"></a>`;
         if (!isSingleAd) adInterval = setTimeout(nextAdSlide, 10000);
         } else if (ad.type === 'video') {
         const loopAttr = isSingleAd ? 'loop' : ''; 
@@ -2205,7 +2043,7 @@ window.renderAdSlide = (index) => {
         mediaHTML = `
         <div class="relative w-full h-full bg-black">
             <video id="homeAdVideo" autoplay muted playsinline ${loopAttr} ${endedAttr} onerror="nextAdSlide()" class="w-full h-full object-cover">
-                <source src="${ad.content}" type="video/mp4">
+                <source src="${escapeHtml(ad.content)}" type="video/mp4">
             </video>
             <button onclick="toggleAdVideoSound()" class="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-sm z-30 transition-all">
                 <i class="fas fa-volume-xmark" id="adVideoSoundIcon"></i>
@@ -2243,7 +2081,7 @@ async function fetchHomeAdsForAdmin() {
     allHomeAds = data || [];
     const list = document.getElementById('adminHomeAdsList'); if (!list) return;
     if (allHomeAds.length === 0) { list.innerHTML = '<p class="text-center text-gray-400 text-sm">لا توجد إعلانات.</p>'; return; }
-    list.innerHTML = allHomeAds.map(ad => `<div class="flex items-center justify-between p-2 rounded-lg border"><div class="text-xs truncate flex-1 flex items-center gap-2"><i class="fas ${ad.type === 'image' ? 'fa-image text-blue-500' : 'fa-video text-purple-500'}"></i><span class="truncate">${ad.content.substring(0, 30)}...</span></div><div class="flex gap-1 mr-2"><button onclick="toggleHomeAdStatus('${ad.id}', ${!ad.is_active})" class="px-2 py-1 rounded text-xs ${ad.is_active ? 'bg-green-500 text-white' : 'bg-gray-200'}">${ad.is_active ? 'مفعّل' : 'معطّل'}</button><button onclick="deleteHomeAd('${ad.id}')" class="px-2 py-1 rounded text-xs bg-red-500 text-white"><i class="fas fa-trash"></i></button></div></div>`).join('');
+    list.innerHTML = allHomeAds.map(ad => `<div class="flex items-center justify-between p-2 rounded-lg border"><div class="text-xs truncate flex-1 flex items-center gap-2"><i class="fas ${ad.type === 'image' ? 'fa-image text-blue-500' : 'fa-video text-purple-500'}"></i><span class="truncate">${escapeHtml(ad.content.substring(0, 30))}...</span></div><div class="flex gap-1 mr-2"><button onclick="toggleHomeAdStatus('${ad.id}', ${!ad.is_active})" class="px-2 py-1 rounded text-xs ${ad.is_active ? 'bg-green-500 text-white' : 'bg-gray-200'}">${ad.is_active ? 'مفعّل' : 'معطّل'}</button><button onclick="deleteHomeAd('${ad.id}')" class="px-2 py-1 rounded text-xs bg-red-500 text-white"><i class="fas fa-trash"></i></button></div></div>`).join('');
 }
 async function fetchHomeAdsPublic() {
     const cachedAds = localStorage.getItem('cached_home_ads');
@@ -2266,11 +2104,9 @@ async function fetchHomeAdsPublic() {
         try { localStorage.setItem('cached_home_ads', JSON.stringify(activeAds)); localStorage.setItem('ads_last_fetch', serverTime.toString()); } catch(e) {}
     }
 }
-// استدعاء جلب الإعلانات عند تحميل الصفحة
 fetchHomeAdsPublic();
 fetchAnnouncements();
 
-// === Service Worker ===
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').then(reg => {
@@ -2286,9 +2122,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (refreshing) return; window.location.reload(); refreshing = true; });
 }
 
-// تنتهي هنا الجزء الرابع...
-        // === الجزء الخامس: الأدوات الطبية والرادار واسأل طبيب (الجزء الأخير الكامل) ===
-
+// === الأدوات الطبية والرادار واسأل طبيب ===
 window.openBurnCalculator = () => {
     burnState = { cause: null, degree: null, area: null };
     openCtrlPanel('مُسعف الحروق الذكي', `
@@ -2366,7 +2200,7 @@ window.renderBurnStep = () => {
             </div>
             <div class="bg-gray-50 p-4 rounded-xl text-sm text-gray-700 leading-relaxed whitespace-pre-line flex items-start gap-2">
                 <i class="fas fa-notes-medical text-orange-500 mt-1"></i>
-                <span>${advice}</span>
+                <span>${escapeHtml(advice)}</span>
             </div>
             ${emergencyBox}
             <button onclick="openBurnCalculator()" class="w-full mt-4 py-3 rounded-xl text-white font-bold text-sm" style="background: #F97316;">
@@ -2377,7 +2211,6 @@ window.renderBurnStep = () => {
 }
 window.selectBurnOption = (key, value) => { burnState[key] = value; window.renderBurnStep(); }
 
-// 3. Seasonal Diseases Guide
 const seasonalDiseases = [
     { name: "التهاب الأمعاء الحاد / التسمم الغذائي", season: "الصيف", icon: "fa-temperature-high", color: "#F59E0B", cause: "ينتشر بكثرة بسبب موجات الحر، وتأثر سلامة المياه أحياناً، أو الأطعمة والمقبلات المكشوفة.", tip: "تجنب الأطعمة المكشوفة والتركيز على غسل الأيدي جيداً قبل تحضير الطعام وبعد استخدام المرحاض." },
     { name: "اللاشمانيا (حبة حلب / حبة السنة)", season: "الخريف والشتاء", icon: "fa-bug", color: "#D97706", cause: "تُعد من الأمراض الجلدية المتوطنة والمشهورة في مناطق ريف دمشق والمناطق شبه الصحراوية والقلمون، تنتقل بلدغات ذبابة الرمل في الصيف.", tip: "استخدام شبكات الناموسيات (المنخل) على النوافذ، وتجنب السير ليلاً في الأماكن شبه الصحراوية دون ملابس طويلة." },
@@ -2391,25 +2224,24 @@ window.openSeasonalDiseases = () => {
             <div class="disease-header" style="background: ${d.color};">
                 <i class="fas ${d.icon} text-2xl text-white"></i>
                 <div>
-                    <h4 class="font-bold text-white text-sm" style="font-family: 'Noto Kufi Arabic'">${d.name}</h4>
-                    <div class="text-xs text-white/80">موسم الذروة: ${d.season}</div>
+                    <h4 class="font-bold text-white text-sm" style="font-family: 'Noto Kufi Arabic'">${escapeHtml(d.name)}</h4>
+                    <div class="text-xs text-white/80">موسم الذروة: ${escapeHtml(d.season)}</div>
                 </div>
             </div>
             <div class="disease-body">
                 <div class="disease-section">
                     <div class="text-xs font-bold text-gray-500 mb-1">السبب المحلي:</div>
-                    <div class="text-sm text-gray-700 leading-relaxed">${d.cause}</div>
+                    <div class="text-sm text-gray-700 leading-relaxed">${escapeHtml(d.cause)}</div>
                 </div>
                 <div class="disease-section">
                     <div class="text-xs font-bold mb-1" style="color: ${d.color};"><i class="fas fa-star ml-1"></i> نصيحة ذهبية:</div>
-                    <div class="text-sm text-gray-700 leading-relaxed">${d.tip}</div>
+                    <div class="text-sm text-gray-700 leading-relaxed">${escapeHtml(d.tip)}</div>
                 </div>
             </div>
         </div>
     `).join('');
     openCtrlPanel('دليل أمراض الرحيبة الموسمية', `<div class="flex flex-col gap-5"><div class="bg-purple-50 border border-purple-200 rounded-xl p-4 text-purple-800 text-sm flex items-center gap-3"><i class="fas fa-virus-covid text-xl"></i><span>دليل توعوي بأبرز الأمراض المنتشرة في منطقة الرحيبة والقلمون موسمياً، مع نصائح وقائية محلية.</span></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${cardsHtml}</div></div>`, '#8B5CF6');
 }
-
 // 4. Pregnancy Calculator
 const pregnancyData = [
     { week: 4, length: "0.4 سم", weight: "< 1 غ", icon: "🌱", dev: "يبدأ القلب والدماغ بالنمو" },
@@ -2459,24 +2291,24 @@ window.calcPregnancy = () => {
     document.getElementById('pregResult').innerHTML = `
         <div class="bg-white p-6 rounded-2xl border-2 text-center" style="border-color: #EC4899;">
             <div class="text-sm font-bold text-pink-500 mb-2">الموعد المتوقع للولادة</div>
-            <div class="text-lg font-black text-gray-800 mb-4" style="font-family: 'Noto Kufi Arabic'">${dueStr}</div>
+            <div class="text-lg font-black text-gray-800 mb-4" style="font-family: 'Noto Kufi Arabic'">${escapeHtml(dueStr)}</div>
             <div class="grid grid-cols-2 gap-3 text-right">
-                <div class="bg-pink-50 p-3 rounded-xl"><div class="text-xs text-pink-400">العمر الحملي الحالي</div><div class="text-xl font-bold text-pink-700">${currentWeek} أسبوع</div></div>
-                <div class="bg-pink-50 p-3 rounded-xl"><div class="text-xs text-pink-400">الأيام المتبقية</div><div class="text-xl font-bold text-pink-700">${daysLeft} يوم</div></div>
+                <div class="bg-pink-50 p-3 rounded-xl"><div class="text-xs text-pink-400">العمر الحملي الحالي</div><div class="text-xl font-bold text-pink-700">${escapeHtml(currentWeek)} أسبوع</div></div>
+                <div class="bg-pink-50 p-3 rounded-xl"><div class="text-xs text-pink-400">الأيام المتبقية</div><div class="text-xl font-bold text-pink-700">${escapeHtml(daysLeft)} يوم</div></div>
             </div>
         </div>
         <div class="bg-gradient-to-br from-pink-50 to-purple-50 p-6 rounded-2xl border flex flex-col items-center text-center" style="border-color: var(--border)">
-            <div class="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center text-5xl mb-3">${stage.icon}</div>
-            <div class="inline-block px-3 py-1 bg-pink-200 text-pink-800 rounded-full text-xs font-bold mb-2">الأسبوع ${stage.week}</div>
+            <div class="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center text-5xl mb-3">${escapeHtml(stage.icon)}</div>
+            <div class="inline-block px-3 py-1 bg-pink-200 text-pink-800 rounded-full text-xs font-bold mb-2">الأسبوع ${escapeHtml(stage.week)}</div>
             <div class="flex justify-center gap-6 mb-4 w-full">
-                <div><div class="text-xs text-gray-500">الطول</div><div class="text-lg font-black text-gray-800">${stage.length}</div></div>
+                <div><div class="text-xs text-gray-500">الطول</div><div class="text-lg font-black text-gray-800">${escapeHtml(stage.length)}</div></div>
                 <div class="w-px bg-gray-300"></div>
-                <div><div class="text-xs text-gray-500">الوزن التقريبي</div><div class="text-lg font-black text-gray-800">${stage.weight}</div></div>
+                <div><div class="text-xs text-gray-500">الوزن التقريبي</div><div class="text-lg font-black text-gray-800">${escapeHtml(stage.weight)}</div></div>
             </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm text-sm text-gray-600 flex items-center gap-2 w-full"><i class="fas fa-heart text-pink-500"></i><span>${stage.dev}</span></div>
+            <div class="bg-white p-3 rounded-xl shadow-sm text-sm text-gray-600 flex items-center gap-2 w-full"><i class="fas fa-heart text-pink-500"></i><span>${escapeHtml(stage.dev)}</span></div>
         </div>
-        <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-pink-600 h-2.5 rounded-full" style="width: ${Math.min(100, (currentWeek/40)*100)}%"></div></div>
-        <div class="text-center text-xs text-gray-500">${Math.min(100, Math.round((currentWeek/40)*100))}% من رحلة الحمل</div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-pink-600 h-2.5 rounded-full" style="width: ${escapeHtml(Math.min(100, (currentWeek/40)*100))}%"></div></div>
+        <div class="text-center text-xs text-gray-500">${escapeHtml(Math.min(100, Math.round((currentWeek/40)*100)))}% من رحلة الحمل</div>
     `;
 }
 
@@ -2519,14 +2351,14 @@ window.calcDose = () => {
     document.getElementById('doseResult').classList.remove('hidden');
     document.getElementById('doseResult').innerHTML = `
         <div class="bg-white p-6 rounded-2xl border-2 text-center" style="border-color: #2563EB;">
-            <div class="text-sm font-bold text-blue-500 mb-2">تعليمات الجرعة لطفل وزنه ${weight} كغ</div>
-            <div class="text-lg font-black text-gray-800 mb-4" style="font-family: 'Noto Kufi Arabic'">${medName}</div>
+            <div class="text-sm font-bold text-blue-500 mb-2">تعليمات الجرعة لطفل وزنه ${escapeHtml(weight)} كغ</div>
+            <div class="text-lg font-black text-gray-800 mb-4" style="font-family: 'Noto Kufi Arabic'">${escapeHtml(medName)}</div>
             <div class="bg-blue-50 p-4 rounded-xl mb-4 flex flex-col items-center justify-center">
                 <div class="text-xs text-blue-400 mb-1">الكمية المعطاة في المرة الواحدة</div>
-                <div class="text-4xl font-black text-blue-700">${doseMl.toFixed(1)} <span class="text-xl">مل</span></div>
-                <div class="text-xs text-gray-500 mt-1">(تقريباً ${Math.round(doseMl * 20)} قطرة)</div>
+                <div class="text-4xl font-black text-blue-700">${escapeHtml(doseMl.toFixed(1))} <span class="text-xl">مل</span></div>
+                <div class="text-xs text-gray-500 mt-1">(تقريباً ${escapeHtml(Math.round(doseMl * 20))} قطرة)</div>
             </div>
-            <div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 mb-2 text-right flex items-start gap-2"><i class="fas fa-clock text-blue-500 mt-1"></i><span><b>التكرار:</b> ${frequency}</span></div>
+            <div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 mb-2 text-right flex items-start gap-2"><i class="fas fa-clock text-blue-500 mt-1"></i><span><b>التكرار:</b> ${escapeHtml(frequency)}</span></div>
             <div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 mb-4 text-right flex items-start gap-2"><i class="fas fa-syringe text-blue-500 mt-1"></i><span><b>طريقة القياس:</b> يُفضل استخدام حقنة الفم المدرجة (السيرنج) لضمان دقة الكمية بدلاً من الملعقة.</span></div>
             <div class="bg-red-50 border border-red-200 p-3 rounded-xl text-xs text-red-700 flex items-start gap-2 text-right"><i class="fas fa-exclamation-circle mt-0.5"></i><span>هذه الجرعة استرشادية. إذا استمرت الحرارة أكثر من 3 أيام أو كانت مرتفعة جداً، توجه للطبيب فوراً. لا تجمع دوائين خافضين للحرارة في نفس الوقت دون استشارة.</span></div>
         </div>
@@ -2557,10 +2389,10 @@ window.openFirstAid = () => {
     const accordionHtml = firstAidData.map((item, index) => `
         <div class="accordion-item ${index === 0 ? 'active' : ''}">
             <div class="accordion-header" onclick="toggleAccordion(this)">
-                <div class="flex items-center gap-3"><i class="fas ${item.icon} text-red-600 text-lg w-8"></i><span>${item.title}</span></div>
+                <div class="flex items-center gap-3"><i class="fas ${escapeHtml(item.icon)} text-red-600 text-lg w-8"></i><span>${escapeHtml(item.title)}</span></div>
                 <i class="fas fa-chevron-down transition-transform"></i>
             </div>
-            <div class="accordion-body"><div class="accordion-body-inner whitespace-pre-line">${item.steps}</div></div>
+            <div class="accordion-body"><div class="accordion-body-inner whitespace-pre-line">${escapeHtml(item.steps)}</div></div>
         </div>
     `).join('');
     openCtrlPanel('دليل الإسعافات الأولية الشامل', `<div class="flex flex-col gap-4"><div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-800 text-sm flex items-center gap-3"><i class="fas fa-ambulance text-xl"></i><span>هذه الإرشادات أولية ولا تغني عن الاتصال بالإسعاف (110) فوراً في الحالات الخطيرة.</span></div><div>${accordionHtml}</div></div>`, '#DC2626');
@@ -2590,7 +2422,7 @@ function renderMedSymbols(data) {
     const grid = document.getElementById('symbolsGrid');
     if (!grid) return;
     if (data.length === 0) { grid.innerHTML = `<div class="col-span-2 text-center py-8 text-gray-400">لا توجد نتائج مطابقة</div>`; return; }
-    grid.innerHTML = data.map(item => `<div class="med-symbol-card"><div class="med-symbol-badge">${item.symbol}</div><div class="font-bold text-sm mb-1" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">${item.name}</div><div class="text-xs leading-relaxed" style="color: var(--muted)">${item.desc}</div></div>`).join('');
+    grid.innerHTML = data.map(item => `<div class="med-symbol-card"><div class="med-symbol-badge">${escapeHtml(item.symbol)}</div><div class="font-bold text-sm mb-1" style="font-family: 'Noto Kufi Arabic'; color: var(--fg)">${escapeHtml(item.name)}</div><div class="text-xs leading-relaxed" style="color: var(--muted)">${escapeHtml(item.desc)}</div></div>`).join('');
 }
 window.filterMedSymbols = () => {
     const q = document.getElementById('symbolSearch').value.toLowerCase();
@@ -2642,12 +2474,12 @@ window.calcHealth = () => {
         <div class="flex flex-col gap-4">
             <div class="bg-white p-6 rounded-2xl border-2 text-center" style="border-color: #4F46E5;">
                 <div class="text-sm font-bold text-indigo-500 mb-2">مؤشر كتلة الجسم (BMI)</div>
-                <div class="text-5xl font-black text-gray-800 mb-2">${bmi.toFixed(1)}</div>
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold" style="background: ${bmiColor}20; color: ${bmiColor};"><i class="fas ${bmiIcon}"></i> ${bmiCategory}</div>
+                <div class="text-5xl font-black text-gray-800 mb-2">${escapeHtml(bmi.toFixed(1))}</div>
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold" style="background: ${escapeHtml(bmiColor)}20; color: ${escapeHtml(bmiColor)};"><i class="fas ${escapeHtml(bmiIcon)}"></i> ${escapeHtml(bmiCategory)}</div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="bg-white p-5 rounded-2xl border text-center" style="border-color: var(--border);"><div class="w-12 h-12 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-2"><i class="fas fa-bullseye text-green-600"></i></div><div class="text-xs text-gray-500 mb-1">الوزن المثالي التقريبي</div><div class="text-2xl font-black text-gray-800">${idealWeight.toFixed(1)} كغ</div></div>
-                <div class="bg-white p-5 rounded-2xl border text-center" style="border-color: var(--border);"><div class="w-12 h-12 mx-auto rounded-full bg-orange-100 flex items-center justify-center mb-2"><i class="fas fa-fire text-orange-500"></i></div><div class="text-xs text-gray-500 mb-1">السعرات اليومية للحفاظ</div><div class="text-2xl font-black text-gray-800">${Math.round(calories)} سعرة</div></div>
+                <div class="bg-white p-5 rounded-2xl border text-center" style="border-color: var(--border);"><div class="w-12 h-12 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-2"><i class="fas fa-bullseye text-green-600"></i></div><div class="text-xs text-gray-500 mb-1">الوزن المثالي التقريبي</div><div class="text-2xl font-black text-gray-800">${escapeHtml(idealWeight.toFixed(1))} كغ</div></div>
+                <div class="bg-white p-5 rounded-2xl border text-center" style="border-color: var(--border);"><div class="w-12 h-12 mx-auto rounded-full bg-orange-100 flex items-center justify-center mb-2"><i class="fas fa-fire text-orange-500"></i></div><div class="text-xs text-gray-500 mb-1">السعرات اليومية للحفاظ</div><div class="text-2xl font-black text-gray-800">${escapeHtml(Math.round(calories))} سعرة</div></div>
             </div>
             <div class="bg-indigo-50 p-4 rounded-xl text-sm text-indigo-800 flex items-start gap-2"><i class="fas fa-lightbulb mt-1"></i><span>لخسارة الوزن: قلل 500 سعرة من احتياجك اليومي. لزيادة الوزن: أضف 500 سعرة. احرص دائماً على استشارة أخصائي التغذية قبل اتباع أي حمية.</span></div>
         </div>
@@ -2689,8 +2521,8 @@ window.calcWater = () => {
         <div class="bg-white p-6 rounded-2xl border-2 text-center" style="border-color: #0891B2;">
             <div class="w-20 h-20 mx-auto rounded-full bg-cyan-100 flex items-center justify-center mb-4"><i class="fas fa-droplet text-4xl text-cyan-500"></i></div>
             <div class="text-sm font-bold text-cyan-600 mb-2">احتياجك اليومي التقريبي من الماء</div>
-            <div class="text-5xl font-black text-gray-800 mb-4">${waterLiters} <span class="text-xl">لتر</span></div>
-            <div class="flex justify-center gap-6 mb-4"><div><div class="text-xs text-gray-500">عدد الأكواب (250 مل)</div><div class="text-2xl font-black text-gray-800">${waterCups} كوب</div></div></div>
+            <div class="text-5xl font-black text-gray-800 mb-4">${escapeHtml(waterLiters)} <span class="text-xl">لتر</span></div>
+            <div class="flex justify-center gap-6 mb-4"><div><div class="text-xs text-gray-500">عدد الأكواب (250 مل)</div><div class="text-2xl font-black text-gray-800">${escapeHtml(waterCups)} كوب</div></div></div>
             <div class="bg-cyan-50 p-3 rounded-xl text-sm text-cyan-800 flex items-start gap-2 text-right"><i class="fas fa-info-circle mt-1"></i><span>وزع هذا المقدار على ساعات اليوم. ابدأ بكوب صباحاً، واحرص على الشرب قبل الشعور بالعطش. تجنب شرب كميات كبيرة دفعة واحدة.</span></div>
         </div>
     `;
@@ -2707,8 +2539,8 @@ const chronicNutritionData = [
 window.openChronicNutrition = () => {
     const cardsHtml = chronicNutritionData.map(d => `
         <div class="disease-card">
-            <div class="disease-header" style="background: ${d.color};"><i class="fas ${d.icon} text-2xl text-white"></i><div><h4 class="font-bold text-white text-sm" style="font-family: 'Noto Kufi Arabic'">${d.disease}</h4></div></div>
-            <div class="disease-body"><div class="text-xs font-bold text-gray-500 mb-1">النصائح الغذائية:</div><div class="text-sm text-gray-700 leading-relaxed">${d.advice}</div></div>
+            <div class="disease-header" style="background: ${escapeHtml(d.color)};"><i class="fas ${escapeHtml(d.icon)} text-2xl text-white"></i><div><h4 class="font-bold text-white text-sm" style="font-family: 'Noto Kufi Arabic'">${escapeHtml(d.disease)}</h4></div></div>
+            <div class="disease-body"><div class="text-xs font-bold text-gray-500 mb-1">النصائح الغذائية:</div><div class="text-sm text-gray-700 leading-relaxed">${escapeHtml(d.advice)}</div></div>
         </div>`).join('');
     openCtrlPanel('قسم التغذية للأمراض المزمنة', `<div class="flex flex-col gap-4"><div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-800 text-sm flex items-center gap-3"><i class="fas fa-bowl-food text-xl"></i><span>دليل غذائي مبسط لأمراض مزمنة شائعة. هذه الإرشادات استرشادية ويجب الالتزام بخطة الطبيب المعالج.</span></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${cardsHtml}</div></div>`, '#10B981');
 }
@@ -2748,11 +2580,11 @@ const foodInteractionsData = [
     { med: "الوارفارين (مسيلات الدم)", food: "الخضار الورقية الداكنة (السبانخ، البقدونس)", effect: "تقلل فاعلية الدواء وتزيد سيولة الدم" },
     { med: "أدوية السكري (Metformin)", food: "الكحول", effect: "خطر حدوث حموضة لاكتكية شديدة" },
     { med: "المضادات الحيوية (Tetracycline)", food: "منتجات الألبان (الحليب، الجبن)", effect: "تمنع امتصاص الدواء وتراكيزه في الجسم" },
-    { med: "أدوية الكوليسترول (Statins)", food: "عصير الليمون هندي", effect: "تراكم الدواء في الدم مما يسبب آلاماً عضلية" },
+    { med: "أدوية الكوليسترول (Statins)", food: "عصير الجريب فروت", effect: "تراكم الدواء في الدم مما يسبب آلاماً عضلية" },
     { med: "مسكنات الألم (NSAIDs)", food: "الكحول، التوابل الحارة", effect: "زيادة خطر نزيف المعدة والقرحة" }
 ];
 window.openFoodInteractions = () => {
-    const tableRows = foodInteractionsData.map(item => `<tr class="border-b" style="border-color: var(--border)"><td class="p-3 text-sm font-bold text-gray-800">${item.med}</td><td class="p-3 text-sm text-red-600">${item.food}</td><td class="p-3 text-sm text-gray-600">${item.effect}</td></tr>`).join('');
+    const tableRows = foodInteractionsData.map(item => `<tr class="border-b" style="border-color: var(--border)"><td class="p-3 text-sm font-bold text-gray-800">${escapeHtml(item.med)}</td><td class="p-3 text-sm text-red-600">${escapeHtml(item.food)}</td><td class="p-3 text-sm text-gray-600">${escapeHtml(item.effect)}</td></tr>`).join('');
     openCtrlPanel('جدول تعارضات الأدوية مع الطعام', `<div class="flex flex-col gap-4"><div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm flex items-center gap-3"><i class="fas fa-utensils text-xl"></i><span>جدول إرشادي لأهم التداخلات بين الأدوية الشائعة والأطعمة. استشر الصيدلاني دائماً.</span></div><div class="bg-white rounded-xl border overflow-hidden" style="border-color: var(--border)"><table class="w-full text-right"><thead class="bg-gray-50"><tr class="border-b" style="border-color: var(--border)"><th class="p-3 text-xs font-bold text-gray-500">الدواء</th><th class="p-3 text-xs font-bold text-gray-500">الطعام الممنوع/المحظور</th><th class="p-3 text-xs font-bold text-gray-500">التأثير الجانبي</th></tr></thead><tbody>${tableRows}</tbody></table></div></div>`, '#D97706');
 }
 
@@ -2789,7 +2621,7 @@ window.deleteReminder = (id) => { patientReminders = patientReminders.filter(r =
 function renderRemindersList() {
     const list = document.getElementById('remindersList'); if (!list) return;
     if (patientReminders.length === 0) { list.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد تذكيرات بعد.</p>'; return; }
-    list.innerHTML = patientReminders.map(r => { const dateObj = new Date(r.date); const formattedDate = dateObj.toLocaleString('ar-EG', { date: 'short', time: 'short', weekday: 'long' }); return `<div class="border rounded-xl p-4 flex items-center justify-between gap-3" style="border-color: var(--border)"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-clock text-indigo-600"></i></div><div><div class="font-bold text-sm text-gray-800">${r.title}</div><div class="text-xs text-gray-500 mt-1">${formattedDate}</div>${r.notes ? `<div class="text-xs text-gray-400 mt-1">${r.notes}</div>` : ''}</div></div><button onclick="deleteReminder(${r.id})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></div>`; }).join('');
+    list.innerHTML = patientReminders.map(r => { const dateObj = new Date(r.date); const formattedDate = dateObj.toLocaleString('ar-EG', { date: 'short', time: 'short', weekday: 'long' }); return `<div class="border rounded-xl p-4 flex items-center justify-between gap-3" style="border-color: var(--border)"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-clock text-indigo-600"></i></div><div><div class="font-bold text-sm text-gray-800">${escapeHtml(r.title)}</div><div class="text-xs text-gray-500 mt-1">${escapeHtml(formattedDate)}</div>${r.notes ? `<div class="text-xs text-gray-400 mt-1">${escapeHtml(r.notes)}</div>` : ''}</div></div><button onclick="deleteReminder(${r.id})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></div>`; }).join('');
 }
 
 // === 5. Medicine Renewal Calculator ===
@@ -2820,7 +2652,7 @@ window.calcRenewal = () => {
     else { statusText = `متبقى ${diffDays} يوماً على نفاد الدواء.`; statusColor = "#10B981"; }
     const formattedDate = renewDate.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('renewalResult').classList.remove('hidden');
-    document.getElementById('renewalResult').innerHTML = `<div class="bg-white p-6 rounded-2xl border-2 text-center" style="border-color: #06B6D4;"><div class="w-16 h-16 mx-auto rounded-full bg-cyan-100 flex items-center justify-center mb-4"><i class="fas fa-pills text-3xl text-cyan-500"></i></div><div class="text-sm font-bold text-cyan-600 mb-2">موعد نفاد الدواء المتوقع</div><div class="text-lg font-black text-gray-800 mb-4" style="font-family: 'Noto Kufi Arabic'">${formattedDate}</div><div class="bg-cyan-50 p-3 rounded-xl text-sm font-bold" style="color: ${statusColor};"><i class="fas fa-info-circle ml-1"></i> ${statusText}</div><div class="text-xs text-gray-500 mt-4">مدة كفاية الدواء الحالي: ${daysSupply} يوم</div></div>`;
+    document.getElementById('renewalResult').innerHTML = `<div class="bg-white p-6 rounded-2xl border-2 text-center" style="border-color: #06B6D4;"><div class="w-16 h-16 mx-auto rounded-full bg-cyan-100 flex items-center justify-center mb-4"><i class="fas fa-pills text-3xl text-cyan-500"></i></div><div class="text-sm font-bold text-cyan-600 mb-2">موعد نفاد الدواء المتوقع</div><div class="text-lg font-black text-gray-800 mb-4" style="font-family: 'Noto Kufi Arabic'">${escapeHtml(formattedDate)}</div><div class="bg-cyan-50 p-3 rounded-xl text-sm font-bold" style="color: ${escapeHtml(statusColor)};"><i class="fas fa-info-circle ml-1"></i> ${escapeHtml(statusText)}</div><div class="text-xs text-gray-500 mt-4">مدة كفاية الدواء الحالي: ${escapeHtml(daysSupply)} يوم</div></div>`;
 }
 
 // === Tool 1: Pre-Test & Scan Instructions (Professional Edition) ===
@@ -2855,10 +2687,10 @@ function renderPrelab(filter='all') {
     container.innerHTML = items.map(item => `
         <div class="prelab-accordion-item border-b" style="border-color:var(--border)">
             <div class="prelab-toggle flex items-center justify-between p-4" onclick="togglePrelab(this)">
-                <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0" style="background:${item.color}"><i class="fas ${item.icon}"></i></div><div><div class="font-bold text-sm">${item.name}</div><span class="fasting-badge ${item.fastingClass} text-[0.7rem] mt-1"><i class="fas ${item.fastingClass==='fasting-none'?'fa-sun':'fa-moon'}"></i> ${item.fasting}</span></div></div>
+                <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0" style="background:${escapeHtml(item.color)}"><i class="fas ${escapeHtml(item.icon)}"></i></div><div><div class="font-bold text-sm">${escapeHtml(item.name)}</div><span class="fasting-badge ${escapeHtml(item.fastingClass)} text-[0.7rem] mt-1"><i class="fas ${item.fastingClass==='fasting-none'?'fa-sun':'fa-moon'}"></i> ${escapeHtml(item.fasting)}</span></div></div>
                 <i class="fas fa-chevron-down text-xs transition-transform" style="color:var(--muted)"></i>
             </div>
-            <div class="prelab-accordion"><div class="px-4 pb-4 pr-[68px]"><div class="bg-gray-50 rounded-xl p-4 mb-3" style="background:var(--bg-deep)"><div class="text-xs font-bold mb-2" style="color:var(--accent)"><i class="fas fa-list-check ml-1"></i> التعليمات:</div><ul class="space-y-2">${item.instructions.map(i => `<li class="flex items-start gap-2 text-xs" style="color:var(--fg-light)"><i class="fas fa-check-circle mt-0.5 flex-shrink-0" style="color:var(--accent)"></i><span>${i}</span></li>`).join('')}</ul></div>${item.notes ? `<div class="flex items-start gap-2 text-xs p-3 rounded-lg" style="background:#FEF9C3;color:#92400E"><i class="fas fa-lightbulb mt-0.5 flex-shrink-0"></i><span>${item.notes}</span></div>` : ''}</div></div>
+            <div class="prelab-accordion"><div class="px-4 pb-4 pr-[68px]"><div class="bg-gray-50 rounded-xl p-4 mb-3" style="background:var(--bg-deep)"><div class="text-xs font-bold mb-2" style="color:var(--accent)"><i class="fas fa-list-check ml-1"></i> التعليمات:</div><ul class="space-y-2">${item.instructions.map(i => `<li class="flex items-start gap-2 text-xs" style="color:var(--fg-light)"><i class="fas fa-check-circle mt-0.5 flex-shrink-0" style="color:var(--accent)"></i><span>${escapeHtml(i)}</span></li>`).join('')}</ul></div>${item.notes ? `<div class="flex items-start gap-2 text-xs p-3 rounded-lg" style="background:#FEF9C3;color:#92400E"><i class="fas fa-lightbulb mt-0.5 flex-shrink-0"></i><span>${escapeHtml(item.notes)}</span></div>` : ''}</div></div>
         </div>`).join('');
 }
 window.filterPrelab = (cat, btn) => { document.querySelectorAll('#ctrlContent .tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderPrelab(cat); }
@@ -2876,7 +2708,7 @@ window.openEventsFirstAid = () => {
         { icon: "fa-bone", title: "السقوط والاشتباه بكسور", steps: "1. لا تحرك العضو المصاب وحاول تثبيته في وضعه الحالي.\n2. ضع جبيرة (خشبة، أو مجلة صلبة) حول العظمة لتثبيتها.\n3. ضع كمادات ثلج ملفوفة بقطعة قماش على مكان الإصابة لتخفيف التورم.\n4. لا تحرك إعادة العظمة لمكانها أبداً، وانقل المصاب للمشفى بحذر أو اطلب الإسعاف." },
         { icon: "fa-pills", title: "هبوط السكر المفاجئ (لمرضى السكري)", steps: "1. إذا شعر شخص بعرق شديد، رجفة، أو تشوش بالوعي، اعطه فوراً عصيراً محلى، أو قطعة سكر، أو ملعقة عسل.\n2. لا تعطه شيئاً عن الفم إذا كان فاقداً للوعي تماماً لتجنب اختناقه.\n3. انتظر 15 دقيقة، إذا لم يتحسن، أعطه جرعة أخرى من السكر واطلب الإسعاف.\n4. بعد أن يستعيد وعيه وتتحسن حالته، أعطه وجبة خفيفة تحتوي على نشويات (شطيرة) لضمان استقرار السكر." }
     ];
-    const html = data.map(d => `<div class="accordion-item"><div class="accordion-header" onclick="toggleAccordion(this)"><div class="flex items-center gap-3"><i class="fas ${d.icon} text-red-600 text-lg w-8"></i><span>${d.title}</span></div><i class="fas fa-chevron-down transition-transform"></i></div><div class="accordion-body"><div class="accordion-body-inner whitespace-pre-line">${d.steps}</div></div></div>`).join('');
+    const html = data.map(d => `<div class="accordion-item"><div class="accordion-header" onclick="toggleAccordion(this)"><div class="flex items-center gap-3"><i class="fas ${escapeHtml(d.icon)} text-red-600 text-lg w-8"></i><span>${escapeHtml(d.title)}</span></div><i class="fas fa-chevron-down transition-transform"></i></div><div class="accordion-body"><div class="accordion-body-inner whitespace-pre-line">${escapeHtml(d.steps)}</div></div></div>`).join('');
     openCtrlPanel('إسعافات المناسبات والتجمعات', `<div class="flex flex-col gap-4"><div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-800 text-sm flex items-center gap-3"><i class="fas fa-kit-medical text-xl"></i><span>دليل سريع للتعامل مع أكثر الحوادث شيوعاً في الأفراح، المهرجانات، والتجمعات العائلية.</span></div><div>${html}</div></div>`, '#DC2626');
 };
 
@@ -2902,7 +2734,7 @@ function renderMapList() {
     container.innerHTML = allData.map(item => {
         const color = typeColors[item.type] || 'var(--accent)';
         const locationQuery = encodeURIComponent((item.address || item.clinic || item.name) + ' الرحيبة سوريا');
-        return `<div onclick="updateMapFrame('${locationQuery}')" class="p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-all" style="border-color: var(--border)"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background: ${color}"></span><span class="font-bold text-sm text-gray-800 truncate">${item.name}</span></div><div class="text-xs text-gray-500 mt-1 truncate">${item.address || item.clinic || 'الرحيبة'}</div></div>`;
+        return `<div onclick="updateMapFrame('${locationQuery}')" class="p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-all" style="border-color: var(--border)"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background: ${escapeHtml(color)}"></span><span class="font-bold text-sm text-gray-800 truncate">${escapeHtml(item.name)}</span></div><div class="text-xs text-gray-500 mt-1 truncate">${escapeHtml(item.address || item.clinic || 'الرحيبة')}</div></div>`;
     }).join('');
 }
 window.updateMapFrame = (query) => { const frame = document.getElementById('mapFrame'); if (frame) frame.src = `https://maps.google.com/maps?q=${query}&output=embed`; };
@@ -2973,7 +2805,7 @@ function renderRadarCards() {
         if (count >= 21 && count <= 50) { badgeText = "انتشار متوسط 🟡"; badgeColor = "#F59E0B"; badgeBg = "#FEF3C7"; barColor = "#F59E0B"; } 
         else if (count > 50) { badgeText = "تنبيه انتشار 🔴"; badgeColor = "#DC2626"; badgeBg = "#FEE2E2"; barColor = "#DC2626"; }
         let barWidth = Math.min(100, (count / 50) * 100); 
-        return `<div class="p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg cursor-pointer" style="background: var(--card); border-color: var(--border);" onclick="toggleRadarTip('${d.id}')"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: ${d.color}20; color: ${d.color};"><i class="fas ${d.icon}"></i></div><div><h4 class="font-bold text-base" style="color: var(--fg);">${d.name}</h4><p class="text-[11px]" style="color: var(--muted);">${d.symptoms}</p></div></div><span class="text-[10px] font-black px-2 py-1 rounded-lg" style="color: ${badgeColor}; background: ${badgeBg};">${badgeText}</span></div><div class="flex justify-between items-center text-xs mb-2"><span class="font-bold" style="color: var(--fg-light);">${count} حالة مسجلة</span></div><div class="flex justify-between text-[11px] mb-3 font-semibold" style="color: var(--muted);"><span>⚡ حالة جديدة اليوم: ${newToday}</span><span>⏳ حالات سابقة: ${ongoing}</span></div><div class="w-full rounded-full h-2.5" style="background: var(--bg-deep);"><div class="h-2.5 rounded-full transition-all duration-700" style="width: ${barWidth}%; background: ${barColor};"></div></div><div id="radarTip_${d.id}" class="hidden mt-4 p-3 rounded-xl text-xs flex items-start gap-2" style="background: rgba(37, 99, 235, 0.1); color: var(--fg-light); border: 1px solid rgba(37, 99, 235, 0.2);"><i class="fas fa-lightbulb mt-0.5" style="color: #2563EB;"></i><div><b style="color: #2563EB;">نصيحة الرادار:</b> ${d.advice}</div></div></div>`;
+        return `<div class="p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg cursor-pointer" style="background: var(--card); border-color: var(--border);" onclick="toggleRadarTip('${escapeHtml(d.id)}')"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: ${escapeHtml(d.color)}20; color: ${escapeHtml(d.color)};"><i class="fas ${escapeHtml(d.icon)}"></i></div><div><h4 class="font-bold text-base" style="color: var(--fg);">${escapeHtml(d.name)}</h4><p class="text-[11px]" style="color: var(--muted);">${escapeHtml(d.symptoms)}</p></div></div><span class="text-[10px] font-black px-2 py-1 rounded-lg" style="color: ${escapeHtml(badgeColor)}; background: ${escapeHtml(badgeBg)};">${escapeHtml(badgeText)}</span></div><div class="flex justify-between items-center text-xs mb-2"><span class="font-bold" style="color: var(--fg-light);">${escapeHtml(count)} حالة مسجلة</span></div><div class="flex justify-between text-[11px] mb-3 font-semibold" style="color: var(--muted);"><span>⚡ حالة جديدة اليوم: ${escapeHtml(newToday)}</span><span>⏳ حالات سابقة: ${escapeHtml(ongoing)}</span></div><div class="w-full rounded-full h-2.5" style="background: var(--bg-deep);"><div class="h-2.5 rounded-full transition-all duration-700" style="width: ${escapeHtml(barWidth)}%; background: ${escapeHtml(barColor)};"></div></div><div id="radarTip_${escapeHtml(d.id)}" class="hidden mt-4 p-3 rounded-xl text-xs flex items-start gap-2" style="background: rgba(37, 99, 235, 0.1); color: var(--fg-light); border: 1px solid rgba(37, 99, 235, 0.2);"><i class="fas fa-lightbulb mt-0.5" style="color: #2563EB;"></i><div><b style="color: #2563EB;">نصيحة الرادار:</b> ${escapeHtml(d.advice)}</div></div></div>`;
     }).join('');
 }
 window.toggleRadarTip = (id) => { const tipDiv = document.getElementById(`radarTip_${id}`); if (tipDiv) tipDiv.classList.toggle('hidden'); };
@@ -2986,10 +2818,10 @@ window.openRadarRegisterModal = () => {
     }
     const diseases = radarDiseasesData[currentRadarTab];
     const optionsHtml = diseases.map((d, index) => `
-        <label class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-all" style="border-color: ${index === 0 ? d.color : '#e5e7eb'}" onclick="selectRadarOption(this, '${d.id}')">
+        <label class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-all" style="border-color: ${index === 0 ? d.color : '#e5e7eb'}" onclick="selectRadarOption(this, '${escapeHtml(d.id)}')">
             <input type="radio" name="radarDisease" class="hidden" ${index === 0 ? 'checked' : ''}>
-            <i class="fas ${d.icon} text-xl" style="color: ${d.color};"></i>
-            <div><div class="font-bold text-sm">${d.name}</div><div class="text-[10px] text-gray-500">${d.symptoms}</div></div>
+            <i class="fas ${escapeHtml(d.icon)} text-xl" style="color: ${escapeHtml(d.color)};"></i>
+            <div><div class="font-bold text-sm">${escapeHtml(d.name)}</div><div class="text-[10px] text-gray-500">${escapeHtml(d.symptoms)}</div></div>
         </label>
     `).join('');
     document.getElementById('modalContent').innerHTML = `
@@ -3004,6 +2836,8 @@ window.openRadarRegisterModal = () => {
     window.selectedRadarDisease = diseases[0].id;
 }
 window.selectRadarOption = (element, id) => { document.querySelectorAll('#radarModalOptions label').forEach(l => l.style.borderColor = '#e5e7eb'); element.style.borderColor = '#0E7C5F'; window.selectedRadarDisease = id; }
+
+// === FIX: Added the missing closing brace '}' that caused the site to hang ===
 window.submitRadarVote = async () => {
     if (!window.selectedRadarDisease) return;
     const duration = document.getElementById('radarDuration').value;
@@ -3017,7 +2851,8 @@ window.submitRadarVote = async () => {
             document.getElementById('modalOverlay').classList.add('active');
         }, 300);
     } catch (err) { showToast('حدث خطأ'); }
-};
+}; 
+
 window.redirectToDoctorsSearch = () => {
     closeModal(); closeCtrlPanel();
     const doctorsSection = document.getElementById('doctors');
@@ -3069,7 +2904,7 @@ window.calcVaccines = () => {
     if (diffMonths < 0 || diffMonths > 72) { showToast('تاريخ الميلاد غير منطقي'); return; }
     const resultContainer = document.getElementById('vaccResult');
     resultContainer.classList.remove('hidden');
-    let html = `<div class="bg-white p-4 rounded-xl border text-center mb-2" style="border-color: var(--border)"><div class="text-sm text-gray-500">عمر الطفل الحالي</div><div class="text-2xl font-black text-orange-600">${diffMonths} شهر</div></div>`;
+    let html = `<div class="bg-white p-4 rounded-xl border text-center mb-2" style="border-color: var(--border)"><div class="text-sm text-gray-500">عمر الطفل الحالي</div><div class="text-2xl font-black text-orange-600">${escapeHtml(diffMonths)} شهر</div></div>`;
     html += vaccineSchedule.map(v => {
         const vaccDate = new Date(birthDate); vaccDate.setMonth(vaccDate.getMonth() + v.months);
         const isPast = diffMonths > v.months + 1; const isDue = diffMonths >= v.months && diffMonths <= v.months + 1;
@@ -3078,16 +2913,14 @@ window.calcVaccines = () => {
         else if (isDue) { cardClass = 'border-orange-400 bg-orange-50 shadow-md'; textColor = 'text-orange-800'; statusBadge = `<span class="text-xs px-2 py-1 rounded bg-orange-200 text-orange-900 inline-block mb-2 animate-pulse font-bold"><i class="fas fa-exclamation-circle"></i> مستحق الآن</span>`; } 
         else { statusBadge = `<span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 inline-block mb-2"><i class="fas fa-clock"></i> قادم قريباً</span>`; }
         const formattedDate = vaccDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
-        return `<div class="p-4 rounded-xl border ${cardClass} transition-all">${statusBadge}<div class="font-bold ${textColor} text-sm">${v.name}</div><div class="text-xs text-gray-400 mt-1">عمر الطفل وقتها: ${v.age}</div><div class="text-xs font-semibold text-gray-600 mt-1">الموعد المقترح: ${formattedDate}</div>${v.notes ? `<div class="text-xs mt-2 pt-2 border-t border-dashed" style="border-color:var(--border); color: var(--muted)"><i class="fas fa-info-circle"></i> ${v.notes}</div>` : ''}</div>`;
+        return `<div class="p-4 rounded-xl border ${escapeHtml(cardClass)} transition-all">${statusBadge}<div class="font-bold ${escapeHtml(textColor)} text-sm">${escapeHtml(v.name)}</div><div class="text-xs text-gray-400 mt-1">عمر الطفل وقتها: ${escapeHtml(v.age)}</div><div class="text-xs font-semibold text-gray-600 mt-1">الموعد المقترح: ${escapeHtml(formattedDate)}</div>${v.notes ? `<div class="text-xs mt-2 pt-2 border-t border-dashed" style="border-color:var(--border); color: var(--muted)"><i class="fas fa-info-circle"></i> ${escapeHtml(v.notes)}</div>` : ''}</div>`;
     }).join('');
     resultContainer.innerHTML = html;
 }
 
 // === 1. Ask a Doctor Q&A (اسأل طبيب ) ===
-
 window.openAskDoctor = (docName) => {
-    window.tempDoctorName = docName || null; // حفظ اسم الطبيب مؤقتاً
-
+    window.tempDoctorName = docName || null; 
     openCtrlPanel('اسأل طبيب ', `
         <div class="flex flex-col gap-5">
             <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 text-sky-800 text-sm flex items-center gap-3">
@@ -3114,10 +2947,8 @@ window.openAskDoctor = (docName) => {
             </div>
         </div>
     `, '#0EA5E9');
-
     fetchQuestions();
 }
-
 async function fetchQuestions() {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabase.from('medical_questions').select('*').in('status', ['open', 'answered']).gte('created_at', weekAgo);
@@ -3130,7 +2961,6 @@ async function fetchQuestions() {
     allQuestions = data || [];
     renderQAList();
 }
-
 function renderQAList() {
     const container = document.getElementById('qaListContainer');
     if (!container) return;
@@ -3138,20 +2968,17 @@ function renderQAList() {
         container.innerHTML = '<p class="text-center py-8 text-gray-400 text-sm">لا توجد أسئلة حالياً. كن أول من يطرح سؤالاً!</p>';
         return;
     }
-
     const isDoctorMode = window.tempDoctorName ? true : false;
-
     container.innerHTML = allQuestions.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||'')).map(q => {
         let answersHtml = '';
         if (q.answers && q.answers.length > 0) {
             answersHtml = q.answers.map(ans => `
                 <div class="bg-green-50 border border-green-200 p-3 rounded-lg mt-2 text-right">
-                    <div class="text-xs font-bold text-green-800 flex items-center gap-1"><i class="fas fa-user-md"></i> ${ans.doctorName}</div>
+                    <div class="text-xs font-bold text-green-800 flex items-center gap-1"><i class="fas fa-user-md"></i> ${escapeHtml(ans.doctorName)}</div>
                     <div class="text-sm text-gray-700 mt-1 whitespace-pre-line">${escapeHtml(ans.text)}</div>
                 </div>
             `).join('');
         }
-
         let answerSection = '';
         if (isDoctorMode) {
             answerSection = `
@@ -3161,12 +2988,11 @@ function renderQAList() {
         } else {
             answerSection = `<p class="text-xs text-gray-400 text-center">يمكن للأطباء فقط الإجابة على هذا السؤال.</p>`;
         }
-
         return `
             <div class="border rounded-xl p-4" style="border-color: var(--border)">
                 <div class="flex justify-between items-start mb-2">
                     <div>
-                        <span class="text-xs px-2 py-1 rounded bg-sky-100 text-sky-700 inline-block mb-1">${q.category}</span>
+                        <span class="text-xs px-2 py-1 rounded bg-sky-100 text-sky-700 inline-block mb-1">${escapeHtml(q.category)}</span>
                         <h5 class="font-bold text-sm text-gray-800">${escapeHtml(q.name)}</h5>
                     </div>
                 </div>
@@ -3179,7 +3005,6 @@ function renderQAList() {
         `;
     }).join('');
 }
-
 window.submitQuestion = async (e) => {
     e.preventDefault();
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -3189,7 +3014,6 @@ window.submitQuestion = async (e) => {
     const category = document.getElementById('qaCategory').value;
     const text = document.getElementById('qaText').value.trim();
     if (!text) return;
-
     try {
         const { error } = await supabase.from('medical_questions').insert([{ name, category, text, status: 'open', answers: [] }]);
         if (error) throw error;
@@ -3202,20 +3026,16 @@ window.submitQuestion = async (e) => {
         submitBtn.disabled = false; submitBtn.innerText = 'نشر السؤال';
     }
 }
-
 window.submitAnswer = async (qId) => {
     const input = document.getElementById(`ansText_${qId}`);
     const text = input.value.trim();
     if (!text) return;
-
     const docName = window.tempDoctorName || 'طبيب';
-    
     try {
         const q = allQuestions.find(x => x.id === qId);
         if (!q) return;
         const currentAnswers = q.answers || [];
         currentAnswers.push({ doctorName: docName, text: text, timestamp: new Date().toISOString() });
-        
         const { error } = await supabase.from('medical_questions').update({ answers: currentAnswers, status: 'answered' }).eq('id', qId);
         if (error) throw error;
         showToast('تم نشر إجابتك!');
@@ -3226,140 +3046,75 @@ window.submitAnswer = async (qId) => {
     }
 }
 
+// === Payment Modal ===
 window.openPaymentModal = (type, name) => {
-    // 1. تحديد المميزات حسب نوع الحساب
     let featuresHtml = '';
     if (type === 'طبيب') {
         featuresHtml = `
-        <div class="flex items-center gap-3">
-                    <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                    <span class="text-sm font-semibold text-gray-700">إحصائيات متقدمة (عدد زيارات ملفك وعدد الحجوزات).</span>
-                </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">إدارة الحجوزات والمواعيد واستقبال الطلبات مباشرة.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">ظهور اسمك في <b>قمة نتائج البحث</b> قبل باقي الأطباء.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">إمكانية <b>الحجز الإلكتروني</b> للمرضى من خلال موقعك.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">غرفة محادثة <b>(دردشة مباشرة)</b> مع المريض داخل المنصة.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">إصدار <b>روشتات طبية إلكترونية موثقة</b> تُحفظ في ملف المريض.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">الوصول السريع للملف الصحي للمريض عبر <b>مسح رمز QR</b>.</span>
-            </div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">إحصائيات متقدمة (عدد زيارات ملفك وعدد الحجوزات).</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">إدارة الحجوزات والمواعيد واستقبال الطلبات مباشرة.</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">ظهور اسمك في <b>قمة نتائج البحث</b> قبل باقي الأطباء.</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">إمكانية <b>الحجز الإلكتروني</b> للمرضى من خلال موقعك.</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">غرفة محادثة <b>(دردشة مباشرة)</b> مع المريض داخل المنصة.</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">إصدار <b>روشتات طبية إلكترونية موثقة</b> تُحفظ في ملف المريض.</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">الوصول السريع للملف الصحي للمريض عبر <b>مسح رمز QR</b>.</span></div>
         `;
-    } else { // مميزات الصيدلية
+    } else { 
         featuresHtml = `
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">ظهور اسم صيدليتك في <b>قمة نتائج البحث</b> قبل باقي الصيدليات.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">استقبال <b>طلبات الأدوية العاجلة</b> من المرضى مباشرة في لوحة التحكم.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">التحكم بإظهار حالة <b>(مفتوح / مغلق / مناوبة ليلية)</b> للمرضى.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-circle-check text-emerald-600 text-lg"></i>
-                <span class="text-sm font-semibold text-gray-700">إحصائيات متقدمة (عدد الأدوية التي قمت بتوفيرها للمرضى).</span>
-            </div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">ظهور اسم صيدليتك في <b>قمة نتائج البحث</b> قبل باقي الصيدليات.</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">استقبال <b>طلبات الأدوية العاجلة</b> من المرضى مباشرة في لوحة التحكم.</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">التحكم بإظهار حالة <b>(مفتوح / مغلق / مناوبة ليلية)</b> للمرضى.</span></div>
+        <div class="flex items-center gap-3"><i class="fas fa-circle-check text-emerald-600 text-lg"></i><span class="text-sm font-semibold text-gray-700">إحصائيات متقدمة (عدد الأدوية التي قمت بتوفيرها للمرضى).</span></div>
         `;
     }
 
-    // 2. بناء نافذة الدفع
+    // Using encodeURIComponent for URL safety
+    const safeType = encodeURIComponent(type);
+    const safeName = encodeURIComponent(name);
+    const htmlSafeType = escapeHtml(type);
+    const htmlSafeName = escapeHtml(name);
+
     document.getElementById('modalContent').innerHTML = `
         <div class="p-6 text-center">
             <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center mb-4 shadow-lg shadow-orange/30">
                 <i class="fas fa-crown text-3xl text-white"></i>
             </div>
-            <h3 class="text-xl font-black mb-1" style="font-family: 'Noto Kufi Arabic'">اشتراك ${type} الاحترافي</h3>
-            <p class="text-xs text-gray-500 mb-5">أهلا دكتور/ة <b>${name}</b>، انضم لنخبة ${type === 'طبيب' ? 'الأطباء' : 'الصيدليات'} وأفتح أقساماً متقدة في موقعك .</p>
-
-            <!-- صندوق مميزات الاشتراك الديناميكي -->
+            <h3 class="text-xl font-black mb-1" style="font-family: 'Noto Kufi Arabic'">اشتراك ${htmlSafeType} الاحترافي</h3>
+            <p class="text-xs text-gray-500 mb-5">أهلا دكتور/ة <b>${htmlSafeName}</b>، انضم لنخبة ${htmlSafeType === 'طبيب' ? 'الأطباء' : 'الصيدليات'} وأفتح أقساماً متقدمة في موقعك .</p>
             <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right mb-6 space-y-3">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-star text-yellow-500 text-lg"></i>
-                    <span class="text-sm font-bold text-gray-800">الحصول على <b>شارة التوثيق الذهبية</b> لزيادة ثقة المرضى.</span>
-                </div>
+                <div class="flex items-center gap-3"><i class="fas fa-star text-yellow-500 text-lg"></i><span class="text-sm font-bold text-gray-800">الحصول على <b>شارة التوثيق الذهبية</b> لزيادة ثقة المرضى.</span></div>
                 ${featuresHtml}
             </div>
-
-            <!-- قسم الدفع المباشر -->
             <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 mb-5 relative overflow-hidden shadow-inner">
-                <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold py-1 px-3 rounded-bl-xl flex items-center gap-1 shadow-sm">
-                    <i class="fas fa-bolt"></i> دفع سريع ومباشر
-                </div>
-                
+                <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold py-1 px-3 rounded-bl-xl flex items-center gap-1 shadow-sm"><i class="fas fa-bolt"></i> دفع سريع ومباشر</div>
                 <h4 class="font-bold text-gray-800 text-base mb-4 mt-3" style="font-family: 'Noto Kufi Arabic'">اختر طريقة الدفع المناسبة لك:</h4>
-                
-                <!-- أزرار اختيار طريقة الدفع -->
                 <div class="grid grid-cols-2 gap-3 mb-5">
                     <button id="btn-shamcash" onclick="togglePaymentMethod('shamcash')" class="py-3 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 font-bold text-sm flex flex-col items-center justify-center gap-1 transition-all">
-                        <i class="fas fa-mobile-screen text-xl"></i>
-                        <span>شام كاش</span>
+                        <i class="fas fa-mobile-screen text-xl"></i><span>شام كاش</span>
                     </button>
                     <button id="btn-cash" onclick="togglePaymentMethod('cash')" class="py-3 rounded-xl border-2 border-gray-300 bg-white text-gray-600 font-bold text-sm flex flex-col items-center justify-center gap-1 transition-all">
-                        <i class="fas fa-hand-holding-dollar text-xl"></i>
-                        <span>دفع النقدي(المباشر)</span>
+                        <i class="fas fa-hand-holding-dollar text-xl"></i><span>دفع النقدي(المباشر)</span>
                     </button>
                 </div>
-
-                <!-- تفاصيل الدفع عبر شام كاش -->
                 <div id="shamcash-details" class="text-right">
                     <div class="bg-white p-2 rounded-2xl border-4 border-white shadow-lg w-44 h-44 mx-auto mb-5">
                         <img src="https://z-cdn-media.chatglm.cn/files/533bb04c-b262-4f21-826a-71b187260747.png?auth_key=1886692436-f4137efd272049179bd92d56b0081347-0-fdecf35d303f970d7d8aac45cca966ba" alt="رمز الدفع شام كاش" class="w-full h-full rounded-lg object-contain">
                     </div>
                     <div class="space-y-3 mb-5">
-                        <div class="flex items-start gap-3">
-                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div>
-                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">افتح تطبيق <b>شام كاش</b> وامسح الرمز أعلاه لتتم عملية التحويل بكل سهولة.</div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div>
-                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">احفظ صورة (Screenshot) لإشعار الدفع الناجح.</div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div>
-                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه وأرسل الصورة لتقوم الإدارة بتفعيل حسابك فوراً.</div>
-                        </div>
+                        <div class="flex items-start gap-3"><div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div><div class="text-sm text-gray-700 leading-relaxed pt-0.5">افتح تطبيق <b>شام كاش</b> وامسح الرمز أعلاه لتتم عملية التحويل بكل سهولة.</div></div>
+                        <div class="flex items-start gap-3"><div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div><div class="text-sm text-gray-700 leading-relaxed pt-0.5">احفظ صورة (Screenshot) لإشعار الدفع الناجح.</div></div>
+                        <div class="flex items-start gap-3"><div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div><div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه وأرسل الصورة لتقوم الإدارة بتفعيل حسابك فوراً.</div></div>
                     </div>
                 </div>
-
-                                <!-- تفاصيل الدفع وجه لوجه -->
                 <div id="cash-details" class="text-right hidden">
                     <div class="space-y-3 mb-5">
-                        <div class="flex items-start gap-3">
-                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div>
-                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه لمراسلة الإدارة .</div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div>
-                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">قم بالدفع نقدياً (مباشر) .</div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div>
-                            <div class="text-sm text-gray-700 leading-relaxed pt-0.5">سيتم تفعيل حسابك فوراً بعد تأكيد الدفع.</div>
-                        </div>
+                        <div class="flex items-start gap-3"><div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">1</div><div class="text-sm text-gray-700 leading-relaxed pt-0.5">اضغط على زر الواتساب أدناه لمراسلة الإدارة .</div></div>
+                        <div class="flex items-start gap-3"><div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">2</div><div class="text-sm text-gray-700 leading-relaxed pt-0.5">قم بالدفع نقدياً (مباشر) .</div></div>
+                        <div class="flex items-start gap-3"><div class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md">3</div><div class="text-sm text-gray-700 leading-relaxed pt-0.5">سيتم تفعيل حسابك فوراً بعد تأكيد الدفع.</div></div>
                     </div>
                 </div>
             </div>
-
-                        <a id="dynamicWpBtn" data-type="${type}" data-name="${name}" href="https://wa.me/963980390813?text=مرحباً، أريد تأكيد دفع اشتراك ${type}: ${name}" target="_blank" class="w-full py-3.5 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-md hover:shadow-lg">
+            <a id="dynamicWpBtn" data-type="${htmlSafeType}" data-name="${htmlSafeName}" href="https://wa.me/963980390813?text=مرحباً، أريد تأكيد دفع اشتراك ${safeType}: ${safeName}" target="_blank" class="w-full py-3.5 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all shadow-md hover:shadow-lg">
                 <i class="fas fa-whatsapp text-lg"></i> <span id="dynamicWpBtnText">تأكيد الدفع عبر الواتساب</span>
             </a>
             <button onclick="closeModal()" class="w-full py-2 mt-2 rounded-xl border font-bold text-sm transition-colors hover:bg-gray-50" style="border-color: var(--border); color: var(--muted)">إغلاق</button>
@@ -3369,19 +3124,17 @@ window.openPaymentModal = (type, name) => {
     lockScroll();
 }
 
-// دالة تبديل طريقة الدفع
-// دالة تبديل طريقة الدفع
 window.togglePaymentMethod = (method) => {
     const shamcashDetails = document.getElementById('shamcash-details');
     const cashDetails = document.getElementById('cash-details');
     const btnShamcash = document.getElementById('btn-shamcash');
     const btnCash = document.getElementById('btn-cash');
-
-    // عناصر الزر الديناميكي
     const dynamicBtn = document.getElementById('dynamicWpBtn');
     const dynamicBtnText = document.getElementById('dynamicWpBtnText');
-    const type = dynamicBtn.dataset.type;
-    const name = dynamicBtn.dataset.name;
+    
+    // Secure extraction for URL
+    const type = encodeURIComponent(dynamicBtn.dataset.type);
+    const name = encodeURIComponent(dynamicBtn.dataset.name);
 
     if (method === 'shamcash') {
         shamcashDetails.classList.remove('hidden');
@@ -3390,8 +3143,6 @@ window.togglePaymentMethod = (method) => {
         btnShamcash.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
         btnCash.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
         btnCash.classList.add('border-gray-300', 'bg-white', 'text-gray-600');
-        
-        // تعديل الزر لـ شام كاش
         dynamicBtnText.innerText = "تأكيد الدفع عبر الواتساب";
         dynamicBtn.href = `https://wa.me/963980390813?text=مرحباً، أريد تأكيد دفع اشتراك ${type}: ${name}`;
     } else {
@@ -3401,19 +3152,16 @@ window.togglePaymentMethod = (method) => {
         btnCash.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
         btnShamcash.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
         btnShamcash.classList.add('border-gray-300', 'bg-white', 'text-gray-600');
-        
-        // تعديل الزر لـ وجه لوجه
         dynamicBtnText.innerText = "تنسيق موعد الدفع عبر الواتساب";
         dynamicBtn.href = `https://wa.me/963980390813?text=مرحباً، أريد تنسيق موعد دفع (نقدي مباشر) لاشتراك ${type}: ${name}`;
     }
 };
 
 window.toggleSubscription = async (id, currentStatus) => {
-    try {
+    try 
         await supabase.from('listings').update({ is_subscribed: currentStatus }).eq('id', id);
         showToast(currentStatus ? 'تم تفعيل الاشتراك بنجاح!' : 'تم إلغاء الاشتراك.');
         await fetchListings();
         renderAdminDashboard();
     } catch (e) { showToast('حدث خطأ'); }
 }
-// نهاية ملف app.js
