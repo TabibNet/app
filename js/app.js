@@ -46,6 +46,41 @@ async function sendPushNotification(userId, title, message) {
         console.error("Notification Engine Error:", err);
     }
 }
+// === دالة طلب إذن الإشعارات ===
+window.setupOneSignal = async () => {
+    if (!window.OneSignalDeferred) { 
+        showToast("نظام الإشعارات لم يكتمل تحميله بعد، يرجى المحاولة بعد ثوانٍ"); 
+        return; 
+    }
+    OneSignalDeferred.push(async function(OneSignal) {
+        try {
+            // إذا كان المستخدم قد رفض الإشعارات سابقاً من إعدادات المتصفح
+            if (OneSignal.Notifications.permission === 'denied') {
+                showToast("الإشعارات محظورة من إعدادات المتصفح! يرجى السماح لها يدوياً.");
+                return;
+            }
+            // طلب الإذن (هنا تظهر النافذة للمستخدم)
+            if (OneSignal.Notifications.permission !== 'granted') {
+                const granted = await OneSignal.Notifications.requestPermission();
+                if (!granted) { showToast("تم رفض الإشعارات."); return; }
+            }
+            // تفعيل الاشتراك
+            if (!OneSignal.User.PushSubscription.optedIn) {
+                await OneSignal.User.PushSubscription.optIn();
+            }
+            // حفظ معرف الجهاز
+            const id = OneSignal.User.PushSubscription.id;
+            if (id) {
+                localStorage.setItem('onesignal_player_id', id);
+                showToast('تم تفعيل الإشعارات بنجاح! 🔔');
+            }
+        } catch (err) {
+            console.error("OneSignal Error:", err);
+            showToast("حدث خطأ غير متوقع في تفعيل الإشعارات");
+        }
+    });
+};
+
 function generateUniqueId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
