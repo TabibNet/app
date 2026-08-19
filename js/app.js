@@ -3165,3 +3165,4 @@ window.toggleSubscription = async (id, currentStatus) => {
         renderAdminDashboard();
     } catch (e) { showToast('حدث خطأ'); }
 }
+// نهاية ملف app.js
