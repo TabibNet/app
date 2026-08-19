@@ -49,40 +49,34 @@ async function sendPushNotification(userId, title, message) {
 // === دالة طلب إذن الإشعارات ===
 window.setupOneSignal = async () => {
     if (!window.OneSignalDeferred) { 
-        showToast("نظام الإشعارات لم يكتمل تحميله بعد"); 
+        showToast("نظام الإشعارات لم يكتمل تحميله بعد، يرجى المحاولة بعد ثوانٍ"); 
         return; 
     }
     OneSignalDeferred.push(async function(OneSignal) {
         try {
-            // في الإصدار الجديد، الإذن يكون true أو false
-            if (OneSignal.Notifications.permission === false) {
-                showToast("الإشعارات محظورة من إعدادات المتصفح!");
-                return;
+            // طلب الإذن من المستخدم
+            const granted = await OneSignal.Notifications.requestPermission();
+            
+            if (!granted) { 
+                showToast("تم رفض الإشعارات. يمكنك تفعيلها لاحقاً من إعدادات المتصفح."); 
+                return; 
             }
             
-            // إذا لم يكن قد سُمح بعد، نطلب الإذن
-            if (!OneSignal.Notifications.permission) {
-                const granted = await OneSignal.Notifications.requestPermission();
-                if (!granted) { 
-                    showToast("تم رفض الإشعارات."); 
-                    return; 
-                }
-            }
-            
-            // إذا كان مسموحاً بالفعل، نتجاوز مرحلة الطلب ونذهب للتسجيل مباشرة
-            showToast("تم تأكيد تفعيل الإشعارات ✅");
-            
+            // تفعيل الاشتراك في الإشعارات
             if (!OneSignal.User.PushSubscription.optedIn) {
                 await OneSignal.User.PushSubscription.optIn();
             }
             
-            const id = OneSignal.User.PushSubscription.id;
-            if (id) {
-                localStorage.setItem('onesignal_player_id', id);
+            const playerId = OneSignal.User.PushSubscription.id;
+            if (playerId) {
+                localStorage.setItem('onesignal_player_id', playerId);
+                showToast("تم تفعيل إشعارات المنصة بنجاح ✅");
+            } else {
+                showToast("جاري تجهيز الإشعارات، قد يستغرق ذلك لحظات...");
             }
         } catch (err) {
-            console.error("OneSignal Error:", err);
-            showToast("حدث خطأ في تفعيل الإشعارات");
+            console.error("OneSignal Setup Error:", err);
+            showToast("حدث خطأ أثناء الاتصال بخادم الإشعارات");
         }
     });
 };
