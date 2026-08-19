@@ -35,7 +35,17 @@ let allHomeAds = [];
 let currentCity = 'all';
 let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا', 'المعضمية']; // أضف أو عدل المدن كما تريد
 
-
+// === محرك الإشعارات المركزي (عبر Supabase Edge Functions) ===
+async function sendPushNotification(userId, title, message) {
+    if (!userId) return;
+    try {
+        await supabase.functions.invoke('send-push-notification', {
+            body: { user_id: userId, title: title, message: message }
+        });
+    } catch (err) {
+        console.error("Notification Engine Error:", err);
+    }
+}
 function generateUniqueId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
@@ -699,6 +709,11 @@ window.confirmBooking = async () => {
         const { data, error } = await supabase.from('bookings').insert([tempBooking]).select(); 
         if (error) throw error;
         const newId = data[0].id;
+                // === إشعار للطبيب بوجود حجز جديد ===
+        const doctorData = allData.find(d => d.id === tempBooking.itemid);
+        if (doctorData && doctorData.user_id) {
+            sendPushNotification(doctorData.user_id, "موعد جديد 🗓️", `المريض ${tempBooking.name} طلب موعداً يوم ${tempBooking.daystr}`);
+        }
         document.getElementById('step2').innerHTML = `
         <div class="text-center py-6 flex flex-col items-center">
             <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4" style="background: var(--accent-light)"><i class="fas fa-check text-3xl" style="color: var(--accent)"></i></div>
@@ -911,6 +926,11 @@ window.handleDoctorLogin = async (e) => {
             showToast('انتهت فترة الاشتراك. يرجى التجديد لمتابعة استخدام اللوحة.');
             openPaymentModal('طبيب', docData.name); 
             return;
+        }
+                if (window.OneSignalDeferred) {
+            OneSignalDeferred.push(function(OneSignal) {
+                OneSignal.login(data.user.id);
+            });
         }
         renderDoctorDashboard(docData); 
     } else {
