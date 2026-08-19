@@ -48,24 +48,20 @@ async function sendPushNotification(userId, title, message) {
 }
 // === دالة طلب إذن الإشعارات ===
 window.setupOneSignal = async () => {
-    showToast("جاري محاولة تفعيل الإشعارات..."); // رسالة 1: للتأكد أن الزر يعمل
-    
     if (!window.OneSignalDeferred) { 
-        showToast("نظام الإشعارات لم يكتمل تحميله بعد، يرجى المحاولة بعد ثوانٍ"); 
+        showToast("نظام الإشعارات لم يكتمل تحميله بعد"); 
         return; 
     }
-    
     OneSignalDeferred.push(async function(OneSignal) {
-        showToast("تم الاتصال بخادم OneSignal..."); // رسالة 2: للتأكد أن المكتبة تعمل
-        
         try {
-            if (OneSignal.Notifications.permission === 'denied') {
+            // في الإصدار الجديد، الإذن يكون true أو false
+            if (OneSignal.Notifications.permission === false) {
                 showToast("الإشعارات محظورة من إعدادات المتصفح!");
                 return;
             }
             
-            if (OneSignal.Notifications.permission !== 'granted') {
-                showToast("جاري طلب الإذن من المتصفح..."); // رسالة 3
+            // إذا لم يكن قد سُمح بعد، نطلب الإذن
+            if (!OneSignal.Notifications.permission) {
                 const granted = await OneSignal.Notifications.requestPermission();
                 if (!granted) { 
                     showToast("تم رفض الإشعارات."); 
@@ -73,7 +69,8 @@ window.setupOneSignal = async () => {
                 }
             }
             
-            showToast("تم منح الإذن، جاري تسجيل الجهاز..."); // رسالة 4
+            // إذا كان مسموحاً بالفعل، نتجاوز مرحلة الطلب ونذهب للتسجيل مباشرة
+            showToast("تم تأكيد تفعيل الإشعارات ✅");
             
             if (!OneSignal.User.PushSubscription.optedIn) {
                 await OneSignal.User.PushSubscription.optIn();
@@ -82,13 +79,10 @@ window.setupOneSignal = async () => {
             const id = OneSignal.User.PushSubscription.id;
             if (id) {
                 localStorage.setItem('onesignal_player_id', id);
-                showToast('تم تفعيل الإشعارات بنجاح! 🔔'); // رسالة 5 (النجاح)
-            } else {
-                showToast("تم التفعيل لكن لم يصدر معرف للجهاز بعد، حاول مرة أخرى."); // رسالة 6
             }
         } catch (err) {
             console.error("OneSignal Error:", err);
-            showToast("حدث خطأ غير متوقع في تفعيل الإشعارات"); // رسالة 7 (الخطأ)
+            showToast("حدث خطأ في تفعيل الإشعارات");
         }
     });
 };
