@@ -36,12 +36,14 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
+  OneSignalDeferred.push(function(OneSignal) {
+    OneSignal.init({
       appId: "2e008b4d-0516-4b06-96b1-8a522e0c1587",
       allowLocalhostAsSecureOrigin: true,
+      serviceWorker: {
+        path: "OneSignalSDKWorker.js",
+      }
     });
-    console.log("OneSignal Initialized Successfully"); // هذه الرسالة ستظهر في الـ Console إذا تم التحميل بشكل صحيح
   });
 </script>
     <script src="https://cdn.tailwindcss.com"></script>
