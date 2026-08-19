@@ -37,6 +37,15 @@ let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا'
 
 
 function generateUniqueId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 function lockScroll() { scrollLockCount++; document.body.style.overflow = 'hidden'; }
 function unlockScroll() { scrollLockCount = Math.max(0, scrollLockCount - 1); if (scrollLockCount === 0) { document.body.style.overflow = ''; } }
 
@@ -820,7 +829,7 @@ window.renderFollowupChat = (bookingId) => {
     else if (b.status === 'canceled') statusBadge = `<span class="px-3 py-1 rounded text-sm" style="background: #FEE2E2; color: #991B1B">تم الإلغاء</span>`;
     else statusBadge = `<span class="px-3 py-1 rounded text-sm" style="background: #FEF3C7; color: #92400E">🟡 الحجز قيد المراجعة من العيادة</span>`;
     let chatHtml = '';
-    if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="flex ${msg.sender === 'patient' ? 'justify-start' : 'justify-end'}"><div class="max-w-[75%] p-3 rounded-xl text-sm ${msg.sender === 'patient' ? 'bg-gray-100 text-gray-800' : 'bg-blue-500 text-white'}">${msg.text}</div></div>`).join(''); } 
+    if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="flex ${msg.sender === 'patient' ? 'justify-start' : 'justify-end'}"><div class="max-w-[75%] p-3 rounded-xl text-sm ${msg.sender === 'patient' ? 'bg-gray-100 text-gray-800' : 'bg-blue-500 text-white'}">${escapeHtml(msg.text)}</div></div>`).join(''); } 
     else { chatHtml = '<p class="text-center text-xs text-gray-400 my-4">لا توجد رسائل بعد. انتظر رد العيادة.</p>'; }
     
     // === التحديث الذكي ===
@@ -878,7 +887,8 @@ window.handlePharmacyLogin = async (e) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
     if (error) { showToast('خطأ: ' + error.message); return; }
 
-    const pharmData = allData.find(d => d.name === name && d.type === 'pharmacy' && d.pharmacypass === pass); 
+    // نبحث عن الصيدلية عبر user_id الآمن
+    const pharmData = allData.find(d => d.user_id === data.user.id && d.type === 'pharmacy'); 
     if (pharmData) { 
         if (!pharmData.is_subscribed) {
             await supabase.auth.signOut();
@@ -889,7 +899,7 @@ window.handlePharmacyLogin = async (e) => {
         renderPharmacyDashboard(pharmData); 
     } else {
         await supabase.auth.signOut();
-        showToast('اسم الصيدلية غير مطابق للرمز'); 
+        showToast('اسم الصيدلية غير مطابق للحساب'); 
     } 
 }
 window.logoutPharmacy = async () => {
@@ -1010,7 +1020,8 @@ window.handleDoctorLogin = async (e) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password: pass });
     if (error) { showToast('خطأ: ' + error.message); return; }
 
-    const docData = allData.find(d => d.name === name && d.bookingpass === pass); 
+    // نبحث عن الطبيب عبر user_id الآمن بدلاً من كلمة المرور
+    const docData = allData.find(d => d.user_id === data.user.id && d.type === 'doctor'); 
     if (docData) { 
         if (!docData.is_subscribed) {
             await supabase.auth.signOut();
@@ -1021,7 +1032,7 @@ window.handleDoctorLogin = async (e) => {
         renderDoctorDashboard(docData); 
     } else {
         await supabase.auth.signOut();
-        showToast('اسم الطبيب غير مطابق للرمز'); 
+        showToast('اسم الطبيب غير مطابق للحساب'); 
     } 
 }
 window.renderDoctorDashboard = async (doc) => { 
@@ -1042,7 +1053,7 @@ window.renderDoctorDashboard = async (doc) => {
             else if (b.status === 'canceled') { statusBadge = '<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #F3F4F6; color: #4B5563">ملغي</span>'; actionButtons = `<button onclick="updateBookingStatus('${b.id}', 'pending')" class="text-xs text-white px-2 py-1 rounded bg-gray-500">استعادة</button><button onclick="updateBookingStatus('${b.id}', 'deleted')" class="text-xs text-white px-2 py-1 rounded bg-gray-800">حذف</button>`; } 
             else { statusBadge = '<span class="text-xs px-2 py-1 rounded block mb-1" style="background: #FEF3C7; color: #92400E">طلب جديد</span>'; actionButtons = `<div class="flex flex-col gap-1 w-full"><input type="text" id="time_${b.id}" placeholder="حدد الموعد" class="ctrl-input text-sm py-1"><div class="flex gap-1"><button onclick="acceptBooking('${b.id}')" class="text-xs text-white px-2 py-1 rounded bg-green-600 flex-1">قبول</button><button onclick="updateBookingStatus('${b.id}', 'canceled')" class="text-xs text-white px-2 py-1 rounded bg-red-500">رفض</button></div></div>`; }
             let chatHtml = '';
-            if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="text-xs p-2 rounded-lg mb-1 ${msg.sender === 'doctor' ? 'bg-blue-100 text-left' : 'bg-gray-100 text-right'}">${msg.text}</div>`).join(''); }
+            if (b.chat && b.chat.length > 0) { chatHtml = b.chat.map(msg => `<div class="text-xs p-2 rounded-lg mb-1 ${msg.sender === 'doctor' ? 'bg-blue-100 text-left' : 'bg-gray-100 text-right'}">${escapeHtml(msg.text)}</div>`).join(''); }
             return `<div class="flex flex-col p-3 rounded-lg border mb-3" style="border-color: var(--border)"><div class="flex items-center justify-between mb-2"><div><span class="text-sm font-bold">${b.name}</span><br><span class="text-xs" style="color: var(--muted)">${b.daystr}</span></div><div>${statusBadge}<span class="text-[10px] text-gray-400">مرجع: #${b.ref}</span></div></div><div class="flex items-center justify-between border-t pt-2 mb-2" style="border-color: var(--border)"><a href="tel:${b.phone}" class="text-xs text-blue-600">${b.phone}</a><div class="flex gap-1">${actionButtons}</div></div><div class="border-t pt-2" style="border-color: var(--border)"><div class="text-xs font-bold text-gray-600 mb-1">المحادثة:</div><div class="max-h-32 overflow-y-auto mb-2 bg-gray-50 p-2 rounded-lg">${chatHtml || '<span class="text-xs text-gray-400">لا توجد رسائل</span>'}</div><div class="flex gap-1"><input type="text" id="docChat_${b.id}" placeholder="اكتب ردك..." class="ctrl-input text-sm py-1 flex-1"><button onclick="sendDocMessage('${b.id}')" class="text-xs text-white px-3 py-1 rounded bg-blue-500"><i class="fas fa-paper-plane"></i></button></div></div></div>`; 
         }).join('');
 
@@ -1483,8 +1494,8 @@ function renderBloodBankUI() {
             <div class="border rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4" style="border-color: var(--border)">
                 <div class="blood-type-badge">${req.blood_type}</div>
                 <div class="flex-1 text-center sm:text-right">
-                    <div class="font-bold text-gray-800">${req.patient_name}</div>
-                    <div class="text-xs text-gray-500 mt-1"><i class="fas fa-hospital ml-1"></i> ${req.hospital} ${req.notes ? `| <i class="fas fa-notes-medical ml-1"></i> ${req.notes}` : ''}</div>
+                    <div class="font-bold text-gray-800">${escapeHtml(req.patient_name)}</div>
+                    <div class="text-xs text-gray-500 mt-1"><i class="fas fa-hospital ml-1"></i> ${escapeHtml(req.hospital)} ${req.notes ? `| <i class="fas fa-notes-medical ml-1"></i> ${escapeHtml(req.notes)}` : ''}</div>
                 </div>
                 <div class="flex gap-2">
                     <a href="tel:${req.phone}" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-blue-600"><i class="fas fa-phone"></i> اتصال</a>
@@ -1963,6 +1974,10 @@ window.handleHealthRegister = async (e) => {
     e.preventDefault();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value.trim();
+        if (password.length < 6) {
+        showToast('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        return;
+    }
     const fullName = document.getElementById('regFullName').value.trim();
 
     // 1. إنشاء حساب مصادقة (Auth) للمريض
@@ -2183,7 +2198,7 @@ window.renderAdSlide = (index) => {
     if (ad.type === 'image') {
         mediaHTML = `<a href="${ad.link || '#'}" target="_blank" class="block w-full h-full"><img src="${ad.content}" alt="إعلان" class="w-full h-full object-cover"></a>`;
         // الصور تقلب كل 6 ثواني
-        if (!isSingleAd) adInterval = setTimeout(nextAdSlide, 6000);
+        if (!isSingleAd) adInterval = setTimeout(nextAdSlide, 10000);
         } else if (ad.type === 'video') {
         const loopAttr = isSingleAd ? 'loop' : ''; 
         const endedAttr = isSingleAd ? '' : 'onended="nextAdSlide()"';
@@ -2733,7 +2748,7 @@ const foodInteractionsData = [
     { med: "الوارفارين (مسيلات الدم)", food: "الخضار الورقية الداكنة (السبانخ، البقدونس)", effect: "تقلل فاعلية الدواء وتزيد سيولة الدم" },
     { med: "أدوية السكري (Metformin)", food: "الكحول", effect: "خطر حدوث حموضة لاكتكية شديدة" },
     { med: "المضادات الحيوية (Tetracycline)", food: "منتجات الألبان (الحليب، الجبن)", effect: "تمنع امتصاص الدواء وتراكيزه في الجسم" },
-    { med: "أدوية الكوليسترول (Statins)", food: "عصير الجريب فروت", effect: "تراكم الدواء في الدم مما يسبب آلاماً عضلية" },
+    { med: "أدوية الكوليسترول (Statins)", food: "عصير الليمون هندي", effect: "تراكم الدواء في الدم مما يسبب آلاماً عضلية" },
     { med: "مسكنات الألم (NSAIDs)", food: "الكحول، التوابل الحارة", effect: "زيادة خطر نزيف المعدة والقرحة" }
 ];
 window.openFoodInteractions = () => {
@@ -3002,7 +3017,7 @@ window.submitRadarVote = async () => {
             document.getElementById('modalOverlay').classList.add('active');
         }, 300);
     } catch (err) { showToast('حدث خطأ'); }
-}
+
 window.redirectToDoctorsSearch = () => {
     closeModal(); closeCtrlPanel();
     const doctorsSection = document.getElementById('doctors');
@@ -3132,7 +3147,7 @@ function renderQAList() {
             answersHtml = q.answers.map(ans => `
                 <div class="bg-green-50 border border-green-200 p-3 rounded-lg mt-2 text-right">
                     <div class="text-xs font-bold text-green-800 flex items-center gap-1"><i class="fas fa-user-md"></i> ${ans.doctorName}</div>
-                    <div class="text-sm text-gray-700 mt-1 whitespace-pre-line">${ans.text}</div>
+                    <div class="text-sm text-gray-700 mt-1 whitespace-pre-line">${escapeHtml(ans.text)}</div>
                 </div>
             `).join('');
         }
@@ -3152,10 +3167,10 @@ function renderQAList() {
                 <div class="flex justify-between items-start mb-2">
                     <div>
                         <span class="text-xs px-2 py-1 rounded bg-sky-100 text-sky-700 inline-block mb-1">${q.category}</span>
-                        <h5 class="font-bold text-sm text-gray-800">${q.name}</h5>
+                        <h5 class="font-bold text-sm text-gray-800">${escapeHtml(q.name)}</h5>
                     </div>
                 </div>
-                <p class="text-sm text-gray-600 whitespace-pre-line bg-gray-50 p-2 rounded-lg">${q.text}</p>
+                <p class="text-sm text-gray-600 whitespace-pre-line bg-gray-50 p-2 rounded-lg">${escapeHtml(q.text)}</p>
                 ${answersHtml}
                 <div class="mt-3 border-t pt-3" style="border-color: var(--border)">
                     ${answerSection}
