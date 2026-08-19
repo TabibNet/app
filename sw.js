@@ -1,4 +1,3 @@
-importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 const CACHE_NAME = 'raheba-med-v23'; // تم تغيير الرقم لإجبار الهاتف على التحديث
 const CORE_ASSETS = [
   './',
