@@ -3017,7 +3017,7 @@ window.submitRadarVote = async () => {
             document.getElementById('modalOverlay').classList.add('active');
         }, 300);
     } catch (err) { showToast('حدث خطأ'); }
-
+};
 window.redirectToDoctorsSearch = () => {
     closeModal(); closeCtrlPanel();
     const doctorsSection = document.getElementById('doctors');
