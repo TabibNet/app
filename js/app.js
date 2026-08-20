@@ -35,74 +35,60 @@ let allHomeAds = [];
 let currentCity = 'all';
 let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا', 'المعضمية']; // أضف أو عدل المدن كما تريد
 
-async function sendPushNotification(userId, title, message) {
-    if (!userId) return;
-    try {
-        const { data, error } = await supabase.functions.invoke('send-push-notification', {
-            body: { user_id: userId, title: title, message: message } // إرسال ككائن مباشرة
-        });
-        
-        if (error) {
-            console.error("Supabase Function Error:", error);
-        } else {
-            console.log("Notification sent successfully:", data);
+// 1. التهيئة (يجب أن توضع في أعلى الملف ليتم تنفيذها فور تحميل الصفحة)
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(function(OneSignal) {
+    OneSignal.init({
+        appId: "2e008b4d-0516-4b06-96b1-8a522e0c1587", // ID تطبيقك
+        allowLocalhostAsSecureOrigin: true,
+        serviceWorker: { 
+            path: "OneSignalSDKWorker.js", // اسم الملف الذي دمجناه
+            scope: "/" 
         }
-    } catch (err) {
-        console.error("Notification Engine Error:", err);
-    }
-}
-// === دالة طلب إذن الإشعارات ===
+        // تم إزالة notifyButton لأنها قديمة ولا حاجة لها
+    });
+});
+
+// 2. دالة التفعيل (سليمة تماماً ومعدلة لتتوافق مع الإصدار الجديد)
 window.setupOneSignal = async () => {
-    console.log("1. تم الضغط على زر الإشعارات...");
+    console.log("جاري طلب الإشعارات...");
     
-    if (!window.OneSignalDeferred) { 
-        console.error("خطأ: OneSignalDeferred غير موجود!");
-        showToast("نظام الإشعارات لم يكتمل تحميله بعد، انتظر ثوانٍ ثم حاول مجدداً"); 
-        return; 
+    // تأكد أن المكتبة قيد التحميل
+    if (!window.OneSignalDeferred) {
+        showToast("جاري تهيئة النظام، انتظر لحظة...");
+        return;
     }
-    
-    console.log("2. جاري دفع الأمر إلى قائمة OneSignalDeferred...");
+
     OneSignalDeferred.push(async function(OneSignal) {
-        console.log("3. تم تحميل كائن OneSignal بنجاح:", OneSignal);
         try {
-            console.log("4. حالة الإذن الحالية:", OneSignal.Notifications.permission);
-            
-            // إذا كان الإذن مرفوضاً من المتصفح
-            if (OneSignal.Notifications.permission === false) {
-                showToast("الإشعارات محظورة من إعدادات المتصفح! يجب السماح بها يدوياً من إعدادات الموقع.");
+            // التحقق من دعم المتصفح
+            if (!OneSignal.Notifications.isPushSupported()) {
+                showToast("متصفحك لا يدعم الإشعارات.");
                 return;
             }
+
+            // طلب الإذن (هذا السطر هو الأهم بعد مسح البيانات)
+            const granted = await OneSignal.Notifications.requestPermission();
             
-            // إذا لم يُطلب الإذن بعد
-            if (!OneSignal.Notifications.permission) {
-                console.log("5. جاري طلب الإذن من المستخدم...");
-                const granted = await OneSignal.Notifications.requestPermission();
-                console.log("6. نتيجة طلب الإذن:", granted);
+            if (granted) {
+                showToast("تم تفعيل الإشعارات بنجاح ✅");
                 
-                if (!granted) { 
-                    showToast("تم رفض الإشعارات."); 
-                    return; 
+                // التأكد من الاشتراك
+                if (!OneSignal.User.PushSubscription.optedIn) {
+                    await OneSignal.User.PushSubscription.optIn();
                 }
-            }
-            
-            showToast("تم تأكيد تفعيل الإشعارات ✅");
-            
-            // تفعيل الاشتراك
-            if (!OneSignal.User.PushSubscription.optedIn) {
-                console.log("7. جاري تفعيل الاشتراك...");
-                await OneSignal.User.PushSubscription.optIn();
-            }
-            
-            const id = OneSignal.User.PushSubscription.id;
-            if (id) {
-                localStorage.setItem('onesignal_player_id', id);
-                console.log("8. تم حفظ الـ ID:", id);
+                
+                // حفظ الـ ID
+                const id = OneSignal.User.PushSubscription.id;
+                if (id) {
+                    localStorage.setItem('onesignal_player_id', id);
+                    console.log("تم تحديث الـ ID:", id);
+                }
             } else {
-                console.log("8. لم يتم إنتاج ID بعد، قد يستغرق لحظات.");
+                showToast("تم رفض الإذن، لن تصلك إشعارات.");
             }
         } catch (err) {
-            console.error("OneSignal Error Caught:", err);
-            showToast("حدث خطأ غير متوقع في تفعيل الإشعارات");
+            console.error("خطأ في التفعيل:", err);
         }
     });
 };
