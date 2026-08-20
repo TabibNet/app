@@ -5,7 +5,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 self.addEventListener('message', (event) => {
   // الكود الخاص بك
 });
-const CACHE_NAME = 'raheba-med-v28'; // تم تغيير الرقم لإجبار الهاتف على التحديث
+const CACHE_NAME = 'raheba-med-v29'; // تم تغيير الرقم لإجبار الهاتف على التحديث
 const CORE_ASSETS = [
   './',
   './index.html',
