@@ -769,7 +769,10 @@ window.confirmBooking = async () => {
             <button onclick="closeModal(); openBookingFollowup('${newId}')" class="w-full py-3 rounded-xl text-white font-bold text-sm mb-2" style="background: var(--doctor)">متابعة الحجز والدردشة</button>
             <button onclick="closeModal()" class="w-full py-2 rounded-xl border font-bold text-sm" style="border-color: var(--border)">إغلاق</button>
         </div>`; 
-    } catch (e) { showToast('خطأ في الحفظ'); } 
+        } catch (e) { 
+        console.error("Booking Error:", e);
+        showToast('خطأ في الحفظ: ' + e.message); // سيظهر لك سبب الخطأ الحقيقي
+    } 
 }
 
 window.openBookingFollowup = (bookingId) => {
