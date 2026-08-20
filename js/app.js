@@ -35,19 +35,30 @@ let allHomeAds = [];
 let currentCity = 'all';
 let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا', 'المعضمية']; // أضف أو عدل المدن كما تريد
 
-
 // === محرك الإشعارات المركزي (عبر Supabase Edge Functions) ===
 async function sendPushNotification(userId, title, message) {
-    if (!userId) return;
+    if (!userId) {
+        console.log("الإشعارات: لا يوجد user_id للطبيب.");
+        return;
+    }
+    
+    console.log("الإشعارات: جاري إرسال الطلب إلى Supabase للطبيب:", userId);
+    
     try {
         const { data, error } = await supabase.functions.invoke('send-push-notification', {
             body: { user_id: userId, title: title, message: message }
         });
-        if (error) console.error("Supabase Function Error:", error);
+        
+        if (error) {
+            console.error("الإشعارات: خطأ من Supabase:", error);
+        } else {
+            console.log("الإشعارات: نجاح! رد Supabase هو:", data);
+        }
     } catch (err) {
-        console.error("Notification Engine Error:", err);
+        console.error("الإشعارات: خطأ في الاتصال بـ Supabase:", err);
     }
 }
+
 // 1. التهيئة (يجب أن توضع في أعلى الملف ليتم تنفيذها فور تحميل الصفحة)
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(function(OneSignal) {
