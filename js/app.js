@@ -106,19 +106,6 @@ window.setupOneSignal = async () => {
         }
     });
 };
-// 2. محرك الإرسال (يرسل البيانات للخادم)
-async function sendPushNotification(userId, title, message) {
-    if (!userId) return;
-    try {
-        const { data, error } = await supabase.functions.invoke('send-push-notification', {
-            body: { user_id: userId, title: title, message: message }
-        });
-        if (error) console.error("Supabase Function Error:", error);
-    } catch (err) {
-        console.error("Notification Engine Error:", err);
-    }
-}
-
 function generateUniqueId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
