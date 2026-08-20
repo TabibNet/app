@@ -1,6 +1,6 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'raheba-med-v31'; // تم رفع الرقم لإجبار الهاتف على تحديث الـ SW فوراً
+const CACHE_NAME = 'raheba-med-v32'; // تم رفع الرقم لإجبار الهاتف على تحديث الـ SW فوراً
 const CORE_ASSETS = [
   './',
   './index.html',
