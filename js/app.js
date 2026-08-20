@@ -39,7 +39,7 @@ async function sendPushNotification(userId, title, message) {
     if (!userId) return;
     try {
         const { data, error } = await supabase.functions.invoke('send-push-notification', {
-            body: JSON.stringify({ user_id: userId, title: title, message: message })
+            body: { user_id: userId, title: title, message: message } // إرسال ككائن مباشرة
         });
         
         if (error) {
