@@ -1,11 +1,6 @@
-// السطر الأول حتماً
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-// أي addEventListener تجعلها في النطاق العام للملف هنا
-self.addEventListener('message', (event) => {
-  // الكود الخاص بك
-});
-const CACHE_NAME = 'raheba-med-v29'; // تم تغيير الرقم لإجبار الهاتف على التحديث
+const CACHE_NAME = 'raheba-med-v26'; // تم رفع الرقم لإجبار الهاتف على تحديث الـ SW فوراً
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -26,7 +21,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => caches.delete(cacheName)) // مسح أي ذاكرة قديمة مهما كان اسمها
+        cacheNames.map((cacheName) => caches.delete(cacheName))
       );
     })
   );
@@ -38,12 +33,11 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // تجاهل الروابط الخارجية (فايربيس، جوجل، الصور)
-  if (url.origin !== location.origin) {
-    return;
+  // العبقرية هنا: تجاهل روابط OneSignal و Firebase تماماً لعدم تعطيلها
+  if (url.origin !== location.origin || url.pathname.includes('OneSignal')) {
+    return; 
   }
 
-  // 1. إذا كان الطلب هو فتح صفحة (HTML)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -57,7 +51,6 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          // عند انقطاع الإنترنت، ابحث عن الصفحة المحفوظة
           return caches.match(event.request).then((cached) => {
             return cached || caches.match('./index.html');
           });
@@ -66,7 +59,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. لباقي الملفات (CSS, JS, Images)
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
