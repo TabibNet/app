@@ -35,19 +35,7 @@ let allHomeAds = [];
 let currentCity = 'all';
 let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا', 'المعضمية']; // أضف أو عدل المدن كما تريد
 
-// === محرك الإشعارات المركزي (عبر Supabase Edge Functions) ===
-async function sendPushNotification(userId, title, message) {
-    if (!userId) return;
-    try {
-        const { data, error } = await supabase.functions.invoke('send-push-notification', {
-            body: { user_id: userId, title: title, message: message }
-        });
-        if (error) console.error("Supabase Function Error:", error);
-    } catch (err) {
-        console.error("Notification Engine Error:", err);
-    }
-}
-// === دالة طلب إذن الإشعارات ===
+// 1. دالة طلب الإذن من المستخدم
 window.setupOneSignal = async () => {
     if (!window.OneSignalDeferred) { 
         showToast("نظام الإشعارات لم يكتمل تحميله بعد"); 
@@ -55,9 +43,8 @@ window.setupOneSignal = async () => {
     }
     OneSignalDeferred.push(async function(OneSignal) {
         try {
-            // إذا كان الإذن محظوراً نهائياً
             if (OneSignal.Notifications.permission === false) {
-                showToast("الإشعارات محظورة من إعدادات المتصفح! يرجى السماح بها يدوياً من إعدادات الموقع.");
+                showToast("الإشعارات محظورة من إعدادات المتصفح! يرجى السماح بها يدوياً.");
                 return;
             }
             
@@ -69,7 +56,7 @@ window.setupOneSignal = async () => {
                 }
             }
             
-            showToast("تم تأكيد تفعيل الإشعارات ✅");
+            showToast("تم تفعيل الإشعارات بنجاح ✅");
             
             if (!OneSignal.User.PushSubscription.optedIn) {
                 await OneSignal.User.PushSubscription.optIn();
@@ -81,9 +68,24 @@ window.setupOneSignal = async () => {
             }
         } catch (err) {
             console.error("OneSignal Error:", err);
+            showToast("حدث خطأ في تفعيل الإشعارات");
         }
     });
 };
+
+// 2. محرك الإرسال (يرسل البيانات للخادم)
+async function sendPushNotification(userId, title, message) {
+    if (!userId) return;
+    try {
+        const { data, error } = await supabase.functions.invoke('send-push-notification', {
+            body: { user_id: userId, title: title, message: message }
+        });
+        if (error) console.error("Supabase Function Error:", error);
+    } catch (err) {
+        console.error("Notification Engine Error:", err);
+    }
+}
+
 function generateUniqueId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
