@@ -35,44 +35,77 @@ let allHomeAds = [];
 let currentCity = 'all';
 let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا', 'المعضمية']; // أضف أو عدل المدن كما تريد
 
-// 1. دالة طلب الإذن من المستخدم
+async function sendPushNotification(userId, title, message) {
+    if (!userId) return;
+    try {
+        const { data, error } = await supabase.functions.invoke('send-push-notification', {
+            body: { user_id: userId, title: title, message: message } // إرسال ككائن مباشرة
+        });
+        
+        if (error) {
+            console.error("Supabase Function Error:", error);
+        } else {
+            console.log("Notification sent successfully:", data);
+        }
+    } catch (err) {
+        console.error("Notification Engine Error:", err);
+    }
+}
+// === دالة طلب إذن الإشعارات ===
 window.setupOneSignal = async () => {
+    console.log("1. تم الضغط على زر الإشعارات...");
+    
     if (!window.OneSignalDeferred) { 
-        showToast("نظام الإشعارات لم يكتمل تحميله بعد"); 
+        console.error("خطأ: OneSignalDeferred غير موجود!");
+        showToast("نظام الإشعارات لم يكتمل تحميله بعد، انتظر ثوانٍ ثم حاول مجدداً"); 
         return; 
     }
+    
+    console.log("2. جاري دفع الأمر إلى قائمة OneSignalDeferred...");
     OneSignalDeferred.push(async function(OneSignal) {
+        console.log("3. تم تحميل كائن OneSignal بنجاح:", OneSignal);
         try {
+            console.log("4. حالة الإذن الحالية:", OneSignal.Notifications.permission);
+            
+            // إذا كان الإذن مرفوضاً من المتصفح
             if (OneSignal.Notifications.permission === false) {
-                showToast("الإشعارات محظورة من إعدادات المتصفح! يرجى السماح بها يدوياً.");
+                showToast("الإشعارات محظورة من إعدادات المتصفح! يجب السماح بها يدوياً من إعدادات الموقع.");
                 return;
             }
             
+            // إذا لم يُطلب الإذن بعد
             if (!OneSignal.Notifications.permission) {
+                console.log("5. جاري طلب الإذن من المستخدم...");
                 const granted = await OneSignal.Notifications.requestPermission();
+                console.log("6. نتيجة طلب الإذن:", granted);
+                
                 if (!granted) { 
                     showToast("تم رفض الإشعارات."); 
                     return; 
                 }
             }
             
-            showToast("تم تفعيل الإشعارات بنجاح ✅");
+            showToast("تم تأكيد تفعيل الإشعارات ✅");
             
+            // تفعيل الاشتراك
             if (!OneSignal.User.PushSubscription.optedIn) {
+                console.log("7. جاري تفعيل الاشتراك...");
                 await OneSignal.User.PushSubscription.optIn();
             }
             
             const id = OneSignal.User.PushSubscription.id;
             if (id) {
                 localStorage.setItem('onesignal_player_id', id);
+                console.log("8. تم حفظ الـ ID:", id);
+            } else {
+                console.log("8. لم يتم إنتاج ID بعد، قد يستغرق لحظات.");
             }
         } catch (err) {
-            console.error("OneSignal Error:", err);
-            showToast("حدث خطأ في تفعيل الإشعارات");
+            console.error("OneSignal Error Caught:", err);
+            showToast("حدث خطأ غير متوقع في تفعيل الإشعارات");
         }
     });
 };
-
 // 2. محرك الإرسال (يرسل البيانات للخادم)
 async function sendPushNotification(userId, title, message) {
     if (!userId) return;
