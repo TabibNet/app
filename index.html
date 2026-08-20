@@ -33,16 +33,26 @@
     <meta property="og:site_name" content="الدليل الطبي" />
     <meta name="google-site-verification" content="xgV2Ga-CojV2Rw9acgS3hBPa_gAkuPtdbatttCT_LVY" />
     <!-- OneSignal SDK -->
+<!-- 1. استدعاء سكريبت OneSignal v16 الرئيسي -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+<!-- 2. تهيئة OneSignal الأساسية (قبل استدعاء app.js) -->
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(function(OneSignal) {
-    OneSignal.init({
-      appId: "2e008b4d-0516-4b06-96b1-8a522e0c1587",
-      allowLocalhostAsSecureOrigin: true
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "2e008b4d-0516-4b06-96b1-8a522e0c1587", // تم وضع الـ ID الحقيقي الخاص بك
+      serviceWorker: { 
+        path: "OneSignalSDKWorker.js", // تم تصحيح الصيغة للإصدار v16
+        scope: "/" 
+      },
+      allowLocalhostAsSecureOrigin: true // لتسهيل التجربة والتطوير المحلي
     });
   });
 </script>
+
+<!-- 3. استدعاء ملف JavaScript الخاص بك (app.js) -->
+<script src="./js/app.js" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
