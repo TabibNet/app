@@ -35,6 +35,19 @@ let allHomeAds = [];
 let currentCity = 'all';
 let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا', 'المعضمية']; // أضف أو عدل المدن كما تريد
 
+
+// === محرك الإشعارات المركزي (عبر Supabase Edge Functions) ===
+async function sendPushNotification(userId, title, message) {
+    if (!userId) return;
+    try {
+        const { data, error } = await supabase.functions.invoke('send-push-notification', {
+            body: { user_id: userId, title: title, message: message }
+        });
+        if (error) console.error("Supabase Function Error:", error);
+    } catch (err) {
+        console.error("Notification Engine Error:", err);
+    }
+}
 // 1. التهيئة (يجب أن توضع في أعلى الملف ليتم تنفيذها فور تحميل الصفحة)
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(function(OneSignal) {
