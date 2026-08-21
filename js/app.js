@@ -1821,7 +1821,13 @@ window.saveFacility = async (e) => {
             if (!data.image) data.image = `https://picsum.photos/seed/new${Date.now()}/400/250`; 
             const { error } = await supabase.from('listings').insert([data]); 
             if (error) throw error; 
-            showToast('تمت الإضافة بنجاح!'); 
+                    let successMsg = 'تمت الإضافة بنجاح!';
+        if (type === 'doctor') {
+            successMsg = `تم إضافة الطبيب بنجاح!\nكلمة المرور للدخول للوحة الطبيب هي: ${data.bookingpass}`;
+        } else if (type === 'pharmacy') {
+            successMsg = `تم إضافة الصيدلية بنجاح!\nكلمة المرور للدخول للوحة الصيدلية هي: ${data.pharmacypass}`;
+        }
+        alert(successMsg); // استخدام alert لإجبار الشاشة على إظهار الكود لتنسخه
         } 
         localStorage.setItem('force_listings_update', 'true');
         await fetchListings(); 
