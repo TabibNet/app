@@ -2199,20 +2199,36 @@ async function fetchHomeAdsPublic() {
 }
 fetchHomeAdsPublic();
 fetchAnnouncements();
-
+                   //سسسسسسيرفر
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('OneSignalSDKWorker.js').then(reg => {
+            // فحص التحديث كل ساعة
+            setInterval(() => {
+                reg.update();
+            }, 3600000); 
+            
             reg.addEventListener('updatefound', () => {
                 const newWorker = reg.installing;
                 newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) { newWorker.postMessage({ type: 'SKIP_WAITING' }); }
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) { 
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    }
                 });
             });
         }).catch(err => console.error('SW registration failed:', err));
     });
-    let refreshing;
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (refreshing) return; window.location.reload(); refreshing = true; });
+    
+    // قفل أمان لمنع دوران التحديث (Infinite Refresh Loop)
+    let refreshing = sessionStorage.getItem('isReloading') === 'true';
+    navigator.serviceWorker.addEventListener('controllerchange', () => { 
+        if (refreshing) {
+            sessionStorage.removeItem('isReloading');
+            return; 
+        }
+        sessionStorage.setItem('isReloading', 'true');
+        window.location.reload(); 
+    });
 }
 
 // === الأدوات الطبية والرادار واسأل طبيب ===
