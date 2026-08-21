@@ -2,7 +2,7 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // 2. إعدادات الكاش والتخزين الخاص بموقعك (PWA)
-const CACHE_NAME = 'raheba-med-v50';
+const CACHE_NAME = 'raheba-med-v51';
 const CORE_ASSETS = [
   './',
   './index.html',
