@@ -35,27 +35,22 @@ let allHomeAds = [];
 let currentCity = 'all';
 let allCities = ['كل المدن', 'الرحيبة', 'قريبا', 'قريبا', 'المعضمية']; // أضف أو عدل المدن كما تريد
 
-// === محرك الإشعارات المركزي (عبر Supabase Edge Functions) ===
-async function sendPushNotification(userId, title, message) {
-    if (!userId) {
-        console.log("الإشعارات: لا يوجد user_id للطبيب.");
-        return;
-    }
-    
-    console.log("الإشعارات: جاري إرسال الطلب إلى Supabase للطبيب:", userId);
-    
+// === محرك الإشعارات المركزي ===
+async function sendPushNotification(userId, title, message, target = 'user', playerId = null) {
     try {
-        const { data, error } = await supabase.functions.invoke('send-push-notification', {
-            body: { user_id: userId, title: title, message: message }
-        });
-        
-        if (error) {
-            console.error("الإشعارات: خطأ من Supabase:", error);
+        const bodyData = { title: title, message: message, target: target };
+        if (target === 'player' && playerId) {
+            bodyData.player_id = playerId;
         } else {
-            console.log("الإشعارات: نجاح! رد Supabase هو:", data);
+            bodyData.user_id = userId;
         }
+
+        const { data, error } = await supabase.functions.invoke('send-push-notification', {
+            body: bodyData
+        });
+        if (error) console.error("Supabase Function Error:", error);
     } catch (err) {
-        console.error("الإشعارات: خطأ في الاتصال بـ Supabase:", err);
+        console.error("Notification Engine Error:", err);
     }
 }
 
@@ -774,7 +769,12 @@ window.confirmBooking = async () => {
     tempBooking.status = 'pending'; 
     tempBooking.time = "بانتظار التحديد"; 
     tempBooking.chat = []; 
-    
+
+    // إرفاق معرف إشعارات المريض (إن وجد)
+    const patientPushId = localStorage.getItem('patient_push_id');
+    if (patientPushId) {
+        tempBooking.patient_push_id = patientPushId;
+    }
     try { 
         const { data, error } = await supabase.from('bookings').insert([tempBooking]).select(); 
         if (error) throw error;
@@ -847,10 +847,24 @@ window.renderFollowupChat = (bookingId) => {
 
 window.sendChatMessage = async (bookingId) => {
     const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text) return; input.value = '';
-    const { data: docSnap, error } = await supabase.from('bookings').select('chat').eq('id', bookingId).single();
-    if (error) return;
-    const currentChat = docSnap.chat || []; currentChat.push({ sender: 'patient', text: text, timestamp: new Date().toISOString() });
-    await supabase.from('bookings').update({ chat: currentChat }).eq('id', bookingId);
+    const booking = bookings.find(b => b.id === bookingId);
+    try {
+        const { data: docSnap, error } = await supabase.from('bookings').select('chat').eq('id', bookingId).single();
+        if (error) return;
+        const currentChat = docSnap.chat || []; 
+        currentChat.push({ sender: 'patient', text: text, timestamp: new Date().toISOString() });
+        await supabase.from('bookings').update({ chat: currentChat }).eq('id', bookingId);
+        
+        // === إشعار للطبيب بوجود رسالة جديدة ===
+        if (booking) {
+            const doctorData = allData.find(d => d.id === booking.itemid);
+            if (doctorData && doctorData.user_id) {
+                sendPushNotification(doctorData.user_id, "رسالة جديدة 💬", `لديك رسالة جديدة من المريض ${booking.name}`);
+            }
+        }
+    } catch (err) {
+        console.error("Chat Error:", err);
+    }
 }
 
 window.openPharmacyLogin = async () => { 
@@ -895,6 +909,15 @@ window.handlePharmacyLogin = async (e) => {
         showToast('اسم الصيدلية غير مطابق للحساب'); 
     } 
 }
+        renderPharmacyDashboard(pharmData); 
+        
+        // === العبقرية: إضافة وسيط "صيدلية" لحساب OneSignal ===
+        if (window.OneSignalDeferred) {
+            OneSignalDeferred.push(function(OneSignal) {
+                OneSignal.login(data.user.id);
+                OneSignal.User.addTag("role", "pharmacy");
+            });
+        }
 window.logoutPharmacy = async () => {
     await supabase.auth.signOut();
     closeCtrlPanel();
@@ -1088,11 +1111,18 @@ window.renderDoctorDashboard = async (doc) => {
 
 window.acceptBooking = async (bookingId) => { 
     const timeInput = document.getElementById(`time_${bookingId}`); const time = timeInput.value.trim(); 
-    if (!time) { showToast('أدخل وقت الموعد'); return; } const booking = bookings.find(b => b.id === bookingId); if (!booking) return; 
+    if (!time) { showToast('أدخل وقت الموعد'); return; } 
+    const booking = bookings.find(b => b.id === bookingId); if (!booking) return; 
     try { 
         const currentChat = booking.chat || []; 
         currentChat.push({ sender: 'doctor', text: `تم تثبيت موعدك اليوم الساعة ${time}. نرحب بك في العيادة.`, timestamp: new Date().toISOString() }); 
         await supabase.from('bookings').update({ status: 'accepted', time: time, chat: currentChat }).eq('id', bookingId); 
+        
+        // === إشعار للمريض بقبول موعده (باستخدام معرف هاتفه) ===
+        if (booking.patient_push_id) {
+            sendPushNotification(null, "تم تأكيد موعدك ✅", `تم تأكيد موعدك مع ${booking.itemname} الساعة ${time}`, 'player', booking.patient_push_id);
+        }
+
         showToast('تم قبول الموعد'); 
     } catch (e) { showToast('خطأ'); } 
 }
@@ -1108,8 +1138,16 @@ window.saveDoctorSettings = async (id) => {
 }
 window.sendDocMessage = async (bookingId) => {
     const input = document.getElementById(`docChat_${bookingId}`); const text = input.value.trim(); if (!text) return; input.value = '';
-    const booking = bookings.find(b => b.id === bookingId); const currentChat = booking.chat || []; currentChat.push({ sender: 'doctor', text: text, timestamp: new Date().toISOString() });
-    try { await supabase.from('bookings').update({ chat: currentChat }).eq('id', bookingId); } catch (e) { showToast('خطأ في الإرسال'); }
+    const booking = bookings.find(b => b.id === bookingId); const currentChat = booking.chat || []; 
+    currentChat.push({ sender: 'doctor', text: text, timestamp: new Date().toISOString() });
+    try { 
+        await supabase.from('bookings').update({ chat: currentChat }).eq('id', bookingId); 
+        
+        // === إشعار للمريض بوجود رد من الطبيب ===
+        if (booking.patient_push_id) {
+            sendPushNotification(null, "رد من الطبيب 💬", `لديك رسالة جديدة من ${booking.itemname}: ${text.substring(0, 30)}`, 'player', booking.patient_push_id);
+        }
+    } catch (e) { showToast('خطأ في الإرسال'); }
 }
 
 window.openDoctorScanner = (docId) => {
@@ -1382,7 +1420,9 @@ window.submitMedicineDonation = async (e) => {
         }]);
 
         if (error) throw error;
-
+                if (error) throw error;
+        // === إشعار لجميع المستخدمين بوجود جهاز طبي ===
+        sendPushNotification(null, "جهاز طبي متاح 🩺", `تم إضافة جهاز: ${medName}`, 'all');
         showToast('تم نشر إعلانك بنجاح !');
         document.querySelector('#ctrlContent form').reset();
         await fetchMedicineDonations();
@@ -1480,6 +1520,9 @@ window.submitBloodRequest = async (e) => {
 
     try {
         await supabase.from('blood_requests').insert([{ patient_name: name, blood_type: bloodType, hospital: hospital, phone: phone, notes: notes, status: 'active' }]);
+               await supabase.from('blood_requests').insert([{ patient_name: name, blood_type: bloodType, hospital: hospital, phone: phone, notes: notes, status: 'active' }]);
+        // === إشعار لجميع المستخدمين بوجود استغاثة دم ===
+        sendPushNotification(null, "استغاثة دم طارئة 🩸", `المريض ${name} يحتاج فصيلة ${bloodType} في ${hospital}`, 'all');
         showToast('تم نشر استغاثتك بنجاح! سيتم التواصل معك قريباً.');
         e.target.reset();
     } catch (err) { 
@@ -1594,7 +1637,7 @@ window.submitMedicineRequest = async (e) => {
             if (imgbbData.success) imageUrl = imgbbData.data.url;
         }
         const medRef = `MED-${Math.floor(Math.random() * 900) + 100}`; 
-        const { error } = await supabase.from('medicine_requests').insert([{ 
+                const { error } = await supabase.from('medicine_requests').insert([{ 
             med_ref: medRef, 
             med_list: medList,
             urgency: urgency,
@@ -1603,9 +1646,13 @@ window.submitMedicineRequest = async (e) => {
             image_url: imageUrl, 
             status: 'searching', 
             notes: '', 
-            available_pharmacy: ''
+            available_pharmacy: '',
+            patient_push_id: localStorage.getItem('patient_push_id') // إرفاق معرف المريض
         }]); 
         if (error) throw error;
+        
+        // === إشعار للصيدليات فقط بوجود طلب دواء عاجل ===
+        sendPushNotification(null, "طلب دواء عاجل 💊", `المريض ${name} يبحث عن: ${medList}`, 'pharmacies');
         
         document.getElementById('modalContent').innerHTML = `
         <div class="p-8 text-center">
@@ -3132,6 +3179,9 @@ window.submitQuestion = async (e) => {
     try {
         const { error } = await supabase.from('medical_questions').insert([{ name, category, text, status: 'open', answers: [] }]);
         if (error) throw error;
+                if (error) throw error;
+        // === إشعار للجميع بوجود سؤال طبي جديد ===
+        sendPushNotification(null, "سؤال طبي جديد ❓", `تم طرح سؤال جديد: ${text.substring(0, 40)}...`, 'all');
         showToast('تم نشر سؤالك بنجاح!');
         e.target.reset();
         fetchQuestions();
