@@ -100,7 +100,7 @@ window.setupOneSignal = async () => {
                 // حفظ الـ ID
                 const id = OneSignal.User.PushSubscription.id;
                 if (id) {
-                    localStorage.setItem('onesignal_player_id', id);
+                    localStorage.setItem('patient_push_id', id);
                     console.log("تم تحديث الـ ID:", id);
                 }
             } else {
@@ -903,21 +903,20 @@ window.handlePharmacyLogin = async (e) => {
             openPaymentModal('صيدلية', pharmData.name);
             return;
         }
-        renderPharmacyDashboard(pharmData); 
-    } else {
-        await supabase.auth.signOut();
-        showToast('اسم الصيدلية غير مطابق للحساب'); 
-    } 
-}
-        renderPharmacyDashboard(pharmData); 
-        
-        // === العبقرية: إضافة وسيط "صيدلية" لحساب OneSignal ===
+        // === إضافة وسيط "صيدلية" لحساب OneSignal ===
         if (window.OneSignalDeferred) {
             OneSignalDeferred.push(function(OneSignal) {
                 OneSignal.login(data.user.id);
                 OneSignal.User.addTag("role", "pharmacy");
             });
         }
+        renderPharmacyDashboard(pharmData); 
+    } else {
+        await supabase.auth.signOut();
+        showToast('اسم الصيدلية غير مطابق للحساب'); 
+    } 
+}
+        
 window.logoutPharmacy = async () => {
     await supabase.auth.signOut();
     closeCtrlPanel();
@@ -974,7 +973,7 @@ async function fetchMedRequests(pharmName) {
         } else if (req.status === 'unavailable') {
             interactionArea = `<div class="bg-gray-100 text-gray-400 text-sm font-bold p-3 rounded-lg text-center">قمت بإغلاق هذا الطلب</div><button onclick="updateMedStatus('${req.id}', 'searching')" class="w-full mt-2 bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-xs">إعادة فتح الطلب</button>`;
         } else {
-            interactionArea = `<input type="text" id="medNotes_${req.id}" placeholder="ملاحظة للمواطن" value="${escapeHtml(req.notes || '')}" onblur="updateMedNotes('${req.id}', this.value)" class="ctrl-input text-sm py-1"><div class="flex gap-2 mt-2"><button onclick="setMedAvailable('${req.id}', '${escapeHtml(pharmName)}')" class="flex-1 bg-green-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">توفّر الدواء</button><button onclick="updateMedStatus('${req.id}', 'unavailable')" class="flex-1 bg-gray-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">غير متوفر</button></div><div class="flex gap-2 mt-2"><a href="tel:${escapeHtml(phone)}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"><i class="fas fa-phone"></i> اتصال</a></div>`;
+            interactionArea = `<input type="text" id="medNotes_${req.id}" placeholder="ملاحظة للمواطن" value="${escapeHtml(req.notes || '')}" onblur="updateMedNotes('${req.id}', this.value)" class="ctrl-input text-sm py-1"><div class="flex gap-2 mt-2"><button onclick="setMedAvailable('${req.id}', '${escapeHtml(pharmName)}', '${escapeHtml(req.patient_push_id || '')}')" class="flex-1 bg-green-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">توفّر الدواء</button><button onclick="updateMedStatus('${req.id}', 'unavailable')" class="flex-1 bg-gray-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">غير متوفر</button></div><div class="flex gap-2 mt-2"><a href="tel:${escapeHtml(phone)}" class="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"><i class="fas fa-phone"></i> اتصال</a></div>`;
         }
 
         html += `<div class="bg-white border rounded-xl p-4 flex flex-col gap-3" style="border-color: var(--border)"><div class="flex flex-col sm:flex-row gap-3 items-center">${req.image_url ? `<img src="${escapeHtml(req.image_url)}" class="w-full sm:w-24 h-24 object-cover rounded-lg cursor-zoom-in" onclick="openLightbox('${escapeHtml(req.image_url)}')">` : ''}<div class="flex-1 text-center sm:text-right"><h4 class="font-bold">${escapeHtml(req.patient_name)} <span class="text-xs text-yellow-600 font-mono">#${escapeHtml(req.med_ref || '')}</span></h4><p class="text-sm text-gray-700 font-semibold">${escapeHtml(req.med_list || '')}</p><p class="text-xs mt-1 text-red-500">الإلحاح: ${escapeHtml(req.urgency || 'عادي')}</p><p class="text-xs" style="color: var(--muted)"><i class="fas fa-clock"></i> ${escapeHtml(date)}</p>${requestStatus}</div></div><div class="flex flex-col gap-2 mt-2 border-t pt-3" style="border-color: var(--border)">${interactionArea}</div></div>`; 
@@ -984,7 +983,22 @@ async function fetchMedRequests(pharmName) {
 }
 
 window.toggleNightShift = async (id, currentStatus) => { try { await supabase.from('listings').update({ night: currentStatus }).eq('id', id); showToast(currentStatus ? 'تم تفعيل المناوبة!' : 'تم إيقاف المناوبة.'); localStorage.setItem('force_listings_update', 'true'); } catch (e) { showToast('خطأ في التحديث'); } }
-window.setMedAvailable = async (id, pharmName) => { try { await supabase.from('medicine_requests').update({ status: 'available', notes: `الدواء متوفر لدى ${pharmName}. يرجى الحضور لاستلامه.`, available_pharmacy: pharmName }).eq('id', id); showToast('تم إعلام المريض بتوفر الدواء'); } catch (e) { showToast('خطأ في التحديث'); } }
+window.setMedAvailable = async (id, pharmName, patientPushId) => { 
+    try { 
+        await supabase.from('medicine_requests').update({ 
+            status: 'available', 
+            notes: `الدواء متوفر لدى ${pharmName}. يرجى الحضور لاستلامه.`, 
+            available_pharmacy: pharmName 
+        }).eq('id', id); 
+        
+        // === إشعار للمريض بأن دواءه متوفر الآن ===
+        if (patientPushId) {
+            sendPushNotification(null, "تم توفير دوائك ✅", `تم توفير الدواء في صيدلية ${pharmName}. يرجى الحضور لاستلامه.`, 'player', patientPushId);
+        }
+
+        showToast('تم إعلام المريض بتوفر الدواء'); 
+    } catch (e) { showToast('خطأ في التحديث'); } 
+}
 window.updateMedStatus = async (id, status) => { try { await supabase.from('medicine_requests').update({ status: status }).eq('id', id); showToast('تم تحديث حالة الدواء'); } catch (e) { showToast('خطأ في التحديث'); } }
 window.updateMedNotes = async (id, notes) => { try { await supabase.from('medicine_requests').update({ notes: notes }).eq('id', id); showToast('تم حفظ الملاحظة'); } catch (e) { showToast('خطأ في الحفظ'); } }
 
@@ -1420,7 +1434,7 @@ window.submitMedicineDonation = async (e) => {
         }]);
 
         if (error) throw error;
-                if (error) throw error;
+        
         // === إشعار لجميع المستخدمين بوجود جهاز طبي ===
         sendPushNotification(null, "جهاز طبي متاح 🩺", `تم إضافة جهاز: ${medName}`, 'all');
         showToast('تم نشر إعلانك بنجاح !');
@@ -1520,7 +1534,7 @@ window.submitBloodRequest = async (e) => {
 
     try {
         await supabase.from('blood_requests').insert([{ patient_name: name, blood_type: bloodType, hospital: hospital, phone: phone, notes: notes, status: 'active' }]);
-               await supabase.from('blood_requests').insert([{ patient_name: name, blood_type: bloodType, hospital: hospital, phone: phone, notes: notes, status: 'active' }]);
+        
         // === إشعار لجميع المستخدمين بوجود استغاثة دم ===
         sendPushNotification(null, "استغاثة دم طارئة 🩸", `المريض ${name} يحتاج فصيلة ${bloodType} في ${hospital}`, 'all');
         showToast('تم نشر استغاثتك بنجاح! سيتم التواصل معك قريباً.');
@@ -3179,7 +3193,7 @@ window.submitQuestion = async (e) => {
     try {
         const { error } = await supabase.from('medical_questions').insert([{ name, category, text, status: 'open', answers: [] }]);
         if (error) throw error;
-                if (error) throw error;
+        
         // === إشعار للجميع بوجود سؤال طبي جديد ===
         sendPushNotification(null, "سؤال طبي جديد ❓", `تم طرح سؤال جديد: ${text.substring(0, 40)}...`, 'all');
         showToast('تم نشر سؤالك بنجاح!');
