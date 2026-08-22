@@ -2,7 +2,7 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // 2. إعدادات الكاش والتخزين الخاص بموقعك (PWA)
-const CACHE_NAME = 'raheba-med-v53';
+const CACHE_NAME = 'raheba-med-v54'; // تم رفع الرقم لإجبار التحديث
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -18,7 +18,7 @@ self.addEventListener('install', (event) => {
       .then((cache) => cache.addAll(CORE_ASSETS))
       .catch((err) => console.log('Cache install error:', err))
   );
-  self.skipWaiting();
+  // تم إزالة self.skipWaiting(); من هنا لمنع التحديث المتكرر
 });
 
 self.addEventListener('activate', (event) => {
@@ -26,7 +26,6 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // حذف كاش موقعك القديم فقط ودون المساس بكاش OneSignal
           if (cacheName !== CACHE_NAME && !cacheName.includes('onesignal')) {
             return caches.delete(cacheName);
           }
@@ -42,7 +41,6 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // استثناء الطلبات الخارجية وخوادم OneSignal حتى لا يعطل الكاش عملها
   if (
     url.origin !== location.origin || 
     url.pathname.includes('OneSignal') || 
